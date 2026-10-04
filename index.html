@@ -449,6 +449,42 @@ h2 {
 }
 
 /* =========================
+   REGISTER STATUS
+   ========================= */
+
+.register-status {
+    padding: 11px 13px;
+    border-radius: 9px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.register-open {
+    background: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #a3cfbb;
+}
+
+.register-submitted {
+    background: #e2e3e5;
+    color: #41464b;
+    border: 1px solid #d3d6d8;
+}
+
+.gms-suggestion {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.gms-suggestion-label {
+    font-size: 11px;
+    color: #666;
+    font-weight: 700;
+}
+
+/* =========================
    FORMS
    ========================= */
 
@@ -647,7 +683,13 @@ let currentSeason = "2026/27";
 
 let currentRole = null;
 let currentAgeGroup = null;
-let todayAttendance = {};
+
+/*
+   DAILY REGISTERS
+   A register only exists when a coach actually opens it.
+   The current day's register remains editable until submitted.
+*/
+let dailyRegisters = {};
 
 /* =========================================================
    PLAYERS
@@ -663,6 +705,7 @@ let players = {
             name: "Player One",
             ageGroup: "U8",
             gms: true,
+            coachGmsSuggestion: true,
             active: true
         },
         {
@@ -670,6 +713,7 @@ let players = {
             name: "Player Two",
             ageGroup: "U8",
             gms: true,
+            coachGmsSuggestion: true,
             active: true
         },
         {
@@ -677,6 +721,7 @@ let players = {
             name: "Player Three",
             ageGroup: "U8",
             gms: false,
+            coachGmsSuggestion: false,
             active: true
         },
         {
@@ -684,6 +729,7 @@ let players = {
             name: "Player Four",
             ageGroup: "U8",
             gms: false,
+            coachGmsSuggestion: false,
             active: true
         }
     ],
@@ -715,6 +761,228 @@ let sessions = {
     ]
 
 };
+
+/* =========================================================
+   STORAGE / DAILY REGISTER HELPERS
+   ========================================================= */
+
+function getTodayKey() {
+
+    const now = new Date();
+
+    return now.getFullYear()
+        + "-"
+        + String(now.getMonth() + 1).padStart(2, "0")
+        + "-"
+        + String(now.getDate()).padStart(2, "0");
+
+}
+
+function getDisplayDate(dateKey) {
+
+    const parts = dateKey.split("-");
+
+    return parts[2] + "/" + parts[1] + "/" + parts[0];
+
+}
+
+function loadSavedData() {
+
+    try {
+
+        const saved = JSON.parse(
+            localStorage.getItem("clubCheckInData")
+        );
+
+        if (!saved) {
+            return;
+        }
+
+        if (saved.players) {
+            players = saved.players;
+        }
+
+        if (saved.sessions) {
+            sessions = saved.sessions;
+        }
+
+        if (saved.dailyRegisters) {
+            dailyRegisters = saved.dailyRegisters;
+        }
+
+        if (saved.currentSeason) {
+            currentSeason = saved.currentSeason;
+        }
+
+        if (saved.coachPIN) {
+            coachPIN = saved.coachPIN;
+        }
+
+        if (saved.seniorPIN) {
+            seniorPIN = saved.seniorPIN;
+        }
+
+        /* Older player records did not have this field. */
+        ageGroups.forEach(ageGroup => {
+
+            (players[ageGroup] || []).forEach(player => {
+
+                if (typeof player.coachGmsSuggestion !== "boolean") {
+                    player.coachGmsSuggestion = !!player.gms;
+                }
+
+            });
+
+        });
+
+    } catch (error) {
+
+        console.log("Saved data could not be loaded.", error);
+
+    }
+
+}
+
+function saveData() {
+
+    localStorage.setItem(
+        "clubCheckInData",
+        JSON.stringify({
+            players: players,
+            sessions: sessions,
+            dailyRegisters: dailyRegisters,
+            currentSeason: currentSeason,
+            coachPIN: coachPIN,
+            seniorPIN: seniorPIN
+        })
+    );
+
+}
+
+function closeExpiredRegisters() {
+
+    const todayKey = getTodayKey();
+
+    Object.keys(dailyRegisters).forEach(dateKey => {
+
+        if (dateKey >= todayKey) {
+            return;
+        }
+
+        Object.keys(dailyRegisters[dateKey]).forEach(ageGroup => {
+
+            const register =
+                dailyRegisters[dateKey][ageGroup];
+
+            if (!register.submitted) {
+                submitDailyRegister(
+                    dateKey,
+                    ageGroup,
+                    true
+                );
+            }
+
+        });
+
+    });
+
+}
+
+function submitDailyRegister(
+    dateKey,
+    ageGroup,
+    automatic = false
+) {
+
+    if (!dailyRegisters[dateKey]) {
+        return;
+    }
+
+    const register =
+        dailyRegisters[dateKey][ageGroup];
+
+    if (!register || register.submitted) {
+        return;
+    }
+
+    const active =
+        getActivePlayers(ageGroup);
+
+    const attendance =
+        register.attendance || {};
+
+    const present =
+        active.filter(player =>
+            attendance[player.id] === true
+        ).length;
+
+    if (!sessions[ageGroup]) {
+        sessions[ageGroup] = [];
+    }
+
+    sessions[ageGroup].push({
+
+        date: getDisplayDate(dateKey),
+        dateKey: dateKey,
+        present: present,
+        total: active.length
+
+    });
+
+    register.submitted = true;
+    register.closedAutomatically = automatic;
+
+    saveData();
+
+}
+
+function getTodayRegister(ageGroup) {
+
+    const todayKey = getTodayKey();
+
+    if (
+        dailyRegisters[todayKey] &&
+        dailyRegisters[todayKey][ageGroup]
+    ) {
+        return dailyRegisters[todayKey][ageGroup];
+    }
+
+    return null;
+
+}
+
+function createTodayRegister(ageGroup) {
+
+    const todayKey = getTodayKey();
+
+    if (!dailyRegisters[todayKey]) {
+        dailyRegisters[todayKey] = {};
+    }
+
+    if (!dailyRegisters[todayKey][ageGroup]) {
+
+        const attendance = {};
+
+        getActivePlayers(ageGroup).forEach(player => {
+
+            attendance[player.id] = false;
+
+        });
+
+        dailyRegisters[todayKey][ageGroup] = {
+
+            submitted: false,
+            attendance: attendance
+
+        };
+
+        saveData();
+
+    }
+
+    return dailyRegisters[todayKey][ageGroup];
+
+}
 
 /* =========================================================
    HELPERS
@@ -1047,13 +1315,20 @@ function showCoachDashboard() {
     const active =
         getActivePlayers(currentAgeGroup);
 
+    const register =
+        getTodayRegister(currentAgeGroup);
+
     const present =
-        active.filter(player =>
-            todayAttendance[player.id] === true
-        ).length;
+        register
+        ? active.filter(player =>
+            register.attendance[player.id] === true
+        ).length
+        : 0;
 
     const absent =
-        active.length - present;
+        register
+        ? active.length - present
+        : 0;
 
     renderShell(`
 
@@ -1136,8 +1411,14 @@ function showCoachDashboard() {
 
 function showRegister() {
 
+    const register =
+        getTodayRegister(currentAgeGroup);
+
+    /* Opening the register is what creates today's record. */
     const active =
-        getActivePlayers(currentAgeGroup);
+        register
+        ? getActivePlayers(currentAgeGroup)
+        : [];
 
     renderShell(`
 
@@ -1152,91 +1433,178 @@ function showRegister() {
             <h2>Today's Register</h2>
 
             <div class="subtitle">
-                ${currentAgeGroup}
+                ${currentAgeGroup} · ${getDisplayDate(getTodayKey())}
             </div>
 
             ${
-                active.length === 0
-
+                !register
                 ? `
-                    <div class="empty">
-                        No active players.
+                    <div class="info-box">
+                        Today's register has not been opened yet.
+                        Opening it will create today's register.
                     </div>
+
+                    <button
+                        class="primary-button"
+                        onclick="openTodayRegister()">
+                        Take Register
+                    </button>
                 `
+                : register.submitted
+                ? `
+                    <div class="register-status register-submitted">
+                        Register submitted and closed.
+                    </div>
 
-                : active.map(player => {
+                    ${
+                        register.closedAutomatically
+                        ? `
+                            <div class="info-box">
+                                This register was automatically closed
+                                because the day ended.
+                            </div>
+                        `
+                        : ""
+                    }
 
-                    const present =
-                        todayAttendance[player.id] === true;
+                    ${
+                        active.length === 0
+                        ? `
+                            <div class="empty">
+                                No active players were recorded.
+                            </div>
+                        `
+                        : active.map(player => {
 
-                    return `
+                            const present =
+                                register.attendance[player.id] === true;
 
-                        <div class="player-row">
+                            return `
 
-                            <div class="player-info">
+                                <div class="player-row">
 
-                                <div class="player-name">
-                                    ${escapeHTML(player.name)}
+                                    <div class="player-info">
+
+                                        <div class="player-name">
+                                            ${escapeHTML(player.name)}
+                                        </div>
+
+                                    </div>
+
+                                    <label
+                                        class="toggle ${
+                                            present
+                                            ? "present"
+                                            : "absent"
+                                        }">
+
+                                        <input
+                                            type="checkbox"
+                                            ${present ? "checked" : ""}
+                                            disabled>
+
+                                        <span class="toggle-knob"></span>
+
+                                        <span class="toggle-label">
+                                            ${
+                                                present
+                                                ? "PRESENT"
+                                                : "ABSENT"
+                                            }
+                                        </span>
+
+                                    </label>
+
                                 </div>
 
+                            `;
+
+                        }).join("")
+                    }
+                `
+                : `
+                    <div class="register-status register-open">
+                        Register open — you can edit it throughout today.
+                    </div>
+
+                    ${
+                        active.length === 0
+
+                        ? `
+                            <div class="empty">
+                                No active players.
                             </div>
+                        `
 
-                            <label
-                                class="toggle ${
-                                    present
-                                    ? "present"
-                                    : "absent"
-                                }">
+                        : active.map(player => {
 
-                                <input
-                                    type="checkbox"
-                                    ${present ? "checked" : ""}
-                                    onchange="
-                                        setAttendance(
-                                            ${player.id},
-                                            this.checked
-                                        )
-                                    ">
+                            const present =
+                                register.attendance[player.id] === true;
 
-                                <span class="toggle-knob"></span>
+                            return `
 
-                                <span class="toggle-label">
-                                    ${
-                                        present
-                                        ? "PRESENT"
-                                        : "ABSENT"
-                                    }
-                                </span>
+                                <div class="player-row">
 
-                            </label>
+                                    <div class="player-info">
 
-                        </div>
+                                        <div class="player-name">
+                                            ${escapeHTML(player.name)}
+                                        </div>
 
-                    `;
+                                    </div>
 
-                }).join("")
-            }
+                                    <label
+                                        class="toggle ${
+                                            present
+                                            ? "present"
+                                            : "absent"
+                                        }">
 
-            <br>
+                                        <input
+                                            type="checkbox"
+                                            ${present ? "checked" : ""}
+                                            onchange="
+                                                setAttendance(
+                                                    ${player.id},
+                                                    this.checked
+                                                )
+                                            ">
 
-            <button
-                class="green-button"
-                onclick="showCoachAddPlayer()">
-                + Add Player
-            </button>
+                                        <span class="toggle-knob"></span>
 
-            ${
-                active.length
-                ? `
-                    <br><br>
+                                        <span class="toggle-label">
+                                            ${
+                                                present
+                                                ? "PRESENT"
+                                                : "ABSENT"
+                                            }
+                                        </span>
+
+                                    </label>
+
+                                </div>
+
+                            `;
+
+                        }).join("")
+                    }
+
+                    <br>
 
                     <button
                         class="green-button"
+                        onclick="showCoachAddPlayer()">
+                        + Add Player
+                    </button>
+
+                    <br><br>
+
+                    <button
+                        class="primary-button"
                         onclick="saveSession()">
-                        Save Session
+                        Submit Today's Register
                     </button>
                 `
-                : ""
             }
 
         </div>
@@ -1245,9 +1613,26 @@ function showRegister() {
 
 }
 
+function openTodayRegister() {
+
+    createTodayRegister(currentAgeGroup);
+
+    showRegister();
+
+}
+
 function setAttendance(playerID, present) {
 
-    todayAttendance[playerID] = present;
+    const register =
+        getTodayRegister(currentAgeGroup);
+
+    if (!register || register.submitted) {
+        return;
+    }
+
+    register.attendance[playerID] = present;
+
+    saveData();
 
     showRegister();
 
@@ -1255,44 +1640,47 @@ function setAttendance(playerID, present) {
 
 function saveSession() {
 
-    const active =
-        getActivePlayers(currentAgeGroup);
+    const register =
+        getTodayRegister(currentAgeGroup);
 
-    const present =
-        active.filter(player =>
-            todayAttendance[player.id] === true
-        ).length;
-
-    if (!sessions[currentAgeGroup]) {
-        sessions[currentAgeGroup] = [];
+    if (!register || register.submitted) {
+        return;
     }
 
-    const now = new Date();
+    const confirmed =
+        confirm(
+            "Submit today's register?\n\n"
+            + "Once submitted, the register will be closed "
+            + "and can no longer be edited."
+        );
 
-    const date =
-        String(now.getDate()).padStart(2, "0")
-        + "/"
-        + String(now.getMonth() + 1).padStart(2, "0")
-        + "/"
-        + now.getFullYear();
+    if (!confirmed) {
+        return;
+    }
 
-    sessions[currentAgeGroup].push({
-
-        date: date,
-        present: present,
-        total: active.length
-
-    });
-
-    alert(
-        "Session saved.\n\n"
-        + present
-        + " of "
-        + active.length
-        + " players present."
+    submitDailyRegister(
+        getTodayKey(),
+        currentAgeGroup,
+        false
     );
 
-    todayAttendance = {};
+    const present =
+        sessions[currentAgeGroup]
+        [sessions[currentAgeGroup].length - 1]
+        .present;
+
+    const total =
+        sessions[currentAgeGroup]
+        [sessions[currentAgeGroup].length - 1]
+        .total;
+
+    alert(
+        "Today's register has been submitted.\n\n"
+        + present
+        + " of "
+        + total
+        + " players present."
+    );
 
     showCoachDashboard();
 
@@ -1342,22 +1730,89 @@ function showRoster() {
                                 ${escapeHTML(player.name)}
                             </div>
 
+                            <div class="player-small">
+                                ${
+                                    player.gms
+                                    ? "Senior GMS confirmed"
+                                    : player.coachGmsSuggestion
+                                        ? "Coach suggests registered"
+                                        : "No coach GMS suggestion"
+                                }
+                            </div>
+
                         </div>
 
-                        <span>
-                            ${player.gms
-                            ? "GMS ✓"
-                            : "GMS outstanding"}
-                        </span>
+                        <div class="row-actions">
+
+                            <label
+                                class="toggle gms-toggle ${
+                                    player.coachGmsSuggestion
+                                    ? "confirmed"
+                                    : "not-confirmed"
+                                }">
+
+                                <input
+                                    type="checkbox"
+                                    ${
+                                        player.coachGmsSuggestion
+                                        ? "checked"
+                                        : ""
+                                    }
+                                    onchange="
+                                        setCoachGMSSuggestion(
+                                            ${player.id},
+                                            this.checked
+                                        )
+                                    ">
+
+                                <span class="toggle-knob"></span>
+
+                                <span class="toggle-label"></span>
+
+                            </label>
+
+                        </div>
 
                     </div>
 
                 `).join("")
             }
 
+            <div class="info-box">
+                Green means you are suggesting that you believe
+                the player is registered. Senior Members make the
+                final GMS confirmation.
+            </div>
+
         </div>
 
     `);
+
+}
+
+function setCoachGMSSuggestion(playerID, suggested) {
+
+    for (const ageGroup of ageGroups) {
+
+        const player =
+            players[ageGroup]
+                .find(player =>
+                    player.id === playerID
+                );
+
+        if (player) {
+
+            player.coachGmsSuggestion = suggested;
+
+            break;
+
+        }
+
+    }
+
+    saveData();
+
+    showRoster();
 
 }
 
@@ -1380,7 +1835,7 @@ function showCoachAddPlayer() {
             <h2>Add Player</h2>
 
             <div class="subtitle">
-                Add a player who is attending today.
+                Add a player to the squad and today's register.
             </div>
 
             <div class="form-group">
@@ -1427,6 +1882,14 @@ function coachAddPlayer() {
         return;
     }
 
+    const register =
+        getTodayRegister(currentAgeGroup);
+
+    if (!register || register.submitted) {
+        alert("Today's register is not open.");
+        return;
+    }
+
     const newPlayer =
         addPlayerToAgeGroup(
             currentAgeGroup,
@@ -1434,8 +1897,10 @@ function coachAddPlayer() {
             false
         );
 
-    /* New player is automatically present */
-    todayAttendance[newPlayer.id] = true;
+    /* New player is automatically present in today's open register. */
+    register.attendance[newPlayer.id] = true;
+
+    saveData();
 
     showRegister();
 
@@ -1892,6 +2357,7 @@ function renderPlayerManagementList(ageGroup) {
 
 function setGMS(playerID, confirmed) {
 
+    /* Senior-only authoritative GMS confirmation. */
     for (const ageGroup of ageGroups) {
 
         const player =
@@ -1904,10 +2370,17 @@ function setGMS(playerID, confirmed) {
 
             player.gms = confirmed;
 
+            /*
+               Senior confirmation is independent of the coach
+               suggestion. A senior can therefore override it.
+            */
+
             break;
         }
 
     }
+
+    saveData();
 
     showPlayerManagement(currentAgeGroup);
 
@@ -2141,6 +2614,7 @@ function addPlayerToAgeGroup(
         name: name,
         ageGroup: ageGroup,
         gms: gms,
+        coachGmsSuggestion: false,
         active: true
 
     };
@@ -2148,6 +2622,8 @@ function addPlayerToAgeGroup(
     players[ageGroup].push(
         newPlayer
     );
+
+    saveData();
 
     return newPlayer;
 
@@ -2367,7 +2843,7 @@ function performNewSeason(nextSeason) {
     currentSeason =
         nextSeason;
 
-    todayAttendance = {};
+    saveData();
 
     alert(
         "New season "
@@ -2582,6 +3058,8 @@ function changePIN(type) {
 
     }
 
+    saveData();
+
     alert(
         type === "coach"
         ? "Coach PIN changed."
@@ -2596,7 +3074,19 @@ function changePIN(type) {
    START
    ========================================================= */
 
+loadSavedData();
+closeExpiredRegisters();
 showWelcome();
+
+/*
+   If the app is left open across midnight, check periodically.
+   If it is closed at midnight, the same check happens on next load.
+*/
+setInterval(() => {
+
+    closeExpiredRegisters();
+
+}, 60000);
 
 </script>
 

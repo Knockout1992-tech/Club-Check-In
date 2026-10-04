@@ -283,7 +283,6 @@ h2 {
     box-shadow: none;
 }
 
-/* GMS outstanding age group */
 .age-button.gms-needs-confirmation {
     background: #d6a900;
     color: #111;
@@ -363,6 +362,7 @@ h2 {
 
 .player-info {
     flex: 1;
+    min-width: 0;
 }
 
 .player-small {
@@ -375,6 +375,12 @@ h2 {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* Keep management rows compact */
+.player-management-row {
+    flex-direction: row !important;
+    align-items: center !important;
 }
 
 /* =========================
@@ -452,6 +458,31 @@ h2 {
 /* GMS is colour-only */
 .toggle.gms-toggle .toggle-label {
     display: none;
+}
+
+/* Compact GMS toggle */
+.toggle.gms-toggle {
+    width: 54px;
+    height: 30px;
+}
+
+.toggle.gms-toggle .toggle-knob {
+    width: 22px;
+    height: 22px;
+    top: 4px;
+}
+
+.toggle.gms-toggle.confirmed .toggle-knob {
+    left: 28px;
+}
+
+.toggle.gms-toggle.not-confirmed .toggle-knob {
+    left: 4px;
+}
+
+.toggle.gms-toggle.locked {
+    opacity: 0.55;
+    cursor: default;
 }
 
 /* =========================
@@ -651,13 +682,18 @@ h2 {
     }
 
     .player-row {
-        align-items: flex-start;
-        flex-direction: column;
+        align-items: center;
+        flex-direction: row;
     }
 
     .row-actions {
-        width: 100%;
-        justify-content: space-between;
+        width: auto;
+        justify-content: flex-end;
+    }
+
+    .player-management-row {
+        flex-direction: row !important;
+        align-items: center !important;
     }
 }
 
@@ -724,15 +760,10 @@ let currentSeason = "2026/27";
 let currentRole = null;
 let currentAgeGroup = null;
 
-/*
+/* =========================================================
    DAILY REGISTERS
+   ========================================================= */
 
-   A register remains reopenable during the same day,
-   even after submission.
-
-   Once the date changes, closeExpiredRegisters()
-   permanently closes the previous day's register.
-*/
 let dailyRegisters = {};
 
 /* =========================================================
@@ -741,9 +772,43 @@ let dailyRegisters = {};
 
 let players = {
 
-    U6: [],
+    U6: [
+        {
+            id: 101,
+            name: "Alfie Carter",
+            ageGroup: "U6",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 102,
+            name: "Charlie Brooks",
+            ageGroup: "U6",
+            gms: false,
+            coachGmsSuggestion: true,
+            active: true
+        }
+    ],
 
-    U7: [],
+    U7: [
+        {
+            id: 201,
+            name: "George Miller",
+            ageGroup: "U7",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 202,
+            name: "Harry Wilson",
+            ageGroup: "U7",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true
+        }
+    ],
 
     U8: [
         {
@@ -775,21 +840,217 @@ let players = {
             name: "Player Four",
             ageGroup: "U8",
             gms: false,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 5,
+            name: "Ben Harris",
+            ageGroup: "U8",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 6,
+            name: "Ethan Wright",
+            ageGroup: "U8",
+            gms: false,
             coachGmsSuggestion: false,
             active: true
         }
     ],
 
-    U9: [],
-    U10: [],
-    U11: [],
-    U12: [],
-    U13: [],
-    U14: [],
-    U15: [],
-    U16: [],
-    U17: [],
-    U18: []
+    U9: [
+        {
+            id: 301,
+            name: "Jack Taylor",
+            ageGroup: "U9",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 302,
+            name: "Leo Martin",
+            ageGroup: "U9",
+            gms: false,
+            coachGmsSuggestion: true,
+            active: true
+        }
+    ],
+
+    U10: [
+        {
+            id: 401,
+            name: "Oliver Smith",
+            ageGroup: "U10",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 402,
+            name: "Noah Jones",
+            ageGroup: "U10",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true
+        }
+    ],
+
+    U11: [
+        {
+            id: 501,
+            name: "Thomas Brown",
+            ageGroup: "U11",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 502,
+            name: "Oscar Davies",
+            ageGroup: "U11",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        }
+    ],
+
+    U12: [
+        {
+            id: 601,
+            name: "James Evans",
+            ageGroup: "U12",
+            gms: false,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 602,
+            name: "William Thomas",
+            ageGroup: "U12",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true
+        }
+    ],
+
+    U13: [
+        {
+            id: 701,
+            name: "Charlie Roberts",
+            ageGroup: "U13",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 702,
+            name: "Jacob Walker",
+            ageGroup: "U13",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true
+        }
+    ],
+
+    U14: [
+        {
+            id: 801,
+            name: "Lucas Robinson",
+            ageGroup: "U14",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 802,
+            name: "Henry Clark",
+            ageGroup: "U14",
+            gms: false,
+            coachGmsSuggestion: true,
+            active: true
+        }
+    ],
+
+    U15: [
+        {
+            id: 901,
+            name: "Freddie Lewis",
+            ageGroup: "U15",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 902,
+            name: "Archie Lee",
+            ageGroup: "U15",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        }
+    ],
+
+    U16: [
+        {
+            id: 1001,
+            name: "Finley Walker",
+            ageGroup: "U16",
+            gms: false,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 1002,
+            name: "Theo Hall",
+            ageGroup: "U16",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true
+        }
+    ],
+
+    U17: [
+        {
+            id: 1101,
+            name: "Charlie Allen",
+            ageGroup: "U17",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 1102,
+            name: "Alfie Young",
+            ageGroup: "U17",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true
+        }
+    ],
+
+    U18: [
+        {
+            id: 1201,
+            name: "Sam King",
+            ageGroup: "U18",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true
+        },
+        {
+            id: 1202,
+            name: "Max Wright",
+            ageGroup: "U18",
+            gms: false,
+            coachGmsSuggestion: true,
+            active: true
+        }
+    ]
+
 };
 
 /* =========================================================
@@ -798,28 +1059,122 @@ let players = {
 
 let sessions = {
 
-    U6: [],
-    U7: [],
+    U6: [
+        {
+            date: "21/09/2026",
+            dateKey: "2026-09-21",
+            present: 2,
+            total: 2
+        }
+    ],
+
+    U7: [
+        {
+            date: "22/09/2026",
+            dateKey: "2026-09-22",
+            present: 1,
+            total: 2
+        }
+    ],
 
     U8: [
         {
             date: "28/09/2026",
             dateKey: "2026-09-28",
             present: 3,
-            total: 4
+            total: 6
         }
     ],
 
-    U9: [],
-    U10: [],
-    U11: [],
-    U12: [],
-    U13: [],
-    U14: [],
-    U15: [],
-    U16: [],
-    U17: [],
-    U18: []
+    U9: [
+        {
+            date: "27/09/2026",
+            dateKey: "2026-09-27",
+            present: 2,
+            total: 2
+        }
+    ],
+
+    U10: [
+        {
+            date: "26/09/2026",
+            dateKey: "2026-09-26",
+            present: 1,
+            total: 2
+        }
+    ],
+
+    U11: [
+        {
+            date: "25/09/2026",
+            dateKey: "2026-09-25",
+            present: 2,
+            total: 2
+        }
+    ],
+
+    U12: [
+        {
+            date: "24/09/2026",
+            dateKey: "2026-09-24",
+            present: 1,
+            total: 2
+        }
+    ],
+
+    U13: [
+        {
+            date: "23/09/2026",
+            dateKey: "2026-09-23",
+            present: 2,
+            total: 2
+        }
+    ],
+
+    U14: [
+        {
+            date: "20/09/2026",
+            dateKey: "2026-09-20",
+            present: 1,
+            total: 2
+        }
+    ],
+
+    U15: [
+        {
+            date: "19/09/2026",
+            dateKey: "2026-09-19",
+            present: 2,
+            total: 2
+        }
+    ],
+
+    U16: [
+        {
+            date: "18/09/2026",
+            dateKey: "2026-09-18",
+            present: 1,
+            total: 2
+        }
+    ],
+
+    U17: [
+        {
+            date: "17/09/2026",
+            dateKey: "2026-09-17",
+            present: 2,
+            total: 2
+        }
+    ],
+
+    U18: [
+        {
+            date: "16/09/2026",
+            dateKey: "2026-09-16",
+            present: 1,
+            total: 2
+        }
+    ]
 
 };
 
@@ -883,12 +1238,6 @@ function loadSavedData() {
             seniorPIN = saved.seniorPIN;
         }
 
-        /*
-           Make sure every current age group exists.
-
-           This also fixes older saved data which was created
-           before U6 was added.
-        */
         ageGroups.forEach(ageGroup => {
 
             if (!players[ageGroup]) {
@@ -901,9 +1250,6 @@ function loadSavedData() {
 
         });
 
-        /*
-           Older player records did not have this field.
-        */
         ageGroups.forEach(ageGroup => {
 
             players[ageGroup].forEach(player => {
@@ -1000,10 +1346,6 @@ function submitDailyRegister(
         return;
     }
 
-    /*
-       Do not submit an already-submitted register unless
-       we are explicitly reopening it first.
-    */
     if (
         register.submitted &&
         !automatic
@@ -1026,11 +1368,6 @@ function submitDailyRegister(
         sessions[ageGroup] = [];
     }
 
-    /*
-       Update the existing session for this date if one exists.
-       This prevents duplicate sessions when a coach submits,
-       reopens and submits again.
-    */
     let existingSession =
         sessions[ageGroup].find(session =>
             session.dateKey === dateKey
@@ -1129,9 +1466,6 @@ function createTodayRegister(ageGroup) {
 
 }
 
-/*
-   Reopen a submitted register during the current day.
-*/
 function reopenTodayRegister() {
 
     const register =
@@ -1141,9 +1475,6 @@ function reopenTodayRegister() {
         return;
     }
 
-    /*
-       Safety check - today's register only.
-    */
     if (
         register.closedAutomatically ||
         register.submitted === false
@@ -1999,75 +2330,109 @@ function showRoster() {
 
                 `
 
-                : active.map(player => `
+                : active.map(player => {
 
-                    <div class="player-row">
+                    const seniorConfirmed =
+                        player.gms === true;
 
-                        <div class="player-info">
+                    const coachSuggested =
+                        player.coachGmsSuggestion === true;
 
-                            <div class="player-name">
-                                ${escapeHTML(player.name)}
-                            </div>
+                    const toggleOn =
+                        seniorConfirmed ||
+                        coachSuggested;
 
-                            <div class="player-small">
+                    return `
 
-                                ${
-                                    player.gms
-                                    ? "Senior GMS confirmed"
-                                    : player.coachGmsSuggestion
-                                        ? "Coach suggests registered"
-                                        : "No coach GMS suggestion"
-                                }
+                        <div class="player-row player-management-row">
 
-                            </div>
+                            <div class="player-info">
 
-                        </div>
+                                <div class="player-name">
+                                    ${escapeHTML(player.name)}
+                                </div>
 
-                        <div class="row-actions">
+                                <div class="player-small">
 
-                            <label
-                                class="toggle gms-toggle ${
-                                    player.coachGmsSuggestion
-                                    ? "confirmed"
-                                    : "not-confirmed"
-                                }">
-
-                                <input
-                                    type="checkbox"
                                     ${
-                                        player.coachGmsSuggestion
-                                        ? "checked"
-                                        : ""
+                                        seniorConfirmed
+                                        ? "Senior GMS confirmed"
+                                        : coachSuggested
+                                            ? "Coach suggests registered"
+                                            : "GMS not confirmed"
                                     }
-                                    onchange="
-                                        setCoachGMSSuggestion(
-                                            ${player.id},
-                                            this.checked
-                                        )
+
+                                </div>
+
+                            </div>
+
+                            <div class="row-actions">
+
+                                <label
+                                    class="
+                                        toggle
+                                        gms-toggle
+                                        ${
+                                            toggleOn
+                                            ? "confirmed"
+                                            : "not-confirmed"
+                                        }
+                                        ${
+                                            seniorConfirmed
+                                            ? "locked"
+                                            : ""
+                                        }
                                     ">
 
-                                <span
-                                    class="toggle-knob">
-                                </span>
+                                    <input
+                                        type="checkbox"
+                                        ${
+                                            toggleOn
+                                            ? "checked"
+                                            : ""
+                                        }
+                                        ${
+                                            seniorConfirmed
+                                            ? "disabled"
+                                            : `
+                                                onchange="
+                                                    setCoachGMSSuggestion(
+                                                        ${player.id},
+                                                        this.checked
+                                                    )
+                                                "
+                                            `
+                                        }>
 
-                                <span
-                                    class="toggle-label">
-                                </span>
+                                    <span
+                                        class="toggle-knob">
+                                    </span>
 
-                            </label>
+                                    <span
+                                        class="toggle-label">
+                                    </span>
+
+                                </label>
+
+                            </div>
 
                         </div>
 
-                    </div>
+                    `;
 
-                `).join("")
+                }).join("")
             }
 
             <div class="info-box">
 
                 Green means you are suggesting that you believe
-                the player is registered. Senior Members make the
-                final GMS confirmation.
+                the player is registered.
+
+                <br><br>
+
+                Once a Senior Member confirms GMS, the status is
+                locked for coaches and the Senior confirmation
+                becomes authoritative.
 
             </div>
 
@@ -2096,18 +2461,26 @@ function setCoachGMSSuggestion(
 
         if (player) {
 
+            /*
+               Senior confirmation is authoritative.
+               Coaches cannot change a confirmed status.
+            */
+            if (player.gms === true) {
+                return;
+            }
+
             player.coachGmsSuggestion =
                 suggested;
 
-            break;
+            saveData();
+
+            showRoster();
+
+            return;
 
         }
 
     }
-
-    saveData();
-
-    showRoster();
 
 }
 
@@ -2638,7 +3011,10 @@ function renderPlayerManagementList(
 
                 : active.map(player => `
 
-                    <div class="player-row">
+                    <div class="
+                        player-row
+                        player-management-row
+                    ">
 
                         <div class="player-info">
 
@@ -2651,7 +3027,15 @@ function renderPlayerManagementList(
                             </div>
 
                             <div class="player-small">
-                                GMS status
+
+                                ${
+                                    player.gms
+                                    ? "Senior GMS confirmed"
+                                    : player.coachGmsSuggestion
+                                        ? "Coach has suggested GMS"
+                                        : "GMS outstanding"
+                                }
+
                             </div>
 
                         </div>
@@ -2757,16 +3141,29 @@ function setGMS(
             player.gms =
                 confirmed;
 
-            break;
+            /*
+               Senior confirmation is authoritative.
+               Once confirmed, the coach suggestion is
+               no longer needed.
+            */
+            if (confirmed) {
+
+                player.coachGmsSuggestion =
+                    false;
+
+            }
+
+            saveData();
+
+            showPlayerManagement(
+                currentAgeGroup
+            );
+
+            return;
+
         }
 
     }
-
-    saveData();
-
-    showPlayerManagement(
-        currentAgeGroup
-    );
 
 }
 
@@ -3562,12 +3959,6 @@ closeExpiredRegisters();
 
 showWelcome();
 
-/*
-   If the app is left open across midnight, check periodically.
-
-   If it is closed at midnight, the same check happens
-   on the next load.
-*/
 setInterval(() => {
 
     closeExpiredRegisters();

@@ -382,6 +382,12 @@ h2 {
     gap: 8px;
 }
 
+.gms-count {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
 .player-management-row {
     flex-direction: row !important;
     align-items: center !important;
@@ -4742,20 +4748,11 @@ function showPlayerManagement(
                                     )
                                 ">
 
-                                ${age}
-
-                                ${
-                                    gmsCount > 0
-                                    ? `
-                                        <span
-                                            class="gms-count">
-
-                                            ${gmsCount}
-
-                                        </span>
-                                    `
-                                    : ""
-                                }
+                                ${age}${
+    gmsCount > 0
+    ? ` <span class="gms-count">(${gmsCount})</span>`
+    : ""
+}
 
                             </button>
 

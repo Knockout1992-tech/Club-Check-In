@@ -698,6 +698,8 @@ let dailyRegisters = {};
 
 let players = {
 
+    U6: [],
+
     U7: [],
 
     U8: [
@@ -753,13 +755,27 @@ let players = {
 
 let sessions = {
 
+    U6: [],
+    U7: [],
+
     U8: [
         {
             date: "28/09/2026",
             present: 3,
             total: 4
         }
-    ]
+    ],
+
+    U9: [],
+    U10: [],
+    U11: [],
+    U12: [],
+    U13: [],
+    U14: [],
+    U15: [],
+    U16: [],
+    U17: [],
+    U18: []
 
 };
 
@@ -822,6 +838,23 @@ function loadSavedData() {
         if (saved.seniorPIN) {
             seniorPIN = saved.seniorPIN;
         }
+
+        /*
+           Ensure every configured age group exists.
+           This is important for older saved data that was
+           created before U6 was added.
+        */
+        ageGroups.forEach(ageGroup => {
+
+            if (!players[ageGroup]) {
+                players[ageGroup] = [];
+            }
+
+            if (!sessions[ageGroup]) {
+                sessions[ageGroup] = [];
+            }
+
+        });
 
         /* Older player records did not have this field. */
         ageGroups.forEach(ageGroup => {
@@ -2408,6 +2441,7 @@ function removePlayer(playerID) {
             playerFound = player;
 
             break;
+
         }
 
     }

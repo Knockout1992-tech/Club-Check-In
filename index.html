@@ -4717,6 +4717,14 @@ function showPlayerManagement(
                                 age
                             );
 
+                        const gmsCount =
+                            getActivePlayers(
+                                age
+                            ).filter(
+                                player =>
+                                    player.gms !== true
+                            ).length;
+
                         return `
 
                             <button
@@ -4735,6 +4743,19 @@ function showPlayerManagement(
                                 ">
 
                                 ${age}
+
+                                ${
+                                    gmsCount > 0
+                                    ? `
+                                        <span
+                                            class="gms-count">
+
+                                            ${gmsCount}
+
+                                        </span>
+                                    `
+                                    : ""
+                                }
 
                             </button>
 

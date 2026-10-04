@@ -4820,6 +4820,22 @@ function renderPlayerManagementList(
 
                             </div>
 
+                            <div
+                                class="player-small">
+
+                                Last attended:
+                                ${
+                                    player.lastAttendanceDate
+                                    ? new Date(
+                                        player.lastAttendanceDate
+                                    ).toLocaleDateString(
+                                        "en-GB"
+                                    )
+                                    : "No attendance recorded"
+                                }
+
+                            </div>
+
                         </div>
 
                         <div

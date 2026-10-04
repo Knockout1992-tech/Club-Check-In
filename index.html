@@ -1,105 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Club Check-In</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Club Check-In</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
+* {
+    box-sizing: border-box;
+}
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
-        }
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #000;
+    color: #000;
+}
 
-        .app {
-            min-height: 100vh;
-            max-width: 500px;
-            margin: auto;
-            background: #fff;
-            color: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 35px 25px;
-            text-align: center;
-        }
+.app {
+    width: 100%;
+    max-width: 600px;
+    min-height: 100vh;
+    margin: auto;
+    background: #fff;
+}
 
-        .crest {
-            width: 170px;
-            height: 170px;
-            margin-bottom: 25px;
-        }
+.screen {
+    display: none;
+    min-height: 100vh;
+    padding: 25px;
+}
 
-        .crest img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
+.screen.active {
+    display: block;
+}
 
-        h1 {
-            margin: 0;
-            font-size: 38px;
-            font-weight: 900;
-            letter-spacing: 2px;
-        }
+/* ---------- GENERAL ---------- */
 
-        .club-name {
-            margin-top: 8px;
-            margin-bottom: 45px;
-            font-size: 17px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #000;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
 
-        .button {
-            width: 100%;
-            max-width: 330px;
-            padding: 18px;
-            margin: 7px 0;
-            border: 2px solid #000;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+.header-title {
+    font-size: 22px;
+    font-weight: 900;
+}
 
-        .coach {
-            background: #000;
-            color: #fff;
-        }
+.logo-small {
+    width: 55px;
+    height: 55px;
+}
 
-        .senior {
-            background: #fff;
-            color: #000;
-        }
+.logo-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
 
-        .button:hover {
-            opacity: 0.8;
-        }
+h1 {
+    font-size: 36px;
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+}
 
-        .footer {
-            margin-top: 40px;
-            font-size: 11px;
-            color: #777;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-    </style>
+h2 {
+    font-size: 26px;
+    margin: 0 0 20px;
+}
+
+h3 {
+    margin-top: 0;
+}
+
+p {
+    line-height: 1.4;
+}
+
+button {
+    font-family: inherit;
+}
+
+.button {
+    width: 100%;
+    padding: 16px;
+    margin: 6px 0;
+    border-radius: 8px;
+    border: 2px solid #000;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.black {
+    background: #000;
+    color: #fff;
+}
+
+.white {
+    background: #fff;
+    color: #000;
+}
+
+.button:hover {
+    opacity: 0.8;
+}
+
+.back-button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.card {
+    border: 2px solid #000;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 15px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stat {
+    border: 2px solid #000;
+    border-radius: 8px;
+    padding: 15px 5px;
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 27px;
+    font-weight: 900;
+}
+
+.stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #000;
+    border-radius: 7px;
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+.message {
+    min-height: 25px;
+    margin: 10px 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+.small-text {
+    font-size: 13px;
+    color: #666;
+}
+
+.footer {
+    margin-top: 35px;
+    text-align: center;
+    color: #777;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ---------- WELCOME ---------- */
+
+#welcomeScreen {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+#welcomeScreen.active {
+    display: flex;
+}
+
+.welcome-content {
+    width: 100%;
+}
+
+.main-logo {
+    width: 190px;
+    height: 190px;
+    margin: 0 auto 25px;
+}
+
+.main-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.club-name {
+    font-size: 17px;
+    font-weight: bold;
+    margin-bottom: 45px;
+}
+
+/* ---------- PIN ---------- */
+
+.pin-screen {
+    text-align: center;
+    padding-top: 80px;
+}
+
+.pin-logo {
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 25px;
+}
+
+.pin-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.pin-input {
+    width: 220px;
+    text-align: center;
+    font-size: 30px;
+    letter-spacing: 8px;
+}
+
+/* ---------- AGE GROUP ---------- */
+
+.age-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.age-button {
+    padding: 22px 5px;
+    border: 2px solid #000;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.age-button:hover {
+    background: #000;
+    color: #fff;
+}
+
+/* ---------- PLAYER LIST ---------- */
+
+.player-row {
+    border: 2px solid #000;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.player-name {
+    font-weight: bold;
+    flex: 1;
+}
+
+.attendance-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.attendance-buttons button {
+    border: 2px solid #000;
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.present {
+    background: #000;
+    color: #fff;
+}
+
+.absent {
+    background: #fff;
+    color: #000;
+}
+
+.present.selected {
+    background: #000;
+    color: #fff;
+}
+
+.absent.selected {
+    background: #ddd;
+}
+
+/* ---------- GMS ---------- */
+
+.gms-status {
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.gms-ok {
+    background: #000;
+    color: #fff;
+}
+
+.gms-no {
+    background: #ddd;
+    color: #000;
+}
+
+.gms-button {
+    padding: 8px 10px;
+    border: 2px solid #000;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* ---------- TABLE ---------- */
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.danger {
+    border-color: #000;
+}
+
+/* ---------- DESKTOP ---------- */
+
+@media (min-width: 700px) {
+    .app {
+        min-height: 100vh;
+        box-shadow: 0 0 30px rgba(0,0,0,0.4);
+    }
+
+    .screen {
+        padding: 35px;
+    }
+}
+</style>
 </head>
 
 <body>
 
-    <div class="app">
+<div class="app">
 
-        <div class="crest">
+<!-- ===================================================== -->
+<!-- WELCOME -->
+<!-- ===================================================== -->
+
+<div id="welcomeScreen" class="screen active">
+
+    <div class="welcome-content">
+
+        <div class="main-logo">
             <img src="RHRFC.jpg" alt="Rushden & Higham RFC">
         </div>
 
@@ -109,11 +400,11 @@
             Rushden &amp; Higham RFC
         </div>
 
-        <button class="button coach">
+        <button class="button black" onclick="showScreen('coachPinScreen')">
             Coach
         </button>
 
-        <button class="button senior">
+        <button class="button white" onclick="showScreen('seniorPinScreen')">
             Senior Member
         </button>
 
@@ -122,6 +413,1371 @@
         </div>
 
     </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- COACH PIN -->
+<!-- ===================================================== -->
+
+<div id="coachPinScreen" class="screen pin-screen">
+
+    <div class="pin-logo">
+        <img src="RHRFC.jpg" alt="RHRFC">
+    </div>
+
+    <h2>Coach Access</h2>
+
+    <p>Enter the Coach PIN</p>
+
+    <input
+        id="coachPin"
+        class="pin-input"
+        type="password"
+        inputmode="numeric"
+        maxlength="4"
+    >
+
+    <div id="coachPinMessage" class="message"></div>
+
+    <button class="button black" onclick="checkCoachPin()">
+        Continue
+    </button>
+
+    <button class="back-button" onclick="showScreen('welcomeScreen')">
+        Back
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- SENIOR PIN -->
+<!-- ===================================================== -->
+
+<div id="seniorPinScreen" class="screen pin-screen">
+
+    <div class="pin-logo">
+        <img src="RHRFC.jpg" alt="RHRFC">
+    </div>
+
+    <h2>Senior Member Access</h2>
+
+    <p>Enter the Senior PIN</p>
+
+    <input
+        id="seniorPin"
+        class="pin-input"
+        type="password"
+        inputmode="numeric"
+        maxlength="4"
+    >
+
+    <div id="seniorPinMessage" class="message"></div>
+
+    <button class="button black" onclick="checkSeniorPin()">
+        Continue
+    </button>
+
+    <button class="back-button" onclick="showScreen('welcomeScreen')">
+        Back
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- COACH AGE GROUP -->
+<!-- ===================================================== -->
+
+<div id="coachAgeScreen" class="screen">
+
+    <div class="header">
+
+        <div class="header-title">
+            Select Age Group
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <p>Select the age group you want to manage.</p>
+
+    <div id="coachAgeGrid" class="age-grid"></div>
+
+    <button class="back-button" onclick="showScreen('welcomeScreen')">
+        Log Out
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- COACH DASHBOARD -->
+<!-- ===================================================== -->
+
+<div id="coachDashboardScreen" class="screen">
+
+    <div class="header">
+
+        <div>
+            <div class="header-title">Coach Dashboard</div>
+            <div id="coachAgeTitle" class="small-text"></div>
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div class="stat-grid">
+
+        <div class="stat">
+            <span id="playerCount" class="stat-number">0</span>
+            <span class="stat-label">Players</span>
+        </div>
+
+        <div class="stat">
+            <span id="sessionCount" class="stat-number">0</span>
+            <span class="stat-label">Sessions</span>
+        </div>
+
+        <div class="stat">
+            <span id="gmsCount" class="stat-number">0</span>
+            <span class="stat-label">GMS</span>
+        </div>
+
+    </div>
+
+    <button class="button black" onclick="openRegister()">
+        Take Today's Register
+    </button>
+
+    <button class="button white" onclick="openRoster()">
+        View Roster
+    </button>
+
+    <button class="button white" onclick="openHistory()">
+        Session History
+    </button>
+
+    <button class="button white" onclick="openAddPlayer()">
+        Add Player
+    </button>
+
+    <button class="back-button" onclick="showScreen('coachAgeScreen')">
+        Change Age Group
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- REGISTER -->
+<!-- ===================================================== -->
+
+<div id="registerScreen" class="screen">
+
+    <div class="header">
+
+        <div>
+            <div class="header-title">Today's Register</div>
+            <div id="registerAgeTitle" class="small-text"></div>
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div id="registerDate" class="card"></div>
+
+    <div id="registerList"></div>
+
+    <button class="button black" onclick="saveRegister()">
+        Save Register
+    </button>
+
+    <div id="registerMessage" class="message"></div>
+
+    <button class="back-button" onclick="showScreen('coachDashboardScreen')">
+        Back to Dashboard
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- ROSTER -->
+<!-- ===================================================== -->
+
+<div id="rosterScreen" class="screen">
+
+    <div class="header">
+
+        <div>
+            <div class="header-title">Roster</div>
+            <div id="rosterAgeTitle" class="small-text"></div>
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div id="rosterList"></div>
+
+    <button class="button black" onclick="openAddPlayer()">
+        Add Player
+    </button>
+
+    <button class="back-button" onclick="showScreen('coachDashboardScreen')">
+        Back to Dashboard
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- ADD PLAYER -->
+<!-- ===================================================== -->
+
+<div id="addPlayerScreen" class="screen">
+
+    <div class="header">
+
+        <div class="header-title">
+            Add Player
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <p>
+            Adding player to:
+            <strong id="addPlayerAge"></strong>
+        </p>
+
+        <input
+            id="newPlayerName"
+            type="text"
+            placeholder="Player name"
+        >
+
+        <label>
+            <strong>GMS Status</strong>
+        </label>
+
+        <select id="newPlayerGMS">
+            <option value="false">Not Confirmed</option>
+            <option value="true">Confirmed</option>
+        </select>
+
+        <button class="button black" onclick="addPlayer()">
+            Add Player
+        </button>
+
+        <div id="addPlayerMessage" class="message"></div>
+
+    </div>
+
+    <button class="back-button" onclick="showScreen('coachDashboardScreen')">
+        Cancel
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- HISTORY -->
+<!-- ===================================================== -->
+
+<div id="historyScreen" class="screen">
+
+    <div class="header">
+
+        <div>
+            <div class="header-title">Session History</div>
+            <div id="historyAgeTitle" class="small-text"></div>
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div id="historyList"></div>
+
+    <button class="back-button" onclick="showScreen('coachDashboardScreen')">
+        Back to Dashboard
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- SENIOR DASHBOARD -->
+<!-- ===================================================== -->
+
+<div id="seniorDashboardScreen" class="screen">
+
+    <div class="header">
+
+        <div class="header-title">
+            Senior Dashboard
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div class="stat-grid">
+
+        <div class="stat">
+            <span id="seniorPlayerCount" class="stat-number">0</span>
+            <span class="stat-label">Players</span>
+        </div>
+
+        <div class="stat">
+            <span id="seniorGMSCount" class="stat-number">0</span>
+            <span class="stat-label">GMS</span>
+        </div>
+
+        <div class="stat">
+            <span id="seniorAgeCount" class="stat-number">12</span>
+            <span class="stat-label">Age Groups</span>
+        </div>
+
+    </div>
+
+    <button class="button black" onclick="openSeniorAgeGroups()">
+        View All Age Groups
+    </button>
+
+    <button class="button white" onclick="openGMS()">
+        GMS Verification
+    </button>
+
+    <button class="button white" onclick="openSeniorPlayers()">
+        Player Management
+    </button>
+
+    <button class="button white" onclick="openChangePIN()">
+        Change Senior PIN
+    </button>
+
+    <button class="back-button" onclick="showScreen('welcomeScreen')">
+        Log Out
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- SENIOR AGE GROUPS -->
+<!-- ===================================================== -->
+
+<div id="seniorAgeScreen" class="screen">
+
+    <div class="header">
+
+        <div class="header-title">
+            All Age Groups
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div id="seniorAgeGrid" class="age-grid"></div>
+
+    <button class="back-button" onclick="showScreen('seniorDashboardScreen')">
+        Back to Dashboard
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- SENIOR AGE GROUP DETAIL -->
+<!-- ===================================================== -->
+
+<div id="seniorAgeDetailScreen" class="screen">
+
+    <div class="header">
+
+        <div>
+            <div class="header-title" id="seniorAgeDetailTitle"></div>
+            <div class="small-text">Player Overview</div>
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div id="seniorAgeDetailList"></div>
+
+    <button class="back-button" onclick="showScreen('seniorAgeScreen')">
+        Back to Age Groups
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- GMS -->
+<!-- ===================================================== -->
+
+<div id="gmsScreen" class="screen">
+
+    <div class="header">
+
+        <div class="header-title">
+            GMS Verification
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div id="gmsList"></div>
+
+    <button class="back-button" onclick="showScreen('seniorDashboardScreen')">
+        Back to Dashboard
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- SENIOR PLAYER MANAGEMENT -->
+<!-- ===================================================== -->
+
+<div id="seniorPlayersScreen" class="screen">
+
+    <div class="header">
+
+        <div class="header-title">
+            Player Management
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <p class="small-text">
+        Select an age group to manage players.
+    </p>
+
+    <div id="seniorPlayerAgeGrid" class="age-grid"></div>
+
+    <button class="back-button" onclick="showScreen('seniorDashboardScreen')">
+        Back to Dashboard
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- CHANGE PIN -->
+<!-- ===================================================== -->
+
+<div id="changePinScreen" class="screen">
+
+    <div class="header">
+
+        <div class="header-title">
+            Change Senior PIN
+        </div>
+
+        <div class="logo-small">
+            <img src="RHRFC.jpg" alt="RHRFC">
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <p>
+            Enter a new four-digit Senior PIN.
+        </p>
+
+        <input
+            id="newSeniorPin"
+            type="password"
+            inputmode="numeric"
+            maxlength="4"
+            placeholder="New PIN"
+        >
+
+        <input
+            id="confirmSeniorPin"
+            type="password"
+            inputmode="numeric"
+            maxlength="4"
+            placeholder="Confirm PIN"
+        >
+
+        <button class="button black" onclick="changeSeniorPIN()">
+            Change PIN
+        </button>
+
+        <div id="changePinMessage" class="message"></div>
+
+    </div>
+
+    <button class="back-button" onclick="showScreen('seniorDashboardScreen')">
+        Back to Dashboard
+    </button>
+
+</div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   DATA
+   ========================================================= */
+
+var ageGroups = [
+    "U7", "U8", "U9", "U10",
+    "U11", "U12", "U13", "U14",
+    "U15", "U16", "U17", "U18"
+];
+
+var coachPIN = "1234";
+var seniorPIN = "9999";
+
+var currentAgeGroup = "";
+var players = {};
+
+var sessions = {};
+
+ageGroups.forEach(function(age) {
+
+    players[age] = [];
+    sessions[age] = [];
+
+});
+
+
+/* =========================================================
+   SAMPLE PLAYERS
+   ========================================================= */
+
+players["U8"] = [
+    {
+        id: 1,
+        name: "Player One",
+        gms: true,
+        active: true
+    },
+    {
+        id: 2,
+        name: "Player Two",
+        gms: true,
+        active: true
+    },
+    {
+        id: 3,
+        name: "Player Three",
+        gms: false,
+        active: true
+    },
+    {
+        id: 4,
+        name: "Player Four",
+        gms: false,
+        active: true
+    }
+];
+
+sessions["U8"] = [
+    {
+        date: "28/09/2026",
+        present: 3,
+        total: 4
+    }
+];
+
+
+/* =========================================================
+   SCREEN CONTROL
+   ========================================================= */
+
+function showScreen(screenId) {
+
+    document.querySelectorAll(".screen").forEach(function(screen) {
+        screen.classList.remove("active");
+    });
+
+    document.getElementById(screenId).classList.add("active");
+
+    window.scrollTo(0, 0);
+}
+
+
+/* =========================================================
+   PIN LOGIN
+   ========================================================= */
+
+function checkCoachPin() {
+
+    var entered = document.getElementById("coachPin").value;
+    var message = document.getElementById("coachPinMessage");
+
+    if (entered === coachPIN) {
+
+        message.textContent = "";
+
+        document.getElementById("coachPin").value = "";
+
+        buildCoachAgeGrid();
+
+        showScreen("coachAgeScreen");
+
+    } else {
+
+        message.textContent = "Incorrect PIN";
+
+        document.getElementById("coachPin").value = "";
+
+    }
+}
+
+
+function checkSeniorPin() {
+
+    var entered = document.getElementById("seniorPin").value;
+    var message = document.getElementById("seniorPinMessage");
+
+    if (entered === seniorPIN) {
+
+        message.textContent = "";
+
+        document.getElementById("seniorPin").value = "";
+
+        updateSeniorStats();
+
+        showScreen("seniorDashboardScreen");
+
+    } else {
+
+        message.textContent = "Incorrect PIN";
+
+        document.getElementById("seniorPin").value = "";
+
+    }
+}
+
+
+/* =========================================================
+   AGE GROUP GRIDS
+   ========================================================= */
+
+function buildCoachAgeGrid() {
+
+    var grid = document.getElementById("coachAgeGrid");
+
+    grid.innerHTML = "";
+
+    ageGroups.forEach(function(age) {
+
+        var button = document.createElement("button");
+
+        button.className = "age-button";
+        button.textContent = age;
+
+        button.onclick = function() {
+            selectCoachAge(age);
+        };
+
+        grid.appendChild(button);
+
+    });
+}
+
+
+function buildSeniorAgeGrid() {
+
+    var grid = document.getElementById("seniorAgeGrid");
+
+    grid.innerHTML = "";
+
+    ageGroups.forEach(function(age) {
+
+        var button = document.createElement("button");
+
+        button.className = "age-button";
+        button.textContent = age;
+
+        button.onclick = function() {
+            openSeniorAgeDetail(age);
+        };
+
+        grid.appendChild(button);
+
+    });
+}
+
+
+function buildSeniorPlayerAgeGrid() {
+
+    var grid = document.getElementById("seniorPlayerAgeGrid");
+
+    grid.innerHTML = "";
+
+    ageGroups.forEach(function(age) {
+
+        var button = document.createElement("button");
+
+        button.className = "age-button";
+        button.textContent = age;
+
+        button.onclick = function() {
+            openSeniorAgeDetail(age);
+        };
+
+        grid.appendChild(button);
+
+    });
+}
+
+
+/* =========================================================
+   COACH AGE GROUP
+   ========================================================= */
+
+function selectCoachAge(age) {
+
+    currentAgeGroup = age;
+
+    document.getElementById("coachAgeTitle").textContent = age;
+
+    updateCoachStats();
+
+    showScreen("coachDashboardScreen");
+}
+
+
+/* =========================================================
+   COACH STATS
+   ========================================================= */
+
+function updateCoachStats() {
+
+    var list = players[currentAgeGroup] || [];
+
+    var gms = list.filter(function(player) {
+        return player.gms;
+    }).length;
+
+    document.getElementById("playerCount").textContent = list.length;
+
+    document.getElementById("sessionCount").textContent =
+        (sessions[currentAgeGroup] || []).length;
+
+    document.getElementById("gmsCount").textContent = gms;
+}
+
+
+/* =========================================================
+   REGISTER
+   ========================================================= */
+
+function openRegister() {
+
+    document.getElementById("registerAgeTitle").textContent =
+        currentAgeGroup;
+
+    document.getElementById("registerDate").innerHTML =
+        "<strong>Date:</strong> " + getTodayDate();
+
+    var list = document.getElementById("registerList");
+
+    list.innerHTML = "";
+
+    var agePlayers = players[currentAgeGroup] || [];
+
+    if (agePlayers.length === 0) {
+
+        list.innerHTML =
+            '<div class="card">No players have been added yet.</div>';
+
+        showScreen("registerScreen");
+
+        return;
+    }
+
+    agePlayers.forEach(function(player) {
+
+        var row = document.createElement("div");
+
+        row.className = "player-row";
+
+        row.innerHTML =
+            '<div class="player-name">' +
+            escapeHTML(player.name) +
+            '</div>' +
+
+            '<div class="attendance-buttons">' +
+
+            '<button id="present-' + player.id + '"' +
+            ' class="present"' +
+            ' onclick="setAttendance(' + player.id + ', true)">' +
+            'P' +
+            '</button>' +
+
+            '<button id="absent-' + player.id + '"' +
+            ' class="absent"' +
+            ' onclick="setAttendance(' + player.id + ', false)">' +
+            'A' +
+            '</button>' +
+
+            '</div>';
+
+        list.appendChild(row);
+
+    });
+
+    showScreen("registerScreen");
+}
+
+
+var todayAttendance = {};
+
+
+function setAttendance(playerId, present) {
+
+    todayAttendance[playerId] = present;
+
+    var p = document.getElementById("present-" + playerId);
+    var a = document.getElementById("absent-" + playerId);
+
+    p.classList.remove("selected");
+    a.classList.remove("selected");
+
+    if (present) {
+        p.classList.add("selected");
+    } else {
+        a.classList.add("selected");
+    }
+}
+
+
+function saveRegister() {
+
+    var agePlayers = players[currentAgeGroup] || [];
+
+    var presentCount = 0;
+
+    agePlayers.forEach(function(player) {
+
+        if (todayAttendance[player.id] === true) {
+            presentCount++;
+        }
+
+    });
+
+    sessions[currentAgeGroup].push({
+
+        date: getTodayDate(),
+
+        present: presentCount,
+
+        total: agePlayers.length
+
+    });
+
+    todayAttendance = {};
+
+    document.getElementById("registerMessage").textContent =
+        "Register saved";
+
+    updateCoachStats();
+
+}
+
+
+/* =========================================================
+   ROSTER
+   ========================================================= */
+
+function openRoster() {
+
+    document.getElementById("rosterAgeTitle").textContent =
+        currentAgeGroup;
+
+    var list = document.getElementById("rosterList");
+
+    list.innerHTML = "";
+
+    var agePlayers = players[currentAgeGroup] || [];
+
+    if (agePlayers.length === 0) {
+
+        list.innerHTML =
+            '<div class="card">No players added yet.</div>';
+
+    } else {
+
+        agePlayers.forEach(function(player) {
+
+            var row = document.createElement("div");
+
+            row.className = "player-row";
+
+            row.innerHTML =
+                '<div class="player-name">' +
+                escapeHTML(player.name) +
+                '</div>' +
+
+                '<span class="gms-status ' +
+                (player.gms ? "gms-ok" : "gms-no") +
+                '">' +
+                (player.gms ? "GMS Confirmed" : "GMS Not Confirmed") +
+                '</span>';
+
+            list.appendChild(row);
+
+        });
+
+    }
+
+    showScreen("rosterScreen");
+}
+
+
+/* =========================================================
+   ADD PLAYER
+   ========================================================= */
+
+function openAddPlayer() {
+
+    document.getElementById("addPlayerAge").textContent =
+        currentAgeGroup;
+
+    document.getElementById("newPlayerName").value = "";
+
+    document.getElementById("newPlayerGMS").value = "false";
+
+    document.getElementById("addPlayerMessage").textContent = "";
+
+    showScreen("addPlayerScreen");
+}
+
+
+function addPlayer() {
+
+    var name =
+        document.getElementById("newPlayerName").value.trim();
+
+    var gms =
+        document.getElementById("newPlayerGMS").value === "true";
+
+    var message =
+        document.getElementById("addPlayerMessage");
+
+    if (name === "") {
+
+        message.textContent = "Please enter a player name.";
+
+        return;
+    }
+
+    var newPlayer = {
+
+        id: Date.now(),
+
+        name: name,
+
+        gms: gms,
+
+        active: true
+
+    };
+
+    players[currentAgeGroup].push(newPlayer);
+
+    message.textContent = "Player added.";
+
+    updateCoachStats();
+
+    setTimeout(function() {
+
+        openRoster();
+
+    }, 700);
+}
+
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
+
+function openHistory() {
+
+    document.getElementById("historyAgeTitle").textContent =
+        currentAgeGroup;
+
+    var list = document.getElementById("historyList");
+
+    list.innerHTML = "";
+
+    var history = sessions[currentAgeGroup] || [];
+
+    if (history.length === 0) {
+
+        list.innerHTML =
+            '<div class="card">No sessions recorded yet.</div>';
+
+    } else {
+
+        history.slice().reverse().forEach(function(session) {
+
+            var card = document.createElement("div");
+
+            card.className = "card";
+
+            card.innerHTML =
+                "<strong>" +
+                session.date +
+                "</strong>" +
+
+                "<div class='info-row'>" +
+                "<span>Present</span>" +
+                "<strong>" + session.present + "</strong>" +
+                "</div>" +
+
+                "<div class='info-row'>" +
+                "<span>Total</span>" +
+                "<strong>" + session.total + "</strong>" +
+                "</div>";
+
+            list.appendChild(card);
+
+        });
+
+    }
+
+    showScreen("historyScreen");
+}
+
+
+/* =========================================================
+   SENIOR DASHBOARD
+   ========================================================= */
+
+function updateSeniorStats() {
+
+    var totalPlayers = 0;
+    var totalGMS = 0;
+
+    ageGroups.forEach(function(age) {
+
+        var list = players[age] || [];
+
+        totalPlayers += list.length;
+
+        totalGMS += list.filter(function(player) {
+            return player.gms;
+        }).length;
+
+    });
+
+    document.getElementById("seniorPlayerCount").textContent =
+        totalPlayers;
+
+    document.getElementById("seniorGMSCount").textContent =
+        totalGMS;
+
+    document.getElementById("seniorAgeCount").textContent =
+        ageGroups.length;
+}
+
+
+function openSeniorAgeGroups() {
+
+    buildSeniorAgeGrid();
+
+    showScreen("seniorAgeScreen");
+}
+
+
+/* =========================================================
+   SENIOR AGE DETAIL
+   ========================================================= */
+
+function openSeniorAgeDetail(age) {
+
+    document.getElementById("seniorAgeDetailTitle").textContent =
+        age;
+
+    var list = document.getElementById("seniorAgeDetailList");
+
+    list.innerHTML = "";
+
+    var agePlayers = players[age] || [];
+
+    if (agePlayers.length === 0) {
+
+        list.innerHTML =
+            '<div class="card">No players registered for ' +
+            age +
+            '.</div>';
+
+    } else {
+
+        agePlayers.forEach(function(player) {
+
+            var row = document.createElement("div");
+
+            row.className = "player-row";
+
+            row.innerHTML =
+                '<div class="player-name">' +
+                escapeHTML(player.name) +
+                '</div>' +
+
+                '<span class="gms-status ' +
+                (player.gms ? "gms-ok" : "gms-no") +
+                '">' +
+                (player.gms ? "GMS Confirmed" : "GMS Not Confirmed") +
+                '</span>';
+
+            list.appendChild(row);
+
+        });
+
+    }
+
+    showScreen("seniorAgeDetailScreen");
+}
+
+
+/* =========================================================
+   GMS VERIFICATION
+   ========================================================= */
+
+function openGMS() {
+
+    var list = document.getElementById("gmsList");
+
+    list.innerHTML = "";
+
+    ageGroups.forEach(function(age) {
+
+        var agePlayers = players[age] || [];
+
+        if (agePlayers.length === 0) {
+            return;
+        }
+
+        var heading = document.createElement("h3");
+
+        heading.textContent = age;
+
+        list.appendChild(heading);
+
+        agePlayers.forEach(function(player) {
+
+            var row = document.createElement("div");
+
+            row.className = "player-row";
+
+            row.innerHTML =
+                '<div class="player-name">' +
+                escapeHTML(player.name) +
+                '</div>' +
+
+                '<span id="gmsStatus-' + player.id + '"' +
+                ' class="gms-status ' +
+                (player.gms ? "gms-ok" : "gms-no") +
+                '">' +
+                (player.gms ? "Confirmed" : "Not Confirmed") +
+                '</span>' +
+
+                '<button class="gms-button"' +
+                ' onclick="toggleGMS(' + player.id + ')">' +
+                'Change' +
+                '</button>';
+
+            list.appendChild(row);
+
+        });
+
+    });
+
+    if (list.innerHTML === "") {
+
+        list.innerHTML =
+            '<div class="card">No players have been added yet.</div>';
+
+    }
+
+    showScreen("gmsScreen");
+}
+
+
+function toggleGMS(playerId) {
+
+    var foundPlayer = null;
+
+    ageGroups.forEach(function(age) {
+
+        players[age].forEach(function(player) {
+
+            if (player.id === playerId) {
+                foundPlayer = player;
+            }
+
+        });
+
+    });
+
+    if (!foundPlayer) {
+        return;
+    }
+
+    foundPlayer.gms = !foundPlayer.gms;
+
+    openGMS();
+
+    updateSeniorStats();
+}
+
+
+/* =========================================================
+   SENIOR PLAYER MANAGEMENT
+   ========================================================= */
+
+function openSeniorPlayers() {
+
+    buildSeniorPlayerAgeGrid();
+
+    showScreen("seniorPlayersScreen");
+}
+
+
+/* =========================================================
+   CHANGE SENIOR PIN
+   ========================================================= */
+
+function openChangePIN() {
+
+    document.getElementById("newSeniorPin").value = "";
+
+    document.getElementById("confirmSeniorPin").value = "";
+
+    document.getElementById("changePinMessage").textContent = "";
+
+    showScreen("changePinScreen");
+}
+
+
+function changeSeniorPIN() {
+
+    var newPIN =
+        document.getElementById("newSeniorPin").value;
+
+    var confirmPIN =
+        document.getElementById("confirmSeniorPin").value;
+
+    var message =
+        document.getElementById("changePinMessage");
+
+    if (!/^\d{4}$/.test(newPIN)) {
+
+        message.textContent =
+            "PIN must be exactly 4 numbers.";
+
+        return;
+    }
+
+    if (newPIN !== confirmPIN) {
+
+        message.textContent =
+            "PINs do not match.";
+
+        return;
+    }
+
+    seniorPIN = newPIN;
+
+    message.textContent =
+        "Senior PIN changed.";
+
+}
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function getTodayDate() {
+
+    var d = new Date();
+
+    var day =
+        String(d.getDate()).padStart(2, "0");
+
+    var month =
+        String(d.getMonth() + 1).padStart(2, "0");
+
+    var year =
+        d.getFullYear();
+
+    return day + "/" + month + "/" + year;
+}
+
+
+function escapeHTML(value) {
+
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* =========================================================
+   INITIALISE
+   ========================================================= */
+
+buildCoachAgeGrid();
+buildSeniorAgeGrid();
+buildSeniorPlayerAgeGrid();
+updateSeniorStats();
+
+</script>
 
 </body>
 </html>

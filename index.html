@@ -1151,16 +1151,6 @@ function reopenTodayRegister() {
         return;
     }
 
-    const confirmed =
-        confirm(
-            "Reopen today's register?\n\n"
-            + "This will allow you to make further attendance changes."
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
     register.submitted = false;
     register.closedAutomatically = false;
 
@@ -1256,10 +1246,6 @@ function getNextSeason(season) {
 
 }
 
-/*
-   Returns true when an age group contains at least one
-   active player whose GMS has not been confirmed.
-*/
 function ageGroupNeedsGMSConfirmation(ageGroup) {
 
     return getActivePlayers(ageGroup)
@@ -1965,48 +1951,10 @@ function saveSession() {
         return;
     }
 
-    const confirmed =
-        confirm(
-            "Submit today's register?\n\n"
-            + "You can still reopen it later today "
-            + "if another player arrives."
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
     submitDailyRegister(
         getTodayKey(),
         currentAgeGroup,
         false
-    );
-
-    const todayKey =
-        getTodayKey();
-
-    const session =
-        sessions[currentAgeGroup]
-            .find(item =>
-                item.dateKey === todayKey
-            );
-
-    const present =
-        session
-        ? session.present
-        : 0;
-
-    const total =
-        session
-        ? session.total
-        : 0;
-
-    alert(
-        "Today's register has been submitted.\n\n"
-        + present
-        + " of "
-        + total
-        + " players present."
     );
 
     showCoachDashboard();
@@ -2581,6 +2529,8 @@ function showPlayerManagement(
 
     if (selectedAge) {
         currentAgeGroup = selectedAge;
+    } else {
+        currentAgeGroup = null;
     }
 
     renderShell(`
@@ -2874,11 +2824,6 @@ function removePlayer(
 
     saveData();
 
-    alert(
-        playerFound.name
-        + " has been removed."
-    );
-
     showPlayerManagement(
         currentAgeGroup
     );
@@ -3050,13 +2995,6 @@ function seniorAddPlayer(
         ageGroup,
         name,
         gms
-    );
-
-    alert(
-        name
-        + " has been added to "
-        + ageGroup
-        + "."
     );
 
     showPlayerManagement(
@@ -3360,12 +3298,6 @@ function performNewSeason(
 
     saveData();
 
-    alert(
-        "New season "
-        + currentSeason
-        + " has started."
-    );
-
     showSeniorDashboard();
 
 }
@@ -3615,12 +3547,6 @@ function changePIN(
     }
 
     saveData();
-
-    alert(
-        type === "coach"
-        ? "Coach PIN changed."
-        : "Senior Member PIN changed."
-    );
 
     showPINManagement();
 

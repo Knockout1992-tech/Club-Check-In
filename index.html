@@ -2328,16 +2328,6 @@ function checkPIN() {
 
 function showCoachAgeGroups() {
 
-    if (
-        !selectedAgeGroups.length &&
-        currentAgeGroup
-    ) {
-
-        selectedAgeGroups =
-            [currentAgeGroup];
-
-    }
-
     renderShell(`
 
         <div class="card">
@@ -2436,6 +2426,7 @@ function showCoachAgeGroups() {
                     class="secondary-button"
                     onclick="
                         selectedAgeGroups = [];
+                        currentAgeGroup = null;
                         showCoachAgeGroups();
                     ">
 
@@ -2449,7 +2440,12 @@ function showCoachAgeGroups() {
                 class="primary-button"
                 onclick="
                     openSelectedCoachAgeGroups()
-                ">
+                "
+                ${
+                    selectedAgeGroups.length === 0
+                    ? "disabled"
+                    : ""
+                }>
 
                 Continue
 

@@ -3294,18 +3294,18 @@ function showRoster() {
 
                                                 </div>
 
-                                                <div
-                                                    class="player-small">
+                                                ${
+    !seniorConfirmed && coachSuggested
+    ? `
+        <div
+            class="player-small">
 
-                                                    ${
-                                                        seniorConfirmed
-                                                        ? "Senior GMS confirmed"
-                                                        : coachSuggested
-                                                            ? "Coach suggests registered"
-                                                            : "GMS not confirmed"
-                                                    }
+            Coach has suggested GMS
 
-                                                </div>
+        </div>
+    `
+    : ""
+}
 
                                             </div>
 

@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+
 <title>Club Check-In</title>
 
 <style>
@@ -10,209 +12,329 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     margin: 0;
+    padding: 0;
+    min-height: 100%;
     font-family: Arial, Helvetica, sans-serif;
-    background: #f2f2f2;
+    background: #f3f3f3;
     color: #111;
 }
 
-header {
+body {
+    min-height: 100vh;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+#app {
+    min-height: 100vh;
+}
+
+/* =========================
+   APP HEADER
+   ========================= */
+
+.app-header {
     background: #000;
     color: #fff;
-    padding: 14px 18px;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
 }
 
-.header-left {
+.brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
-.header-left img {
-    width: 48px;
-    height: 48px;
+.brand img {
+    width: 42px;
+    height: 42px;
     object-fit: contain;
 }
 
-.header-title {
-    font-size: 20px;
-    font-weight: bold;
+.brand-title {
+    font-size: 17px;
+    font-weight: 700;
 }
 
-.header-season {
-    font-size: 13px;
-    color: #ccc;
+.brand-season {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 2px;
 }
 
-.container {
-    max-width: 1000px;
+.header-button {
+    background: #333;
+    border: 0;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 11px;
+    font-size: 12px;
+}
+
+/* =========================
+   MAIN
+   ========================= */
+
+.page {
+    max-width: 850px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 15px;
 }
 
 .card {
     background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 7px rgba(0,0,0,.07);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     margin-top: 0;
 }
 
-button {
-    border: none;
+h2 {
+    font-size: 22px;
+    margin-bottom: 6px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 18px;
+}
+
+.back-button {
+    background: #e3e3e3;
+    border: 0;
     border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-button:active {
-    transform: scale(0.98);
-}
-
-.btn-black {
-    background: #000;
-    color: #fff;
-}
-
-.btn-grey {
-    background: #ddd;
-    color: #111;
-}
-
-.btn-green {
-    background: #198754;
-    color: #fff;
-}
-
-.btn-red {
-    background: #c82333;
-    color: #fff;
-}
-
-.btn-blue {
-    background: #0d6efd;
-    color: #fff;
-}
-
-.btn-small {
     padding: 8px 12px;
     font-size: 13px;
-}
-
-.welcome {
-    text-align: center;
-    padding: 35px 20px;
-}
-
-.welcome img {
-    width: 150px;
-    max-width: 60%;
     margin-bottom: 15px;
 }
 
-.welcome h1 {
-    font-size: 34px;
+.primary-button {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    border: 0;
+    border-radius: 11px;
+    padding: 16px;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.secondary-button {
+    background: #ddd;
+    color: #111;
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 14px;
+    font-weight: 700;
+}
+
+.green-button {
+    background: #198754;
+    color: #fff;
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 14px;
+    font-weight: 700;
+}
+
+.red-button {
+    background: #c82333;
+    color: #fff;
+    border: 0;
+    border-radius: 9px;
+    padding: 10px 13px;
+    font-weight: 700;
+}
+
+.blue-button {
+    background: #0d6efd;
+    color: #fff;
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 14px;
+    font-weight: 700;
+}
+
+.small-button {
+    padding: 8px 11px;
+    font-size: 12px;
+}
+
+/* =========================
+   WELCOME
+   ========================= */
+
+.welcome {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px 18px;
+}
+
+.welcome-card {
+    width: 100%;
+    max-width: 430px;
+    text-align: center;
+    background: #fff;
+    border-radius: 18px;
+    padding: 30px 22px;
+    box-shadow: 0 4px 15px rgba(0,0,0,.08);
+}
+
+.welcome-logo {
+    width: 135px;
+    height: 135px;
+    object-fit: contain;
+    margin-bottom: 15px;
+}
+
+.welcome-title {
+    font-size: 31px;
+    font-weight: 800;
     margin-bottom: 5px;
 }
 
-.welcome p {
-    color: #555;
+.welcome-club {
+    color: #666;
     margin-bottom: 28px;
 }
 
-.role-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    max-width: 500px;
-    margin: auto;
+.role-button {
+    width: 100%;
+    padding: 17px;
+    margin-top: 10px;
+    border: 0;
+    border-radius: 11px;
+    background: #000;
+    color: #fff;
+    font-weight: 700;
+    font-size: 17px;
 }
 
-.role-buttons button {
-    padding: 20px;
-    font-size: 18px;
-}
+/* =========================
+   PIN
+   ========================= */
 
-.pin-box {
+.pin-card {
     max-width: 420px;
-    margin: 40px auto;
+    margin: 45px auto;
     text-align: center;
 }
 
 .pin-input {
     width: 100%;
     padding: 15px;
-    font-size: 24px;
     text-align: center;
-    letter-spacing: 8px;
+    font-size: 25px;
+    letter-spacing: 7px;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 10px;
     margin: 15px 0;
 }
 
 .error {
-    color: #c82333;
-    font-weight: bold;
     min-height: 22px;
+    color: #c82333;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
+
+/* =========================
+   AGE GROUPS
+   ========================= */
 
 .age-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
 }
 
-.age-grid button {
-    padding: 20px 10px;
+.age-button {
+    background: #000;
+    color: #fff;
+    border: 0;
+    border-radius: 11px;
+    padding: 19px 8px;
     font-size: 18px;
+    font-weight: 700;
 }
 
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-}
-
-.dashboard-grid button {
-    min-height: 85px;
-    font-size: 16px;
-}
+/* =========================
+   DASHBOARD
+   ========================= */
 
 .stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 18px;
+    gap: 9px;
+    margin: 15px 0;
 }
 
 .stat {
-    background: #f7f7f7;
+    background: #f1f1f1;
     border-radius: 10px;
-    padding: 16px;
+    padding: 13px 7px;
     text-align: center;
 }
 
 .stat-number {
-    font-size: 28px;
-    font-weight: bold;
+    font-size: 25px;
+    font-weight: 800;
 }
 
 .stat-label {
-    font-size: 13px;
     color: #666;
-    margin-top: 4px;
+    font-size: 11px;
+    margin-top: 3px;
 }
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.menu-button {
+    min-height: 82px;
+    border: 0;
+    border-radius: 12px;
+    background: #000;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 12px;
+}
+
+.menu-button.blue {
+    background: #0d6efd;
+}
+
+/* =========================
+   PLAYER ROW
+   ========================= */
 
 .player-row {
     display: flex;
@@ -220,90 +342,45 @@ button:active {
     justify-content: space-between;
     gap: 12px;
     padding: 13px 0;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .player-row:last-child {
-    border-bottom: none;
+    border-bottom: 0;
 }
 
 .player-name {
-    font-weight: bold;
+    font-weight: 700;
 }
 
-.player-sub {
-    font-size: 12px;
+.player-info {
+    flex: 1;
+}
+
+.player-small {
     color: #777;
+    font-size: 12px;
     margin-top: 3px;
 }
 
-.actions {
+.row-actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
 }
 
-.empty {
-    color: #777;
-    text-align: center;
-    padding: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 6px;
-}
-
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 7px;
-    font-size: 16px;
-}
-
-.back {
-    margin-bottom: 15px;
-}
-
-.session-row {
-    padding: 13px 0;
-    border-bottom: 1px solid #ddd;
-}
-
-.session-row:last-child {
-    border-bottom: none;
-}
-
-.session-date {
-    font-weight: bold;
-}
-
-.session-summary {
-    color: #666;
-    font-size: 13px;
-    margin-top: 3px;
-}
-
-/* TOGGLE */
+/* =========================
+   SLIDE TOGGLES
+   ========================= */
 
 .toggle {
     position: relative;
     display: inline-flex;
-    align-items: center;
     width: 108px;
     height: 38px;
     border-radius: 30px;
     cursor: pointer;
-    user-select: none;
-    transition: background 0.2s ease;
+    overflow: hidden;
     flex-shrink: 0;
 }
 
@@ -311,34 +388,27 @@ button:active {
     display: none;
 }
 
-.toggle-track {
-    position: absolute;
-    inset: 0;
-    border-radius: 30px;
-}
-
 .toggle-knob {
     position: absolute;
     top: 4px;
     width: 30px;
     height: 30px;
-    background: white;
+    background: #fff;
     border-radius: 50%;
-    transition: left 0.2s ease;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 4px rgba(0,0,0,.35);
+    transition: left .18s ease;
     z-index: 2;
 }
 
 .toggle-label {
-    position: relative;
-    z-index: 3;
-    width: 100%;
-    font-size: 12px;
-    font-weight: bold;
-    color: white;
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
-    height: 100%;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    z-index: 3;
 }
 
 .toggle.present,
@@ -364,78 +434,138 @@ button:active {
 .toggle.present .toggle-label,
 .toggle.confirmed .toggle-label {
     justify-content: flex-start;
-    padding-left: 12px;
+    padding-left: 10px;
 }
 
 .toggle.absent .toggle-label,
 .toggle.not-confirmed .toggle-label {
     justify-content: flex-end;
-    padding-right: 10px;
+    padding-right: 9px;
+}
+
+/* =========================
+   FORMS
+   ========================= */
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label.title {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.text-input {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ccc;
+    border-radius: 9px;
+    font-size: 16px;
+}
+
+/* =========================
+   INFORMATION BOXES
+   ========================= */
+
+.info-box {
+    padding: 13px;
+    border-radius: 9px;
+    margin-bottom: 15px;
+    background: #eee;
+    font-size: 14px;
 }
 
 .warning-box {
     background: #fff3cd;
-    border: 1px solid #ffe69c;
     color: #664d03;
-    border-radius: 8px;
-    padding: 14px;
-    margin-bottom: 15px;
-}
-
-.success-box {
-    background: #d1e7dd;
-    border: 1px solid #a3cfbb;
-    color: #0f5132;
-    border-radius: 8px;
-    padding: 14px;
-    margin-bottom: 15px;
+    border: 1px solid #ffe69c;
 }
 
 .danger-box {
     background: #f8d7da;
-    border: 1px solid #f1aeb5;
     color: #842029;
-    border-radius: 8px;
-    padding: 14px;
-    margin-bottom: 15px;
+    border: 1px solid #f1aeb5;
+}
+
+.success-box {
+    background: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #a3cfbb;
+}
+
+/* =========================
+   LISTS
+   ========================= */
+
+.list-row {
+    padding: 13px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.list-row:last-child {
+    border-bottom: 0;
+}
+
+.list-title {
+    font-weight: 700;
+}
+
+.list-sub {
+    color: #666;
+    font-size: 13px;
+    margin-top: 3px;
 }
 
 .promotion-row {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: 11px 0;
     border-bottom: 1px solid #ddd;
 }
 
 .promotion-row:last-child {
-    border-bottom: none;
+    border-bottom: 0;
 }
 
-.age-badge {
-    display: inline-block;
-    background: #000;
-    color: #fff;
-    border-radius: 5px;
-    padding: 4px 7px;
-    font-size: 12px;
-    font-weight: bold;
+.empty {
+    text-align: center;
+    color: #777;
+    padding: 25px 10px;
 }
 
-.inactive {
-    opacity: 0.55;
-}
+/* =========================
+   MOBILE
+   ========================= */
 
-@media (max-width: 700px) {
+@media (max-width: 520px) {
+
+    .page {
+        padding: 10px;
+    }
+
+    .card {
+        border-radius: 12px;
+        padding: 15px;
+    }
+
     .age-grid {
         grid-template-columns: repeat(3, 1fr);
     }
 
-    .dashboard-grid {
-        grid-template-columns: 1fr;
+    .age-button {
+        padding: 17px 5px;
+        font-size: 17px;
     }
 
-    .stats {
-        grid-template-columns: 1fr 1fr 1fr;
+    .menu-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .menu-button {
+        min-height: 75px;
+        font-size: 14px;
     }
 
     .player-row {
@@ -443,23 +573,24 @@ button:active {
         flex-direction: column;
     }
 
-    .player-row .actions {
+    .row-actions {
         width: 100%;
         justify-content: space-between;
     }
-
-    .role-buttons {
-        grid-template-columns: 1fr;
-    }
 }
 
-@media (max-width: 450px) {
+@media (max-width: 360px) {
+
     .age-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
     .stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .stat-number {
+        font-size: 21px;
     }
 }
 </style>
@@ -467,44 +598,52 @@ button:active {
 
 <body>
 
-<header>
-    <div class="header-left">
-        <img src="RHRFC.jpg" alt="RHRFC">
-        <div>
-            <div class="header-title">CLUB CHECK-IN</div>
-            <div class="header-season" id="headerSeason"></div>
-        </div>
-    </div>
-
-    <button class="btn-grey btn-small" onclick="showWelcome()">Home</button>
-</header>
-
-<div class="container" id="app"></div>
+<div id="app"></div>
 
 <script>
 
 /* =========================================================
    CLUB CHECK-IN
-   Prototype V2
    ========================================================= */
 
 const ageGroups = [
-    "U7", "U8", "U9", "U10", "U11", "U12",
-    "U13", "U14", "U15", "U16", "U17", "U18"
+    "U7",
+    "U8",
+    "U9",
+    "U10",
+    "U11",
+    "U12",
+    "U13",
+    "U14",
+    "U15",
+    "U16",
+    "U17",
+    "U18"
 ];
+
+/* =========================================================
+   ACCESS
+   ========================================================= */
 
 let coachPIN = "1234";
 let seniorPIN = "9999";
 
+/* =========================================================
+   SEASON
+   ========================================================= */
+
 let currentSeason = "2026/27";
+
+/* =========================================================
+   CURRENT SESSION
+   ========================================================= */
 
 let currentRole = null;
 let currentAgeGroup = null;
-
 let todayAttendance = {};
 
 /* =========================================================
-   PLAYER DATA
+   PLAYERS
    ========================================================= */
 
 let players = {
@@ -555,7 +694,7 @@ let players = {
 };
 
 /* =========================================================
-   SESSION DATA
+   SESSIONS
    ========================================================= */
 
 let sessions = {
@@ -574,69 +713,141 @@ let sessions = {
    HELPERS
    ========================================================= */
 
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
 function getActivePlayers(ageGroup) {
 
     if (!players[ageGroup]) {
         return [];
     }
 
-    return players[ageGroup].filter(p => p.active);
+    return players[ageGroup]
+        .filter(player => player.active);
+
 }
 
 function getAllActivePlayers() {
 
     let result = [];
 
-    ageGroups.forEach(age => {
+    ageGroups.forEach(ageGroup => {
 
-        if (players[age]) {
-
-            players[age].forEach(player => {
-
-                if (player.active) {
-                    result.push(player);
-                }
-
-            });
-
+        if (!players[ageGroup]) {
+            return;
         }
+
+        players[ageGroup].forEach(player => {
+
+            if (player.active) {
+                result.push(player);
+            }
+
+        });
 
     });
 
     return result;
-}
 
-function getTotalActivePlayers() {
-    return getAllActivePlayers().length;
-}
-
-function getTotalGMSConfirmed() {
-
-    return getAllActivePlayers()
-        .filter(p => p.gms)
-        .length;
 }
 
 function getNextAgeGroup(ageGroup) {
 
-    const index = ageGroups.indexOf(ageGroup);
+    const index =
+        ageGroups.indexOf(ageGroup);
 
-    if (index === -1) {
+    if (index < 0) {
         return null;
     }
 
-    if (index === ageGroups.length - 1) {
+    if (index >= ageGroups.length - 1) {
         return null;
     }
 
     return ageGroups[index + 1];
+
 }
 
-function updateHeader() {
+function getNextSeason(season) {
 
-    document.getElementById("headerSeason").textContent =
-        "Season " + currentSeason;
+    const parts = season.split("/");
+
+    const start =
+        parseInt(parts[0], 10);
+
+    const end =
+        parseInt(parts[1], 10);
+
+    return (
+        start + 1
+    ) + "/" + (
+        String(end + 1).slice(-2)
+    );
+
 }
+
+/* =========================================================
+   SHELL
+   ========================================================= */
+
+function renderShell(content, showHome = true) {
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="app-header">
+
+            <div class="brand">
+
+                <img src="RHRFC.jpg"
+                     alt="RHRFC">
+
+                <div>
+
+                    <div class="brand-title">
+                        CLUB CHECK-IN
+                    </div>
+
+                    <div class="brand-season">
+                        Season ${currentSeason}
+                    </div>
+
+                </div>
+
+            </div>
+
+            ${
+                showHome
+                ? `
+                    <button
+                        class="header-button"
+                        onclick="showWelcome()">
+                        Home
+                    </button>
+                `
+                : ""
+            }
+
+        </div>
+
+        <main class="page">
+            ${content}
+        </main>
+
+    `;
+
+}
+
+/* =========================================================
+   WELCOME
+   ========================================================= */
 
 function showWelcome() {
 
@@ -645,23 +856,32 @@ function showWelcome() {
 
     document.getElementById("app").innerHTML = `
 
-        <div class="card welcome">
+        <div class="welcome">
 
-            <img src="RHRFC.jpg" alt="Rushden & Higham RFC">
+            <div class="welcome-card">
 
-            <h1>CLUB CHECK-IN</h1>
+                <img
+                    src="RHRFC.jpg"
+                    class="welcome-logo"
+                    alt="Rushden & Higham RFC">
 
-            <p>Rushden & Higham RFC</p>
+                <div class="welcome-title">
+                    CLUB CHECK-IN
+                </div>
 
-            <div class="role-buttons">
+                <div class="welcome-club">
+                    Rushden & Higham RFC
+                </div>
 
-                <button class="btn-black"
-                        onclick="showPIN('coach')">
+                <button
+                    class="role-button"
+                    onclick="showPIN('coach')">
                     Coach
                 </button>
 
-                <button class="btn-black"
-                        onclick="showPIN('senior')">
+                <button
+                    class="role-button"
+                    onclick="showPIN('senior')">
                     Senior Member
                 </button>
 
@@ -671,8 +891,11 @@ function showWelcome() {
 
     `;
 
-    updateHeader();
 }
+
+/* =========================================================
+   PIN
+   ========================================================= */
 
 function showPIN(role) {
 
@@ -683,13 +906,21 @@ function showPIN(role) {
         ? "Coach"
         : "Senior Member";
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
-        <div class="card pin-box">
+        <div class="card pin-card">
+
+            <button
+                class="back-button"
+                onclick="showWelcome()">
+                ← Back
+            </button>
 
             <h2>${roleName} Access</h2>
 
-            <p>Enter your PIN.</p>
+            <div class="subtitle">
+                Enter your PIN to continue.
+            </div>
 
             <input
                 id="pinInput"
@@ -697,28 +928,25 @@ function showPIN(role) {
                 type="password"
                 inputmode="numeric"
                 maxlength="8"
-                autocomplete="off"
-            >
+                autocomplete="off">
 
-            <div id="pinError" class="error"></div>
+            <div
+                id="pinError"
+                class="error">
+            </div>
 
-            <button class="btn-black"
-                    onclick="checkPIN()">
+            <button
+                class="primary-button"
+                onclick="checkPIN()">
                 Continue
-            </button>
-
-            <br><br>
-
-            <button class="btn-grey"
-                    onclick="showWelcome()">
-                Back
             </button>
 
         </div>
 
-    `;
+    `);
 
     document.getElementById("pinInput").focus();
+
 }
 
 function checkPIN() {
@@ -748,48 +976,50 @@ function checkPIN() {
 
     document.getElementById("pinError").textContent =
         "Incorrect PIN.";
+
 }
 
 /* =========================================================
-   AGE GROUP SELECTION
+   COACH AGE GROUPS
    ========================================================= */
 
 function showCoachAgeGroups() {
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <div class="back">
-                <button class="btn-grey btn-small"
-                        onclick="showWelcome()">
-                    ← Back
-                </button>
-            </div>
+            <button
+                class="back-button"
+                onclick="showWelcome()">
+                ← Back
+            </button>
 
             <h2>Select Age Group</h2>
 
-            <p>
-                Choose the age group you are taking the register for.
-            </p>
+            <div class="subtitle">
+                Select the team you are taking attendance for.
+            </div>
 
             <div class="age-grid">
 
-                ${ageGroups.map(age => `
+                ${
+                    ageGroups.map(age => `
 
-                    <button
-                        class="btn-black"
-                        onclick="selectCoachAgeGroup('${age}')">
-                        ${age}
-                    </button>
+                        <button
+                            class="age-button"
+                            onclick="selectCoachAgeGroup('${age}')">
+                            ${age}
+                        </button>
 
-                `).join("")}
+                    `).join("")
+                }
 
             </div>
 
         </div>
 
-    `;
+    `);
 
 }
 
@@ -811,25 +1041,28 @@ function showCoachDashboard() {
         getActivePlayers(currentAgeGroup);
 
     const present =
-        active.filter(p =>
-            todayAttendance[p.id] === true
+        active.filter(player =>
+            todayAttendance[player.id] === true
         ).length;
 
     const absent =
         active.length - present;
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <div class="back">
-                <button class="btn-grey btn-small"
-                        onclick="showCoachAgeGroups()">
-                    ← Age Groups
-                </button>
-            </div>
+            <button
+                class="back-button"
+                onclick="showCoachAgeGroups()">
+                ← Age Groups
+            </button>
 
-            <h2>${currentAgeGroup} Dashboard</h2>
+            <h2>${currentAgeGroup}</h2>
+
+            <div class="subtitle">
+                Coach Dashboard
+            </div>
 
             <div class="stats">
 
@@ -862,38 +1095,42 @@ function showCoachDashboard() {
 
             </div>
 
-            <div class="dashboard-grid">
+            <div class="menu-grid">
 
-                <button class="btn-black"
-                        onclick="showRegister()">
-                    Today's Register
+                <button
+                    class="menu-button"
+                    onclick="showRegister()">
+                    Today's<br>Register
                 </button>
 
-                <button class="btn-black"
-                        onclick="showRoster()">
+                <button
+                    class="menu-button"
+                    onclick="showRoster()">
                     Roster
                 </button>
 
-                <button class="btn-black"
-                        onclick="showSessionHistory()">
-                    Session History
+                <button
+                    class="menu-button"
+                    onclick="showSessionHistory()">
+                    Session<br>History
                 </button>
 
-                <button class="btn-black"
-                        onclick="showAddPlayer()">
-                    Add Player
+                <button
+                    class="menu-button"
+                    onclick="showCoachAddPlayer()">
+                    Add<br>Player
                 </button>
 
             </div>
 
         </div>
 
-    `;
+    `);
 
 }
 
 /* =========================================================
-   ATTENDANCE REGISTER
+   REGISTER
    ========================================================= */
 
 function showRegister() {
@@ -901,22 +1138,31 @@ function showRegister() {
     const active =
         getActivePlayers(currentAgeGroup);
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showCoachDashboard()">
+            <button
+                class="back-button"
+                onclick="showCoachDashboard()">
                 ← Back
             </button>
 
-            <h2>${currentAgeGroup} - Today's Register</h2>
+            <h2>Today's Register</h2>
+
+            <div class="subtitle">
+                ${currentAgeGroup}
+            </div>
 
             ${
                 active.length === 0
-                ? `<div class="empty">
-                       No active players.
-                   </div>`
+
+                ? `
+                    <div class="empty">
+                        No active players.
+                    </div>
+                `
+
                 : active.map(player => {
 
                     const present =
@@ -926,28 +1172,30 @@ function showRegister() {
 
                         <div class="player-row">
 
-                            <div>
+                            <div class="player-info">
+
                                 <div class="player-name">
                                     ${escapeHTML(player.name)}
                                 </div>
+
                             </div>
 
-                            <label class="toggle ${
-                                present
-                                ? "present"
-                                : "absent"
-                            }">
+                            <label
+                                class="toggle ${
+                                    present
+                                    ? "present"
+                                    : "absent"
+                                }">
 
                                 <input
                                     type="checkbox"
                                     ${present ? "checked" : ""}
-                                    onchange="setAttendance(
-                                        ${player.id},
-                                        this.checked
-                                    )"
-                                >
-
-                                <span class="toggle-track"></span>
+                                    onchange="
+                                        setAttendance(
+                                            ${player.id},
+                                            this.checked
+                                        )
+                                    ">
 
                                 <span class="toggle-knob"></span>
 
@@ -969,12 +1217,13 @@ function showRegister() {
             }
 
             ${
-                active.length > 0
+                active.length
                 ? `
                     <br>
 
-                    <button class="btn-green"
-                            onclick="saveSession()">
+                    <button
+                        class="green-button"
+                        onclick="saveSession()">
                         Save Session
                     </button>
                 `
@@ -983,7 +1232,7 @@ function showRegister() {
 
         </div>
 
-    `;
+    `);
 
 }
 
@@ -995,18 +1244,14 @@ function setAttendance(playerID, present) {
 
 }
 
-/* =========================================================
-   SAVE SESSION
-   ========================================================= */
-
 function saveSession() {
 
     const active =
         getActivePlayers(currentAgeGroup);
 
     const present =
-        active.filter(p =>
-            todayAttendance[p.id] === true
+        active.filter(player =>
+            todayAttendance[player.id] === true
         ).length;
 
     if (!sessions[currentAgeGroup]) {
@@ -1053,34 +1298,47 @@ function showRoster() {
     const active =
         getActivePlayers(currentAgeGroup);
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showCoachDashboard()">
+            <button
+                class="back-button"
+                onclick="showCoachDashboard()">
                 ← Back
             </button>
 
-            <h2>${currentAgeGroup} Roster</h2>
+            <h2>Roster</h2>
+
+            <div class="subtitle">
+                ${currentAgeGroup}
+            </div>
 
             ${
                 active.length === 0
-                ? `<div class="empty">
-                       No active players.
-                   </div>`
+
+                ? `
+                    <div class="empty">
+                        No active players.
+                    </div>
+                `
+
                 : active.map(player => `
 
                     <div class="player-row">
 
-                        <div>
+                        <div class="player-info">
+
                             <div class="player-name">
                                 ${escapeHTML(player.name)}
                             </div>
+
                         </div>
 
-                        <span class="age-badge">
-                            ${player.ageGroup}
+                        <span>
+                            ${player.gms
+                            ? "GMS ✓"
+                            : "GMS outstanding"}
                         </span>
 
                     </div>
@@ -1090,59 +1348,64 @@ function showRoster() {
 
         </div>
 
-    `;
+    `);
 
 }
 
 /* =========================================================
-   ADD PLAYER
+   COACH ADD PLAYER
    ========================================================= */
 
-function showAddPlayer() {
+function showCoachAddPlayer() {
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showCoachDashboard()">
+            <button
+                class="back-button"
+                onclick="showCoachDashboard()">
                 ← Back
             </button>
 
             <h2>Add Player</h2>
 
+            <div class="subtitle">
+                Add a player to ${currentAgeGroup}.
+            </div>
+
             <div class="form-group">
 
-                <label>
+                <label class="title">
                     Player Name
                 </label>
 
                 <input
-                    id="newPlayerName"
-                    type="text"
+                    id="coachPlayerName"
+                    class="text-input"
                     maxlength="100"
-                    autocomplete="off"
-                >
+                    autocomplete="off">
 
             </div>
 
-            <button class="btn-green"
-                    onclick="addPlayer()">
+            <button
+                class="green-button"
+                onclick="coachAddPlayer()">
                 Add Player
             </button>
 
         </div>
 
-    `;
+    `);
 
-    document.getElementById("newPlayerName").focus();
+    document.getElementById("coachPlayerName").focus();
 
 }
 
-function addPlayer() {
+function coachAddPlayer() {
 
     const name =
-        document.getElementById("newPlayerName")
+        document.getElementById("coachPlayerName")
         .value
         .trim();
 
@@ -1153,23 +1416,11 @@ function addPlayer() {
         return;
     }
 
-    if (!players[currentAgeGroup]) {
-        players[currentAgeGroup] = [];
-    }
-
-    const id =
-        Date.now()
-        + Math.floor(Math.random() * 1000);
-
-    players[currentAgeGroup].push({
-
-        id: id,
-        name: name,
-        ageGroup: currentAgeGroup,
-        gms: false,
-        active: true
-
-    });
+    addPlayerToAgeGroup(
+        currentAgeGroup,
+        name,
+        false
+    );
 
     alert(
         name
@@ -1191,31 +1442,40 @@ function showSessionHistory() {
     const history =
         sessions[currentAgeGroup] || [];
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showCoachDashboard()">
+            <button
+                class="back-button"
+                onclick="showCoachDashboard()">
                 ← Back
             </button>
 
-            <h2>${currentAgeGroup} Session History</h2>
+            <h2>Session History</h2>
+
+            <div class="subtitle">
+                ${currentAgeGroup}
+            </div>
 
             ${
                 history.length === 0
-                ? `<div class="empty">
-                       No sessions recorded yet.
-                   </div>`
+
+                ? `
+                    <div class="empty">
+                        No sessions recorded yet.
+                    </div>
+                `
+
                 : history.slice().reverse().map(session => `
 
-                    <div class="session-row">
+                    <div class="list-row">
 
-                        <div class="session-date">
+                        <div class="list-title">
                             ${session.date}
                         </div>
 
-                        <div class="session-summary">
+                        <div class="list-sub">
                             ${session.present}
                             of
                             ${session.total}
@@ -1229,7 +1489,7 @@ function showSessionHistory() {
 
         </div>
 
-    `;
+    `);
 
 }
 
@@ -1240,84 +1500,92 @@ function showSessionHistory() {
 function showSeniorDashboard() {
 
     const active =
-        getTotalActivePlayers();
+        getAllActivePlayers();
 
     const gms =
-        getTotalGMSConfirmed();
+        active.filter(player => player.gms).length;
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
             <h2>Senior Dashboard</h2>
 
-            <p>
+            <div class="subtitle">
                 Season ${currentSeason}
-            </p>
+            </div>
 
             <div class="stats">
 
                 <div class="stat">
+
                     <div class="stat-number">
-                        ${active}
+                        ${active.length}
                     </div>
+
                     <div class="stat-label">
                         Active Players
                     </div>
+
                 </div>
 
                 <div class="stat">
+
                     <div class="stat-number">
                         ${gms}
                     </div>
+
                     <div class="stat-label">
                         GMS Confirmed
                     </div>
+
                 </div>
 
                 <div class="stat">
+
                     <div class="stat-number">
-                        ${active - gms}
+                        ${active.length - gms}
                     </div>
+
                     <div class="stat-label">
                         GMS Outstanding
                     </div>
+
                 </div>
 
             </div>
 
-            <div class="dashboard-grid">
+            <div class="menu-grid">
 
-                <button class="btn-black"
-                        onclick="showSeniorAgeGroups()">
-                    View All Age Groups
+                <button
+                    class="menu-button"
+                    onclick="showSeniorAgeGroups()">
+                    All Age<br>Groups
                 </button>
 
-                <button class="btn-black"
-                        onclick="showGMSVerification()">
-                    GMS Verification
+                <button
+                    class="menu-button"
+                    onclick="showPlayerManagement()">
+                    Player<br>Management
                 </button>
 
-                <button class="btn-black"
-                        onclick="showPlayerManagement()">
-                    Player Management
+                <button
+                    class="menu-button blue"
+                    onclick="showNewSeason()">
+                    New<br>Season
                 </button>
 
-                <button class="btn-blue"
-                        onclick="showNewSeason()">
-                    New Season
-                </button>
-
-                <button class="btn-black"
-                        onclick="showChangeSeniorPIN()">
-                    Change Senior PIN
+                <button
+                    class="menu-button"
+                    onclick="showPINManagement()">
+                    Manage<br>PINs
                 </button>
 
             </div>
 
         </div>
 
-    `;
+    `);
 
 }
 
@@ -1327,34 +1595,41 @@ function showSeniorDashboard() {
 
 function showSeniorAgeGroups() {
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showSeniorDashboard()">
+            <button
+                class="back-button"
+                onclick="showSeniorDashboard()">
                 ← Back
             </button>
 
             <h2>All Age Groups</h2>
 
+            <div class="subtitle">
+                Select an age group to view.
+            </div>
+
             <div class="age-grid">
 
-                ${ageGroups.map(age => `
+                ${
+                    ageGroups.map(age => `
 
-                    <button
-                        class="btn-black"
-                        onclick="showSeniorAgeGroup('${age}')">
-                        ${age}
-                    </button>
+                        <button
+                            class="age-button"
+                            onclick="showSeniorAgeGroup('${age}')">
+                            ${age}
+                        </button>
 
-                `).join("")}
+                    `).join("")
+                }
 
             </div>
 
         </div>
 
-    `;
+    `);
 
 }
 
@@ -1364,14 +1639,15 @@ function showSeniorAgeGroup(ageGroup) {
         getActivePlayers(ageGroup);
 
     const gms =
-        active.filter(p => p.gms).length;
+        active.filter(player => player.gms).length;
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showSeniorAgeGroups()">
+            <button
+                class="back-button"
+                onclick="showSeniorAgeGroups()">
                 ← Age Groups
             </button>
 
@@ -1380,53 +1656,70 @@ function showSeniorAgeGroup(ageGroup) {
             <div class="stats">
 
                 <div class="stat">
+
                     <div class="stat-number">
                         ${active.length}
                     </div>
+
                     <div class="stat-label">
                         Players
                     </div>
+
                 </div>
 
                 <div class="stat">
+
                     <div class="stat-number">
                         ${gms}
                     </div>
+
                     <div class="stat-label">
                         GMS Confirmed
                     </div>
+
                 </div>
 
                 <div class="stat">
+
                     <div class="stat-number">
                         ${active.length - gms}
                     </div>
+
                     <div class="stat-label">
                         Outstanding
                     </div>
+
                 </div>
 
             </div>
 
             ${
                 active.length === 0
-                ? `<div class="empty">
-                       No active players.
-                   </div>`
+
+                ? `
+                    <div class="empty">
+                        No active players.
+                    </div>
+                `
+
                 : active.map(player => `
 
                     <div class="player-row">
 
-                        <div>
+                        <div class="player-info">
+
                             <div class="player-name">
                                 ${escapeHTML(player.name)}
                             </div>
+
                         </div>
 
-                        <span class="age-badge">
-                            ${player.gms
-                            ? "GMS CONFIRMED"
-                            : "GMS OUTSTANDING"}
+                        <span>
+                            ${
+                                player.gms
+                                ? "GMS ✓"
+                                : "GMS outstanding"
+                            }
                         </span>
 
                     </div>
@@ -1436,81 +1729,7 @@ function showSeniorAgeGroup(ageGroup) {
 
         </div>
 
-    `;
-
-}
-
-/* =========================================================
-   GMS VERIFICATION
-   ========================================================= */
-
-function showGMSVerification() {
-
-    document.getElementById("app").innerHTML = `
-
-        <div class="card">
-
-            <button class="btn-grey btn-small back"
-                    onclick="showSeniorDashboard()">
-                ← Back
-            </button>
-
-            <h2>GMS Verification</h2>
-
-            <p>
-                GMS changes are made through Player Management.
-            </p>
-
-            ${
-                ageGroups.map(age => {
-
-                    const active =
-                        getActivePlayers(age);
-
-                    if (active.length === 0) {
-                        return "";
-                    }
-
-                    const confirmed =
-                        active.filter(p => p.gms).length;
-
-                    return `
-
-                        <div class="session-row">
-
-                            <div class="player-row">
-
-                                <div>
-                                    <div class="player-name">
-                                        ${age}
-                                    </div>
-
-                                    <div class="player-sub">
-                                        ${confirmed}
-                                        of
-                                        ${active.length}
-                                        confirmed
-                                    </div>
-                                </div>
-
-                                <button
-                                    class="btn-black btn-small"
-                                    onclick="showPlayerManagement('${age}')">
-                                    Manage
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    `;
-
-                }).join("")
-            }
-
-        </div>
-
-    `;
+    `);
 
 }
 
@@ -1524,36 +1743,35 @@ function showPlayerManagement(selectedAge = null) {
         currentAgeGroup = selectedAge;
     }
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showSeniorDashboard()">
+            <button
+                class="back-button"
+                onclick="showSeniorDashboard()">
                 ← Back
             </button>
 
             <h2>Player Management</h2>
 
-            <p>
-                Manage players and confirm GMS status.
-            </p>
+            <div class="subtitle">
+                Add, remove and manage GMS status.
+            </div>
 
             <div class="age-grid">
 
-                ${ageGroups.map(age => `
+                ${
+                    ageGroups.map(age => `
 
-                    <button
-                        class="${
-                            age === currentAgeGroup
-                            ? "btn-blue"
-                            : "btn-black"
-                        }"
-                        onclick="showPlayerManagement('${age}')">
-                        ${age}
-                    </button>
+                        <button
+                            class="age-button"
+                            onclick="showPlayerManagement('${age}')">
+                            ${age}
+                        </button>
 
-                `).join("")}
+                    `).join("")
+                }
 
             </div>
 
@@ -1565,7 +1783,7 @@ function showPlayerManagement(selectedAge = null) {
             : ""
         }
 
-    `;
+    `);
 
 }
 
@@ -1578,45 +1796,51 @@ function renderPlayerManagementList(ageGroup) {
 
         <div class="card">
 
-            <h3>${ageGroup} Players</h3>
+            <h3>${ageGroup}</h3>
 
             ${
                 active.length === 0
-                ? `<div class="empty">
-                       No active players.
-                   </div>`
+
+                ? `
+                    <div class="empty">
+                        No active players.
+                    </div>
+                `
+
                 : active.map(player => `
 
                     <div class="player-row">
 
-                        <div>
+                        <div class="player-info">
+
                             <div class="player-name">
                                 ${escapeHTML(player.name)}
                             </div>
 
-                            <div class="player-sub">
+                            <div class="player-small">
                                 GMS status
                             </div>
+
                         </div>
 
-                        <div class="actions">
+                        <div class="row-actions">
 
-                            <label class="toggle ${
-                                player.gms
-                                ? "confirmed"
-                                : "not-confirmed"
-                            }">
+                            <label
+                                class="toggle ${
+                                    player.gms
+                                    ? "confirmed"
+                                    : "not-confirmed"
+                                }">
 
                                 <input
                                     type="checkbox"
                                     ${player.gms ? "checked" : ""}
-                                    onchange="setGMS(
-                                        ${player.id},
-                                        this.checked
-                                    )"
-                                >
-
-                                <span class="toggle-track"></span>
+                                    onchange="
+                                        setGMS(
+                                            ${player.id},
+                                            this.checked
+                                        )
+                                    ">
 
                                 <span class="toggle-knob"></span>
 
@@ -1631,8 +1855,12 @@ function renderPlayerManagementList(ageGroup) {
                             </label>
 
                             <button
-                                class="btn-red btn-small"
-                                onclick="removePlayer(${player.id})">
+                                class="red-button small-button"
+                                onclick="
+                                    removePlayer(
+                                        ${player.id}
+                                    )
+                                ">
                                 Remove
                             </button>
 
@@ -1646,8 +1874,10 @@ function renderPlayerManagementList(ageGroup) {
             <br>
 
             <button
-                class="btn-green"
-                onclick="showSeniorAddPlayer('${ageGroup}')">
+                class="green-button"
+                onclick="
+                    showSeniorAddPlayer('${ageGroup}')
+                ">
                 Add Player
             </button>
 
@@ -1659,11 +1889,13 @@ function renderPlayerManagementList(ageGroup) {
 
 function setGMS(playerID, confirmed) {
 
-    for (const age of ageGroups) {
+    for (const ageGroup of ageGroups) {
 
         const player =
-            players[age]
-                .find(p => p.id === playerID);
+            players[ageGroup]
+                .find(player =>
+                    player.id === playerID
+                );
 
         if (player) {
 
@@ -1686,11 +1918,13 @@ function removePlayer(playerID) {
 
     let playerFound = null;
 
-    for (const age of ageGroups) {
+    for (const ageGroup of ageGroups) {
 
         const player =
-            players[age]
-                .find(p => p.id === playerID);
+            players[ageGroup]
+                .find(player =>
+                    player.id === playerID
+                );
 
         if (player) {
 
@@ -1705,7 +1939,7 @@ function removePlayer(playerID) {
         return;
     }
 
-    const confirmRemove =
+    const confirmed =
         confirm(
             "Remove "
             + playerFound.name
@@ -1713,7 +1947,7 @@ function removePlayer(playerID) {
             + "Their historical attendance will be retained."
         );
 
-    if (!confirmRemove) {
+    if (!confirmed) {
         return;
     }
 
@@ -1721,7 +1955,7 @@ function removePlayer(playerID) {
 
     alert(
         playerFound.name
-        + " has been removed from the active register."
+        + " has been removed."
     );
 
     showPlayerManagement(currentAgeGroup);
@@ -1736,48 +1970,55 @@ function showSeniorAddPlayer(ageGroup) {
 
     currentAgeGroup = ageGroup;
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showPlayerManagement('${ageGroup}')">
+            <button
+                class="back-button"
+                onclick="
+                    showPlayerManagement('${ageGroup}')
+                ">
                 ← Back
             </button>
 
-            <h2>Add Player - ${ageGroup}</h2>
+            <h2>Add Player</h2>
+
+            <div class="subtitle">
+                ${ageGroup}
+            </div>
 
             <div class="form-group">
 
-                <label>
+                <label class="title">
                     Player Name
                 </label>
 
                 <input
-                    id="seniorNewPlayerName"
-                    type="text"
+                    id="seniorPlayerName"
+                    class="text-input"
                     maxlength="100"
-                    autocomplete="off"
-                >
+                    autocomplete="off">
 
             </div>
 
             <div class="form-group">
 
-                <label>
+                <label class="title">
                     GMS Status
                 </label>
 
-                <label class="toggle not-confirmed"
-                       id="newPlayerGMSToggle">
+                <label
+                    id="newGMSToggle"
+                    class="toggle not-confirmed">
 
                     <input
-                        id="newPlayerGMS"
+                        id="newGMS"
                         type="checkbox"
-                        onchange="updateNewPlayerGMSToggle()"
-                    >
+                        onchange="
+                            updateNewGMSToggle()
+                        ">
 
-                    <span class="toggle-track"></span>
                     <span class="toggle-knob"></span>
 
                     <span class="toggle-label">
@@ -1788,42 +2029,60 @@ function showSeniorAddPlayer(ageGroup) {
 
             </div>
 
-            <button class="btn-green"
-                    onclick="seniorAddPlayer('${ageGroup}')">
+            <button
+                class="green-button"
+                onclick="
+                    seniorAddPlayer('${ageGroup}')
+                ">
                 Add Player
             </button>
 
         </div>
 
-    `;
+    `);
 
-    document.getElementById("seniorNewPlayerName").focus();
+    document.getElementById(
+        "seniorPlayerName"
+    ).focus();
 
 }
 
-function updateNewPlayerGMSToggle() {
+function updateNewGMSToggle() {
 
     const input =
-        document.getElementById("newPlayerGMS");
+        document.getElementById("newGMS");
 
     const toggle =
-        document.getElementById("newPlayerGMSToggle");
+        document.getElementById("newGMSToggle");
+
+    const label =
+        toggle.querySelector(".toggle-label");
 
     if (input.checked) {
 
-        toggle.classList.remove("not-confirmed");
-        toggle.classList.add("confirmed");
+        toggle.classList.remove(
+            "not-confirmed"
+        );
 
-        toggle.querySelector(".toggle-label")
-            .textContent = "CONFIRMED";
+        toggle.classList.add(
+            "confirmed"
+        );
+
+        label.textContent =
+            "CONFIRMED";
 
     } else {
 
-        toggle.classList.remove("confirmed");
-        toggle.classList.add("not-confirmed");
+        toggle.classList.remove(
+            "confirmed"
+        );
 
-        toggle.querySelector(".toggle-label")
-            .textContent = "NOT CONF.";
+        toggle.classList.add(
+            "not-confirmed"
+        );
+
+        label.textContent =
+            "NOT CONF.";
 
     }
 
@@ -1832,34 +2091,29 @@ function updateNewPlayerGMSToggle() {
 function seniorAddPlayer(ageGroup) {
 
     const name =
-        document.getElementById("seniorNewPlayerName")
-        .value
-        .trim();
+        document.getElementById(
+            "seniorPlayerName"
+        ).value.trim();
 
     const gms =
-        document.getElementById("newPlayerGMS")
-        .checked;
+        document.getElementById(
+            "newGMS"
+        ).checked;
 
     if (!name) {
 
-        alert("Please enter a player name.");
+        alert(
+            "Please enter a player name."
+        );
 
         return;
     }
 
-    const id =
-        Date.now()
-        + Math.floor(Math.random() * 1000);
-
-    players[ageGroup].push({
-
-        id: id,
-        name: name,
-        ageGroup: ageGroup,
-        gms: gms,
-        active: true
-
-    });
+    addPlayerToAgeGroup(
+        ageGroup,
+        name,
+        gms
+    );
 
     alert(
         name
@@ -1872,6 +2126,34 @@ function seniorAddPlayer(ageGroup) {
 
 }
 
+function addPlayerToAgeGroup(
+    ageGroup,
+    name,
+    gms
+) {
+
+    if (!players[ageGroup]) {
+        players[ageGroup] = [];
+    }
+
+    const id =
+        Date.now()
+        + Math.floor(
+            Math.random() * 1000
+        );
+
+    players[ageGroup].push({
+
+        id: id,
+        name: name,
+        ageGroup: ageGroup,
+        gms: gms,
+        active: true
+
+    });
+
+}
+
 /* =========================================================
    NEW SEASON
    ========================================================= */
@@ -1879,76 +2161,80 @@ function seniorAddPlayer(ageGroup) {
 function showNewSeason() {
 
     const nextSeason =
-        calculateNextSeason(currentSeason);
+        getNextSeason(currentSeason);
 
-    const counts = {};
-
-    ageGroups.forEach(age => {
-
-        counts[age] =
-            getActivePlayers(age).length;
-
-    });
-
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showSeniorDashboard()">
+            <button
+                class="back-button"
+                onclick="showSeniorDashboard()">
                 ← Back
             </button>
 
-            <h2>Start New Season</h2>
+            <h2>New Season</h2>
 
-            <div class="warning-box">
+            <div class="subtitle">
+                Move active players up one age group.
+            </div>
 
-                <strong>This will move active players up one age group.</strong>
+            <div class="info-box warning-box">
+
+                <strong>
+                    Current season:
+                </strong>
+
+                ${currentSeason}
 
                 <br><br>
 
-                The change should only be made once at the start
-                of the new season.
+                <strong>
+                    New season:
+                </strong>
+
+                ${nextSeason}
 
             </div>
-
-            <p>
-                Current season:
-                <strong>${currentSeason}</strong>
-            </p>
-
-            <p>
-                New season:
-                <strong>${nextSeason}</strong>
-            </p>
 
             <h3>Promotion Preview</h3>
 
             ${
-                ageGroups.slice(0, -1).map(age => {
+                ageGroups
+                    .slice(0, -1)
+                    .map(ageGroup => {
 
-                    const next =
-                        getNextAgeGroup(age);
+                        const next =
+                            getNextAgeGroup(
+                                ageGroup
+                            );
 
-                    return `
+                        const count =
+                            getActivePlayers(
+                                ageGroup
+                            ).length;
 
-                        <div class="promotion-row">
+                        return `
 
-                            <span>
-                                ${age}
-                                →
-                                ${next}
-                            </span>
+                            <div
+                                class="promotion-row">
 
-                            <strong>
-                                ${counts[age]}
-                            </strong>
+                                <span>
+                                    ${ageGroup}
+                                    →
+                                    ${next}
+                                </span>
 
-                        </div>
+                                <strong>
+                                    ${count}
+                                </strong>
 
-                    `;
+                            </div>
 
-                }).join("")
+                        `;
+
+                    })
+                    .join("")
             }
 
             <div class="promotion-row">
@@ -1958,68 +2244,53 @@ function showNewSeason() {
                 </span>
 
                 <strong>
-                    ${counts.U18}
+                    ${
+                        getActivePlayers(
+                            "U18"
+                        ).length
+                    }
                 </strong>
 
             </div>
 
             <br>
 
-            <div class="danger-box">
+            <div class="info-box danger-box">
 
                 <strong>
-                    This action cannot be undone by the button.
+                    Check the numbers before confirming.
                 </strong>
 
                 <br><br>
 
-                Check the numbers above before continuing.
+                This moves every active player up
+                one age group.
 
             </div>
 
             <button
-                class="btn-blue"
+                class="blue-button"
                 onclick="confirmNewSeason()">
                 Confirm New Season
             </button>
 
         </div>
 
-    `;
-
-}
-
-function calculateNextSeason(season) {
-
-    const parts =
-        season.split("/");
-
-    const start =
-        parseInt(parts[0], 10);
-
-    const end =
-        parseInt(parts[1], 10);
-
-    return (
-        start + 1
-    ) + "/" + (
-        String(end + 1).slice(-2)
-    );
+    `);
 
 }
 
 function confirmNewSeason() {
 
     const nextSeason =
-        calculateNextSeason(currentSeason);
+        getNextSeason(currentSeason);
 
     const confirmed =
         confirm(
             "Start season "
             + nextSeason
             + "?\n\n"
-            + "All active players will move up one age group."
-            + "\n\n"
+            + "All active players will move up one age group.\n\n"
             + "U18 players will leave the active register."
         );
 
@@ -2033,68 +2304,57 @@ function confirmNewSeason() {
 
 function performNewSeason(nextSeason) {
 
-    const newPlayers = {
+    const newPlayers = {};
 
-        U7: [],
-        U8: [],
-        U9: [],
-        U10: [],
-        U11: [],
-        U12: [],
-        U13: [],
-        U14: [],
-        U15: [],
-        U16: [],
-        U17: [],
-        U18: []
+    ageGroups.forEach(ageGroup => {
 
-    };
+        newPlayers[ageGroup] = [];
 
-    ageGroups.forEach(age => {
+    });
 
-        const active =
-            players[age]
-                .filter(p => p.active);
+    ageGroups.forEach(ageGroup => {
 
         const inactive =
-            players[age]
-                .filter(p => !p.active);
-
-        /*
-            Keep inactive players in their existing age group
-            so historical records aren't lost.
-        */
+            players[ageGroup]
+                .filter(player =>
+                    !player.active
+                );
 
         inactive.forEach(player => {
 
-            newPlayers[age].push(player);
+            newPlayers[ageGroup]
+                .push(player);
 
         });
 
-        /*
-            Move active players forward.
-        */
+        const active =
+            players[ageGroup]
+                .filter(player =>
+                    player.active
+                );
 
         active.forEach(player => {
 
             const next =
-                getNextAgeGroup(age);
+                getNextAgeGroup(
+                    ageGroup
+                );
 
             if (next) {
 
-                player.ageGroup = next;
+                player.ageGroup =
+                    next;
 
-                newPlayers[next].push(player);
+                newPlayers[next]
+                    .push(player);
 
             } else {
 
-                /*
-                    U18 becomes inactive/graduated.
-                */
+                player.active =
+                    false;
 
-                player.active = false;
-
-                newPlayers[age].push(player);
+                newPlayers[ageGroup]
+                    .push(player);
 
             }
 
@@ -2102,9 +2362,11 @@ function performNewSeason(nextSeason) {
 
     });
 
-    players = newPlayers;
+    players =
+        newPlayers;
 
-    currentSeason = nextSeason;
+    currentSeason =
+        nextSeason;
 
     todayAttendance = {};
 
@@ -2119,81 +2381,161 @@ function performNewSeason(nextSeason) {
 }
 
 /* =========================================================
-   CHANGE SENIOR PIN
+   PIN MANAGEMENT
    ========================================================= */
 
-function showChangeSeniorPIN() {
+function showPINManagement() {
 
-    document.getElementById("app").innerHTML = `
+    renderShell(`
 
         <div class="card">
 
-            <button class="btn-grey btn-small back"
-                    onclick="showSeniorDashboard()">
+            <button
+                class="back-button"
+                onclick="showSeniorDashboard()">
                 ← Back
             </button>
 
-            <h2>Change Senior PIN</h2>
+            <h2>Manage PINs</h2>
+
+            <div class="subtitle">
+                Senior Members can change both access PINs.
+            </div>
+
+            <div class="list-row">
+
+                <div class="list-title">
+                    Coach PIN
+                </div>
+
+                <div class="list-sub">
+                    Used by coaches to access registers.
+                </div>
+
+                <br>
+
+                <button
+                    class="secondary-button"
+                    onclick="
+                        showChangePIN('coach')
+                    ">
+                    Change Coach PIN
+                </button>
+
+            </div>
+
+            <div class="list-row">
+
+                <div class="list-title">
+                    Senior Member PIN
+                </div>
+
+                <div class="list-sub">
+                    Used for full club access.
+                </div>
+
+                <br>
+
+                <button
+                    class="secondary-button"
+                    onclick="
+                        showChangePIN('senior')
+                    ">
+                    Change Senior PIN
+                </button>
+
+            </div>
+
+        </div>
+
+    `);
+
+}
+
+function showChangePIN(type) {
+
+    const title =
+        type === "coach"
+        ? "Change Coach PIN"
+        : "Change Senior Member PIN";
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showPINManagement()">
+                ← Back
+            </button>
+
+            <h2>${title}</h2>
 
             <div class="form-group">
 
-                <label>
+                <label class="title">
                     New PIN
                 </label>
 
                 <input
-                    id="newSeniorPIN"
+                    id="newPIN"
                     class="pin-input"
                     type="password"
                     inputmode="numeric"
-                    maxlength="8"
-                >
+                    maxlength="8">
 
             </div>
 
             <div class="form-group">
 
-                <label>
+                <label class="title">
                     Confirm New PIN
                 </label>
 
                 <input
-                    id="confirmSeniorPIN"
+                    id="confirmPIN"
                     class="pin-input"
                     type="password"
                     inputmode="numeric"
-                    maxlength="8"
-                >
+                    maxlength="8">
 
             </div>
 
-            <div id="pinChangeError"
-                 class="error">
+            <div
+                id="changePINError"
+                class="error">
             </div>
 
-            <button class="btn-green"
-                    onclick="changeSeniorPIN()">
-                Change PIN
+            <button
+                class="green-button"
+                onclick="
+                    changePIN('${type}')
+                ">
+                Save New PIN
             </button>
 
         </div>
 
-    `;
+    `);
 
 }
 
-function changeSeniorPIN() {
+function changePIN(type) {
 
     const newPIN =
-        document.getElementById("newSeniorPIN")
-        .value;
+        document.getElementById(
+            "newPIN"
+        ).value;
 
     const confirmPIN =
-        document.getElementById("confirmSeniorPIN")
-        .value;
+        document.getElementById(
+            "confirmPIN"
+        ).value;
 
     const error =
-        document.getElementById("pinChangeError");
+        document.getElementById(
+            "changePINError"
+        );
 
     error.textContent = "";
 
@@ -2229,26 +2571,25 @@ function changeSeniorPIN() {
         return;
     }
 
-    seniorPIN = newPIN;
+    if (type === "coach") {
 
-    alert("Senior PIN changed.");
+        coachPIN =
+            newPIN;
 
-    showSeniorDashboard();
+    } else {
 
-}
+        seniorPIN =
+            newPIN;
 
-/* =========================================================
-   HTML SAFETY
-   ========================================================= */
+    }
 
-function escapeHTML(value) {
+    alert(
+        type === "coach"
+        ? "Coach PIN changed."
+        : "Senior Member PIN changed."
+    );
 
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    showPINManagement();
 
 }
 

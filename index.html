@@ -4828,18 +4828,18 @@ function renderPlayerManagementList(
 
                             </div>
 
-                            <div
-                                class="player-small">
+                            ${
+    player.coachGmsSuggestion && !player.gms
+    ? `
+        <div
+            class="player-small">
 
-                                ${
-                                    player.gms
-                                    ? "Senior GMS confirmed"
-                                    : player.coachGmsSuggestion
-                                        ? "Coach has suggested GMS"
-                                        : "GMS outstanding"
-                                }
+            Coach has suggested GMS
 
-                            </div>
+        </div>
+    `
+    : ""
+}
 
                             <div
                                 class="player-small">

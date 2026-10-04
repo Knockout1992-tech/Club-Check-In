@@ -17,7 +17,7 @@ html, body {
     padding: 0;
     min-height: 100%;
     font-family: Arial, Helvetica, sans-serif;
-    background: #f3f3f3;
+    background: #f5f5f5;
     color: #111;
 }
 
@@ -101,7 +101,7 @@ button {
     border-radius: 14px;
     padding: 18px;
     margin-bottom: 15px;
-    box-shadow: 0 2px 7px rgba(0,0,0,.07);
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
 
 h1,
@@ -122,7 +122,7 @@ h2 {
 }
 
 .back-button {
-    background: #e3e3e3;
+    background: #e5e5e5;
     border: 0;
     border-radius: 8px;
     padding: 8px 12px;
@@ -201,7 +201,7 @@ h2 {
     background: #fff;
     border-radius: 18px;
     padding: 30px 22px;
-    box-shadow: 0 4px 15px rgba(0,0,0,.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
 
 .welcome-logo {
@@ -269,17 +269,18 @@ h2 {
 .age-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 14px;
 }
 
 .age-button {
-    background: #000;
+    background: #111;
     color: #fff;
     border: 0;
     border-radius: 11px;
     padding: 19px 8px;
     font-size: 18px;
     font-weight: 700;
+    box-shadow: none;
 }
 
 /* =========================
@@ -289,12 +290,12 @@ h2 {
 .stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 9px;
+    gap: 12px;
     margin: 15px 0;
 }
 
 .stat {
-    background: #f1f1f1;
+    background: #f0f0f0;
     border-radius: 10px;
     padding: 13px 7px;
     text-align: center;
@@ -314,18 +315,19 @@ h2 {
 .menu-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 14px;
 }
 
 .menu-button {
     min-height: 82px;
     border: 0;
     border-radius: 12px;
-    background: #000;
+    background: #111;
     color: #fff;
     font-weight: 700;
     font-size: 15px;
     padding: 12px;
+    box-shadow: none;
 }
 
 .menu-button.blue {
@@ -395,7 +397,7 @@ h2 {
     height: 30px;
     background: #fff;
     border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(0,0,0,.35);
+    box-shadow: 0 1px 4px rgba(0,0,0,.25);
     transition: left .18s ease;
     z-index: 2;
 }
@@ -431,16 +433,19 @@ h2 {
     left: 4px;
 }
 
-.toggle.present .toggle-label,
-.toggle.confirmed .toggle-label {
+.toggle.present .toggle-label {
     justify-content: flex-start;
     padding-left: 10px;
 }
 
-.toggle.absent .toggle-label,
-.toggle.not-confirmed .toggle-label {
+.toggle.absent .toggle-label {
     justify-content: flex-end;
     padding-right: 9px;
+}
+
+/* GMS is colour-only */
+.toggle.gms-toggle .toggle-label {
+    display: none;
 }
 
 /* =========================
@@ -552,6 +557,7 @@ h2 {
 
     .age-grid {
         grid-template-columns: repeat(3, 1fr);
+        gap: 13px;
     }
 
     .age-button {
@@ -561,6 +567,7 @@ h2 {
 
     .menu-grid {
         grid-template-columns: 1fr 1fr;
+        gap: 13px;
     }
 
     .menu-button {
@@ -1115,12 +1122,6 @@ function showCoachDashboard() {
                     Session<br>History
                 </button>
 
-                <button
-                    class="menu-button"
-                    onclick="showCoachAddPlayer()">
-                    Add<br>Player
-                </button>
-
             </div>
 
         </div>
@@ -1216,10 +1217,18 @@ function showRegister() {
                 }).join("")
             }
 
+            <br>
+
+            <button
+                class="green-button"
+                onclick="showCoachAddPlayer()">
+                + Add Player
+            </button>
+
             ${
                 active.length
                 ? `
-                    <br>
+                    <br><br>
 
                     <button
                         class="green-button"
@@ -1364,14 +1373,14 @@ function showCoachAddPlayer() {
 
             <button
                 class="back-button"
-                onclick="showCoachDashboard()">
-                ← Back
+                onclick="showRegister()">
+                ← Register
             </button>
 
             <h2>Add Player</h2>
 
             <div class="subtitle">
-                Add a player to ${currentAgeGroup}.
+                Add a player who is attending today.
             </div>
 
             <div class="form-group">
@@ -1398,16 +1407,18 @@ function showCoachAddPlayer() {
 
     `);
 
-    document.getElementById("coachPlayerName").focus();
+    document.getElementById(
+        "coachPlayerName"
+    ).focus();
 
 }
 
 function coachAddPlayer() {
 
     const name =
-        document.getElementById("coachPlayerName")
-        .value
-        .trim();
+        document.getElementById(
+            "coachPlayerName"
+        ).value.trim();
 
     if (!name) {
 
@@ -1416,20 +1427,17 @@ function coachAddPlayer() {
         return;
     }
 
-    addPlayerToAgeGroup(
-        currentAgeGroup,
-        name,
-        false
-    );
+    const newPlayer =
+        addPlayerToAgeGroup(
+            currentAgeGroup,
+            name,
+            false
+        );
 
-    alert(
-        name
-        + " has been added to "
-        + currentAgeGroup
-        + "."
-    );
+    /* New player is automatically present */
+    todayAttendance[newPlayer.id] = true;
 
-    showCoachDashboard();
+    showRegister();
 
 }
 
@@ -1826,7 +1834,7 @@ function renderPlayerManagementList(ageGroup) {
                         <div class="row-actions">
 
                             <label
-                                class="toggle ${
+                                class="toggle gms-toggle ${
                                     player.gms
                                     ? "confirmed"
                                     : "not-confirmed"
@@ -1845,11 +1853,6 @@ function renderPlayerManagementList(ageGroup) {
                                 <span class="toggle-knob"></span>
 
                                 <span class="toggle-label">
-                                    ${
-                                        player.gms
-                                        ? "CONFIRMED"
-                                        : "NOT CONF."
-                                    }
                                 </span>
 
                             </label>
@@ -2010,7 +2013,7 @@ function showSeniorAddPlayer(ageGroup) {
 
                 <label
                     id="newGMSToggle"
-                    class="toggle not-confirmed">
+                    class="toggle gms-toggle not-confirmed">
 
                     <input
                         id="newGMS"
@@ -2022,7 +2025,6 @@ function showSeniorAddPlayer(ageGroup) {
                     <span class="toggle-knob"></span>
 
                     <span class="toggle-label">
-                        NOT CONF.
                     </span>
 
                 </label>
@@ -2055,9 +2057,6 @@ function updateNewGMSToggle() {
     const toggle =
         document.getElementById("newGMSToggle");
 
-    const label =
-        toggle.querySelector(".toggle-label");
-
     if (input.checked) {
 
         toggle.classList.remove(
@@ -2068,9 +2067,6 @@ function updateNewGMSToggle() {
             "confirmed"
         );
 
-        label.textContent =
-            "CONFIRMED";
-
     } else {
 
         toggle.classList.remove(
@@ -2080,9 +2076,6 @@ function updateNewGMSToggle() {
         toggle.classList.add(
             "not-confirmed"
         );
-
-        label.textContent =
-            "NOT CONF.";
 
     }
 
@@ -2142,7 +2135,7 @@ function addPlayerToAgeGroup(
             Math.random() * 1000
         );
 
-    players[ageGroup].push({
+    const newPlayer = {
 
         id: id,
         name: name,
@@ -2150,7 +2143,13 @@ function addPlayerToAgeGroup(
         gms: gms,
         active: true
 
-    });
+    };
+
+    players[ageGroup].push(
+        newPlayer
+    );
+
+    return newPlayer;
 
 }
 
@@ -2441,7 +2440,7 @@ function showPINManagement() {
                     onclick="
                         showChangePIN('senior')
                     ">
-                    Change Senior PIN
+                    Change Senior Member PIN
                 </button>
 
             </div>

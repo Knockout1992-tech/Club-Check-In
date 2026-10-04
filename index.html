@@ -288,6 +288,11 @@ h2 {
     color: #111;
 }
 
+.age-button.selected-age {
+    background: #198754;
+    color: #fff;
+}
+
 /* =========================
    DASHBOARD
    ========================= */
@@ -377,7 +382,6 @@ h2 {
     gap: 8px;
 }
 
-/* Keep management rows compact */
 .player-management-row {
     flex-direction: row !important;
     align-items: center !important;
@@ -455,12 +459,10 @@ h2 {
     padding-right: 9px;
 }
 
-/* GMS is colour-only */
 .toggle.gms-toggle .toggle-label {
     display: none;
 }
 
-/* Compact GMS toggle */
 .toggle.gms-toggle {
     width: 54px;
     height: 30px;
@@ -646,6 +648,40 @@ h2 {
     font-weight: 700;
 }
 
+.archive-age-title {
+    background: #555;
+}
+
+.archive-due {
+    background: #fff3cd;
+    color: #664d03;
+    border: 1px solid #ffe69c;
+}
+
+/* =========================
+   MULTI AGE SELECTION
+   ========================= */
+
+.multi-age-summary {
+    padding: 12px 13px;
+    background: #eee;
+    border-radius: 9px;
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+.multi-age-summary strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.multi-age-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
 /* =========================
    MOBILE
    ========================= */
@@ -759,6 +795,7 @@ let currentSeason = "2026/27";
 
 let currentRole = null;
 let currentAgeGroup = null;
+let selectedAgeGroups = [];
 
 /* =========================================================
    DAILY REGISTERS
@@ -779,7 +816,9 @@ let players = {
             ageGroup: "U6",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-27"
         },
         {
             id: 102,
@@ -787,7 +826,29 @@ let players = {
             ageGroup: "U6",
             gms: false,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-27"
+        },
+        {
+            id: 103,
+            name: "Archie Cooper",
+            ageGroup: "U6",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-06-20"
+        },
+        {
+            id: 104,
+            name: "Freddie Baker",
+            ageGroup: "U6",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-20"
         }
     ],
 
@@ -798,7 +859,9 @@ let players = {
             ageGroup: "U7",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-22"
         },
         {
             id: 202,
@@ -806,7 +869,29 @@ let players = {
             ageGroup: "U7",
             gms: false,
             coachGmsSuggestion: false,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-22"
+        },
+        {
+            id: 203,
+            name: "Oscar Turner",
+            ageGroup: "U7",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-06-15"
+        },
+        {
+            id: 204,
+            name: "Theo Green",
+            ageGroup: "U7",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-22"
         }
     ],
 
@@ -817,7 +902,9 @@ let players = {
             ageGroup: "U8",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-28"
         },
         {
             id: 2,
@@ -825,7 +912,9 @@ let players = {
             ageGroup: "U8",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-28"
         },
         {
             id: 3,
@@ -833,7 +922,9 @@ let players = {
             ageGroup: "U8",
             gms: false,
             coachGmsSuggestion: false,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-28"
         },
         {
             id: 4,
@@ -841,7 +932,9 @@ let players = {
             ageGroup: "U8",
             gms: false,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-28"
         },
         {
             id: 5,
@@ -849,7 +942,9 @@ let players = {
             ageGroup: "U8",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-28"
         },
         {
             id: 6,
@@ -857,7 +952,41 @@ let players = {
             ageGroup: "U8",
             gms: false,
             coachGmsSuggestion: false,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-28"
+        },
+        {
+            id: 7,
+            name: "Liam Foster",
+            ageGroup: "U8",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-28"
+        },
+        {
+            id: 8,
+            name: "Noah Collins",
+            ageGroup: "U8",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-28"
+        },
+
+        /* Archived player available for Coach restore testing */
+        {
+            id: 9,
+            name: "Archived U8 Player",
+            ageGroup: "U8",
+            gms: true,
+            coachGmsSuggestion: false,
+            active: false,
+            archived: true,
+            lastAttendanceDate: "2026-05-10"
         }
     ],
 
@@ -868,7 +997,9 @@ let players = {
             ageGroup: "U9",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-27"
         },
         {
             id: 302,
@@ -876,7 +1007,19 @@ let players = {
             ageGroup: "U9",
             gms: false,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-27"
+        },
+        {
+            id: 303,
+            name: "Mason Wood",
+            ageGroup: "U9",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-06-25"
         }
     ],
 
@@ -887,7 +1030,9 @@ let players = {
             ageGroup: "U10",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-26"
         },
         {
             id: 402,
@@ -895,7 +1040,19 @@ let players = {
             ageGroup: "U10",
             gms: false,
             coachGmsSuggestion: false,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-26"
+        },
+        {
+            id: 403,
+            name: "Finley Moore",
+            ageGroup: "U10",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-06-10"
         }
     ],
 
@@ -906,7 +1063,9 @@ let players = {
             ageGroup: "U11",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-25"
         },
         {
             id: 502,
@@ -914,7 +1073,19 @@ let players = {
             ageGroup: "U11",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-25"
+        },
+        {
+            id: 503,
+            name: "Charlie Fox",
+            ageGroup: "U11",
+            gms: false,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-07-01"
         }
     ],
 
@@ -925,7 +1096,9 @@ let players = {
             ageGroup: "U12",
             gms: false,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-24"
         },
         {
             id: 602,
@@ -933,7 +1106,19 @@ let players = {
             ageGroup: "U12",
             gms: false,
             coachGmsSuggestion: false,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-24"
+        },
+        {
+            id: 603,
+            name: "Henry White",
+            ageGroup: "U12",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-05-30"
         }
     ],
 
@@ -944,7 +1129,9 @@ let players = {
             ageGroup: "U13",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-23"
         },
         {
             id: 702,
@@ -952,7 +1139,19 @@ let players = {
             ageGroup: "U13",
             gms: false,
             coachGmsSuggestion: false,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-23"
+        },
+        {
+            id: 703,
+            name: "Arthur King",
+            ageGroup: "U13",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-06-01"
         }
     ],
 
@@ -963,7 +1162,9 @@ let players = {
             ageGroup: "U14",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-20"
         },
         {
             id: 802,
@@ -971,7 +1172,19 @@ let players = {
             ageGroup: "U14",
             gms: false,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-20"
+        },
+        {
+            id: 803,
+            name: "Riley James",
+            ageGroup: "U14",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-05-15"
         }
     ],
 
@@ -982,7 +1195,9 @@ let players = {
             ageGroup: "U15",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-19"
         },
         {
             id: 902,
@@ -990,7 +1205,19 @@ let players = {
             ageGroup: "U15",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-19"
+        },
+        {
+            id: 903,
+            name: "Toby Harris",
+            ageGroup: "U15",
+            gms: false,
+            coachGmsSuggestion: false,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-06-05"
         }
     ],
 
@@ -1001,7 +1228,9 @@ let players = {
             ageGroup: "U16",
             gms: false,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-18"
         },
         {
             id: 1002,
@@ -1009,7 +1238,19 @@ let players = {
             ageGroup: "U16",
             gms: false,
             coachGmsSuggestion: false,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-18"
+        },
+        {
+            id: 1003,
+            name: "Reggie Young",
+            ageGroup: "U16",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-05-25"
         }
     ],
 
@@ -1020,7 +1261,9 @@ let players = {
             ageGroup: "U17",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-17"
         },
         {
             id: 1102,
@@ -1028,7 +1271,19 @@ let players = {
             ageGroup: "U17",
             gms: false,
             coachGmsSuggestion: false,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-17"
+        },
+        {
+            id: 1103,
+            name: "Louie Scott",
+            ageGroup: "U17",
+            gms: true,
+            coachGmsSuggestion: true,
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-06-12"
         }
     ],
 
@@ -1039,7 +1294,9 @@ let players = {
             ageGroup: "U18",
             gms: true,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-16"
         },
         {
             id: 1202,
@@ -1047,7 +1304,9 @@ let players = {
             ageGroup: "U18",
             gms: false,
             coachGmsSuggestion: true,
-            active: true
+            active: true,
+            archived: false,
+            lastAttendanceDate: "2026-09-16"
         }
     ]
 
@@ -1064,7 +1323,7 @@ let sessions = {
             date: "21/09/2026",
             dateKey: "2026-09-21",
             present: 2,
-            total: 2
+            total: 4
         }
     ],
 
@@ -1072,8 +1331,8 @@ let sessions = {
         {
             date: "22/09/2026",
             dateKey: "2026-09-22",
-            present: 1,
-            total: 2
+            present: 2,
+            total: 4
         }
     ],
 
@@ -1081,8 +1340,8 @@ let sessions = {
         {
             date: "28/09/2026",
             dateKey: "2026-09-28",
-            present: 3,
-            total: 6
+            present: 5,
+            total: 8
         }
     ],
 
@@ -1091,7 +1350,7 @@ let sessions = {
             date: "27/09/2026",
             dateKey: "2026-09-27",
             present: 2,
-            total: 2
+            total: 3
         }
     ],
 
@@ -1100,7 +1359,7 @@ let sessions = {
             date: "26/09/2026",
             dateKey: "2026-09-26",
             present: 1,
-            total: 2
+            total: 3
         }
     ],
 
@@ -1109,7 +1368,7 @@ let sessions = {
             date: "25/09/2026",
             dateKey: "2026-09-25",
             present: 2,
-            total: 2
+            total: 3
         }
     ],
 
@@ -1117,8 +1376,8 @@ let sessions = {
         {
             date: "24/09/2026",
             dateKey: "2026-09-24",
-            present: 1,
-            total: 2
+            present: 2,
+            total: 3
         }
     ],
 
@@ -1127,7 +1386,7 @@ let sessions = {
             date: "23/09/2026",
             dateKey: "2026-09-23",
             present: 2,
-            total: 2
+            total: 3
         }
     ],
 
@@ -1135,8 +1394,8 @@ let sessions = {
         {
             date: "20/09/2026",
             dateKey: "2026-09-20",
-            present: 1,
-            total: 2
+            present: 2,
+            total: 3
         }
     ],
 
@@ -1145,7 +1404,7 @@ let sessions = {
             date: "19/09/2026",
             dateKey: "2026-09-19",
             present: 2,
-            total: 2
+            total: 3
         }
     ],
 
@@ -1153,8 +1412,8 @@ let sessions = {
         {
             date: "18/09/2026",
             dateKey: "2026-09-18",
-            present: 1,
-            total: 2
+            present: 2,
+            total: 3
         }
     ],
 
@@ -1163,7 +1422,7 @@ let sessions = {
             date: "17/09/2026",
             dateKey: "2026-09-17",
             present: 2,
-            total: 2
+            total: 3
         }
     ],
 
@@ -1179,7 +1438,7 @@ let sessions = {
 };
 
 /* =========================================================
-   STORAGE / DAILY REGISTER HELPERS
+   STORAGE / DATE HELPERS
    ========================================================= */
 
 function getTodayKey() {
@@ -1202,40 +1461,129 @@ function getDisplayDate(dateKey) {
 
 }
 
+function getDaysSinceDate(dateKey) {
+
+    if (!dateKey) {
+        return null;
+    }
+
+    const last =
+        new Date(dateKey + "T00:00:00");
+
+    const today =
+        new Date(getTodayKey() + "T00:00:00");
+
+    const difference =
+        today.getTime() - last.getTime();
+
+    return Math.floor(
+        difference / 86400000
+    );
+
+}
+
+function getWeeksSinceDate(dateKey) {
+
+    const days =
+        getDaysSinceDate(dateKey);
+
+    if (days === null) {
+        return null;
+    }
+
+    return Math.floor(days / 7);
+
+}
+
+function isArchiveReviewDue(player) {
+
+    if (!player.active || player.archived) {
+        return false;
+    }
+
+    if (!player.lastAttendanceDate) {
+        return false;
+    }
+
+    return getDaysSinceDate(
+        player.lastAttendanceDate
+    ) >= 84;
+
+}
+
+/* =========================================================
+   PLAYER FINDER
+   ========================================================= */
+
+function findPlayerByID(playerID) {
+
+    for (const ageGroup of ageGroups) {
+
+        if (!players[ageGroup]) {
+            continue;
+        }
+
+        const player =
+            players[ageGroup].find(
+                player =>
+                    String(player.id) === String(playerID)
+            );
+
+        if (player) {
+            return player;
+        }
+
+    }
+
+    return null;
+
+}
+
+/* =========================================================
+   LOAD SAVED DATA
+   ========================================================= */
+
 function loadSavedData() {
 
     try {
 
-        const saved = JSON.parse(
-            localStorage.getItem("clubCheckInData")
-        );
+        const saved =
+            JSON.parse(
+                localStorage.getItem(
+                    "clubCheckInData"
+                )
+            );
 
-        if (!saved) {
-            return;
-        }
+        if (saved) {
 
-        if (saved.players) {
-            players = saved.players;
-        }
+            if (saved.players) {
+                players = saved.players;
+            }
 
-        if (saved.sessions) {
-            sessions = saved.sessions;
-        }
+            if (saved.sessions) {
+                sessions = saved.sessions;
+            }
 
-        if (saved.dailyRegisters) {
-            dailyRegisters = saved.dailyRegisters;
-        }
+            if (saved.dailyRegisters) {
+                dailyRegisters =
+                    saved.dailyRegisters;
+            }
 
-        if (saved.currentSeason) {
-            currentSeason = saved.currentSeason;
-        }
+            if (saved.currentSeason) {
+                currentSeason =
+                    saved.currentSeason;
+            }
 
-        if (saved.coachPIN) {
-            coachPIN = saved.coachPIN;
-        }
+            if (saved.coachPIN) {
+                coachPIN =
+                    saved.coachPIN;
+            }
 
-        if (saved.seniorPIN) {
-            seniorPIN = saved.seniorPIN;
+            if (saved.seniorPIN) {
+                seniorPIN =
+                    saved.seniorPIN;
+            }
+
         }
 
         ageGroups.forEach(ageGroup => {
@@ -1247,10 +1595,6 @@ function loadSavedData() {
             if (!sessions[ageGroup]) {
                 sessions[ageGroup] = [];
             }
-
-        });
-
-        ageGroups.forEach(ageGroup => {
 
             players[ageGroup].forEach(player => {
 
@@ -1264,9 +1608,40 @@ function loadSavedData() {
 
                 }
 
+                if (
+                    typeof player.archived
+                    !== "boolean"
+                ) {
+
+                    player.archived = false;
+
+                }
+
+                if (
+                    typeof player.active
+                    !== "boolean"
+                ) {
+
+                    player.active =
+                        !player.archived;
+
+                }
+
+                if (
+                    typeof player.lastAttendanceDate
+                    === "undefined"
+                ) {
+
+                    player.lastAttendanceDate =
+                        null;
+
+                }
+
             });
 
         });
+
+        backfillLastAttendanceDates();
 
     } catch (error) {
 
@@ -1279,53 +1654,181 @@ function loadSavedData() {
 
 }
 
+/* =========================================================
+   BACKFILL ATTENDANCE
+   ========================================================= */
+
+function backfillLastAttendanceDates() {
+
+    Object.keys(dailyRegisters)
+        .forEach(dateKey => {
+
+            const day =
+                dailyRegisters[dateKey];
+
+            if (!day) {
+                return;
+            }
+
+            Object.keys(day)
+                .forEach(ageGroup => {
+
+                    const register =
+                        day[ageGroup];
+
+                    if (
+                        !register ||
+                        !register.attendance
+                    ) {
+                        return;
+                    }
+
+                    Object.keys(
+                        register.attendance
+                    ).forEach(playerID => {
+
+                        if (
+                            register.attendance[playerID]
+                            !== true
+                        ) {
+                            return;
+                        }
+
+                        const player =
+                            findPlayerByID(
+                                playerID
+                            );
+
+                        if (!player) {
+                            return;
+                        }
+
+                        if (
+                            !player.lastAttendanceDate ||
+                            dateKey >
+                            player.lastAttendanceDate
+                        ) {
+
+                            player.lastAttendanceDate =
+                                dateKey;
+
+                        }
+
+                    });
+
+                });
+
+        });
+
+}
+
 function saveData() {
 
     localStorage.setItem(
         "clubCheckInData",
         JSON.stringify({
-            players: players,
-            sessions: sessions,
-            dailyRegisters: dailyRegisters,
-            currentSeason: currentSeason,
-            coachPIN: coachPIN,
-            seniorPIN: seniorPIN
+
+            players:
+                players,
+
+            sessions:
+                sessions,
+
+            dailyRegisters:
+                dailyRegisters,
+
+            currentSeason:
+                currentSeason,
+
+            coachPIN:
+                coachPIN,
+
+            seniorPIN:
+                seniorPIN
+
         })
     );
 
 }
 
-function closeExpiredRegisters() {
+/* =========================================================
+   ACTIVE PLAYERS
+   ========================================================= */
 
-    const todayKey = getTodayKey();
+function getActivePlayers(ageGroup) {
 
-    Object.keys(dailyRegisters).forEach(dateKey => {
+    if (!players[ageGroup]) {
+        return [];
+    }
 
-        if (dateKey >= todayKey) {
-            return;
-        }
+    return players[ageGroup]
+        .filter(player =>
+            player.active &&
+            !player.archived
+        );
 
-        Object.keys(dailyRegisters[dateKey]).forEach(ageGroup => {
+}
 
-            const register =
-                dailyRegisters[dateKey][ageGroup];
+function getAllActivePlayers() {
 
-            if (
-                register &&
-                !register.submitted
-            ) {
+    let result = [];
 
-                submitDailyRegister(
-                    dateKey,
-                    ageGroup,
-                    true
-                );
+    ageGroups.forEach(ageGroup => {
 
-            }
+        getActivePlayers(ageGroup)
+            .forEach(player => {
 
-        });
+                result.push(player);
+
+            });
 
     });
+
+    return result;
+
+}
+
+/* =========================================================
+   REGISTER HELPERS
+   ========================================================= */
+
+function closeExpiredRegisters() {
+
+    const todayKey =
+        getTodayKey();
+
+    Object.keys(dailyRegisters)
+        .forEach(dateKey => {
+
+            if (dateKey >= todayKey) {
+                return;
+            }
+
+            Object.keys(
+                dailyRegisters[dateKey]
+            ).forEach(ageGroup => {
+
+                const register =
+                    dailyRegisters[
+                        dateKey
+                    ][ageGroup];
+
+                if (
+                    register &&
+                    !register.submitted
+                ) {
+
+                    submitDailyRegister(
+                        dateKey,
+                        ageGroup,
+                        true
+                    );
+
+                }
+
+            });
+
+        });
 
 }
 
@@ -1340,7 +1843,9 @@ function submitDailyRegister(
     }
 
     const register =
-        dailyRegisters[dateKey][ageGroup];
+        dailyRegisters[
+            dateKey
+        ][ageGroup];
 
     if (!register) {
         return;
@@ -1354,23 +1859,36 @@ function submitDailyRegister(
     }
 
     const active =
-        getActivePlayers(ageGroup);
+        getActivePlayers(
+            ageGroup
+        );
 
     const attendance =
         register.attendance || {};
 
-    const present =
+    const presentPlayers =
         active.filter(player =>
             attendance[player.id] === true
-        ).length;
+        );
+
+    presentPlayers.forEach(player => {
+
+        player.lastAttendanceDate =
+            dateKey;
+
+    });
+
+    const present =
+        presentPlayers.length;
 
     if (!sessions[ageGroup]) {
         sessions[ageGroup] = [];
     }
 
     let existingSession =
-        sessions[ageGroup].find(session =>
-            session.dateKey === dateKey
+        sessions[ageGroup].find(
+            session =>
+                session.dateKey === dateKey
         );
 
     if (existingSession) {
@@ -1404,8 +1922,11 @@ function submitDailyRegister(
 
     }
 
-    register.submitted = true;
-    register.closedAutomatically = automatic;
+    register.submitted =
+        true;
+
+    register.closedAutomatically =
+        automatic;
 
     saveData();
 
@@ -1421,7 +1942,9 @@ function getTodayRegister(ageGroup) {
         dailyRegisters[todayKey][ageGroup]
     ) {
 
-        return dailyRegisters[todayKey][ageGroup];
+        return dailyRegisters[
+            todayKey
+        ][ageGroup];
 
     }
 
@@ -1438,23 +1961,33 @@ function createTodayRegister(ageGroup) {
         dailyRegisters[todayKey] = {};
     }
 
-    if (!dailyRegisters[todayKey][ageGroup]) {
+    if (
+        !dailyRegisters[todayKey][ageGroup]
+    ) {
 
         const attendance = {};
 
-        getActivePlayers(ageGroup).forEach(player => {
+        getActivePlayers(
+            ageGroup
+        ).forEach(player => {
 
-            attendance[player.id] = false;
+            attendance[player.id] =
+                false;
 
         });
 
-        dailyRegisters[todayKey][ageGroup] = {
+        dailyRegisters[
+            todayKey
+        ][ageGroup] = {
 
-            submitted: false,
+            submitted:
+                false,
 
-            closedAutomatically: false,
+            closedAutomatically:
+                false,
 
-            attendance: attendance
+            attendance:
+                attendance
 
         };
 
@@ -1462,28 +1995,38 @@ function createTodayRegister(ageGroup) {
 
     }
 
-    return dailyRegisters[todayKey][ageGroup];
+    return dailyRegisters[
+        todayKey
+    ][ageGroup];
 
 }
 
 function reopenTodayRegister() {
 
-    const register =
-        getTodayRegister(currentAgeGroup);
+    selectedAgeGroups.forEach(
+        ageGroup => {
 
-    if (!register) {
-        return;
-    }
+            const register =
+                getTodayRegister(
+                    ageGroup
+                );
 
-    if (
-        register.closedAutomatically ||
-        register.submitted === false
-    ) {
-        return;
-    }
+            if (
+                register &&
+                register.submitted &&
+                !register.closedAutomatically
+            ) {
 
-    register.submitted = false;
-    register.closedAutomatically = false;
+                register.submitted =
+                    false;
+
+                register.closedAutomatically =
+                    false;
+
+            }
+
+        }
+    );
 
     saveData();
 
@@ -1492,7 +2035,7 @@ function reopenTodayRegister() {
 }
 
 /* =========================================================
-   HELPERS
+   GENERAL HELPERS
    ========================================================= */
 
 function escapeHTML(value) {
@@ -1506,41 +2049,6 @@ function escapeHTML(value) {
 
 }
 
-function getActivePlayers(ageGroup) {
-
-    if (!players[ageGroup]) {
-        return [];
-    }
-
-    return players[ageGroup]
-        .filter(player => player.active);
-
-}
-
-function getAllActivePlayers() {
-
-    let result = [];
-
-    ageGroups.forEach(ageGroup => {
-
-        if (!players[ageGroup]) {
-            return;
-        }
-
-        players[ageGroup].forEach(player => {
-
-            if (player.active) {
-                result.push(player);
-            }
-
-        });
-
-    });
-
-    return result;
-
-}
-
 function getNextAgeGroup(ageGroup) {
 
     const index =
@@ -1550,11 +2058,15 @@ function getNextAgeGroup(ageGroup) {
         return null;
     }
 
-    if (index >= ageGroups.length - 1) {
+    if (
+        index >= ageGroups.length - 1
+    ) {
         return null;
     }
 
-    return ageGroups[index + 1];
+    return ageGroups[
+        index + 1
+    ];
 
 }
 
@@ -1577,10 +2089,16 @@ function getNextSeason(season) {
 
 }
 
-function ageGroupNeedsGMSConfirmation(ageGroup) {
+function ageGroupNeedsGMSConfirmation(
+    ageGroup
+) {
 
-    return getActivePlayers(ageGroup)
-        .some(player => !player.gms);
+    return getActivePlayers(
+        ageGroup
+    ).some(
+        player =>
+            !player.gms
+    );
 
 }
 
@@ -1593,7 +2111,9 @@ function renderShell(
     showHome = true
 ) {
 
-    document.getElementById("app").innerHTML = `
+    document.getElementById(
+        "app"
+    ).innerHTML = `
 
         <div class="app-header">
 
@@ -1620,11 +2140,15 @@ function renderShell(
             ${
                 showHome
                 ? `
+
                     <button
                         class="header-button"
                         onclick="showWelcome()">
+
                         Home
+
                     </button>
+
                 `
                 : ""
             }
@@ -1632,7 +2156,9 @@ function renderShell(
         </div>
 
         <main class="page">
+
             ${content}
+
         </main>
 
     `;
@@ -1647,8 +2173,11 @@ function showWelcome() {
 
     currentRole = null;
     currentAgeGroup = null;
+    selectedAgeGroups = [];
 
-    document.getElementById("app").innerHTML = `
+    document.getElementById(
+        "app"
+    ).innerHTML = `
 
         <div class="welcome">
 
@@ -1670,13 +2199,17 @@ function showWelcome() {
                 <button
                     class="role-button"
                     onclick="showPIN('coach')">
+
                     Coach
+
                 </button>
 
                 <button
                     class="role-button"
                     onclick="showPIN('senior')">
+
                     Senior Member
+
                 </button>
 
             </div>
@@ -1707,13 +2240,19 @@ function showPIN(role) {
             <button
                 class="back-button"
                 onclick="showWelcome()">
+
                 ← Back
+
             </button>
 
-            <h2>${roleName} Access</h2>
+            <h2>
+                ${roleName} Access
+            </h2>
 
             <div class="subtitle">
+
                 Enter your PIN to continue.
+
             </div>
 
             <input
@@ -1732,7 +2271,9 @@ function showPIN(role) {
             <button
                 class="primary-button"
                 onclick="checkPIN()">
+
                 Continue
+
             </button>
 
         </div>
@@ -1782,10 +2323,20 @@ function checkPIN() {
 }
 
 /* =========================================================
-   COACH AGE GROUPS
+   COACH AGE GROUP SELECTION
    ========================================================= */
 
 function showCoachAgeGroups() {
+
+    if (
+        !selectedAgeGroups.length &&
+        currentAgeGroup
+    ) {
+
+        selectedAgeGroups =
+            [currentAgeGroup];
+
+    }
 
     renderShell(`
 
@@ -1794,32 +2345,115 @@ function showCoachAgeGroups() {
             <button
                 class="back-button"
                 onclick="showWelcome()">
+
                 ← Back
+
             </button>
 
-            <h2>Select Age Group</h2>
+            <h2>
+                Select Age Groups
+            </h2>
 
             <div class="subtitle">
-                Select the team you are taking attendance for.
+
+                Select one or more teams. You can manage
+                several age groups in one register.
+
+            </div>
+
+            <div class="multi-age-summary">
+
+                <strong>
+                    Selected:
+                </strong>
+
+                ${
+                    selectedAgeGroups.length
+                    ? escapeHTML(
+                        selectedAgeGroups.join(
+                            " + "
+                        )
+                    )
+                    : "None selected"
+                }
+
             </div>
 
             <div class="age-grid">
 
                 ${
-                    ageGroups.map(age => `
+                    ageGroups.map(age => {
 
-                        <button
-                            class="age-button"
-                            onclick="
-                                selectCoachAgeGroup('${age}')
-                            ">
-                            ${age}
-                        </button>
+                        const selected =
+                            selectedAgeGroups
+                                .includes(age);
 
-                    `).join("")
+                        return `
+
+                            <button
+                                class="
+                                    age-button
+                                    ${
+                                        selected
+                                        ? "selected-age"
+                                        : ""
+                                    }
+                                "
+                                onclick="
+                                    toggleCoachAgeGroup(
+                                        '${age}'
+                                    )
+                                ">
+
+                                ${age}
+
+                            </button>
+
+                        `;
+
+                    }).join("")
                 }
 
             </div>
+
+            <br>
+
+            <div class="multi-age-actions">
+
+                <button
+                    class="secondary-button"
+                    onclick="
+                        selectCoachAgeGroups(
+                            ageGroups
+                        )
+                    ">
+
+                    Select All
+
+                </button>
+
+                <button
+                    class="secondary-button"
+                    onclick="
+                        selectedAgeGroups = [];
+                        showCoachAgeGroups();
+                    ">
+
+                    Clear
+
+                </button>
+
+            </div>
+
+            <button
+                class="primary-button"
+                onclick="
+                    openSelectedCoachAgeGroups()
+                ">
+
+                Continue
+
+            </button>
 
         </div>
 
@@ -1827,10 +2461,68 @@ function showCoachAgeGroups() {
 
 }
 
-function selectCoachAgeGroup(ageGroup) {
+function toggleCoachAgeGroup(
+    ageGroup
+) {
+
+    if (
+        selectedAgeGroups.includes(
+            ageGroup
+        )
+    ) {
+
+        selectedAgeGroups =
+            selectedAgeGroups.filter(
+                age =>
+                    age !== ageGroup
+            );
+
+    } else {
+
+        selectedAgeGroups.push(
+            ageGroup
+        );
+
+        selectedAgeGroups =
+            ageGroups.filter(
+                age =>
+                    selectedAgeGroups
+                        .includes(age)
+            );
+
+    }
+
+    showCoachAgeGroups();
+
+}
+
+function selectCoachAgeGroups(
+    groups
+) {
+
+    selectedAgeGroups =
+        [...groups];
+
+    showCoachAgeGroups();
+
+}
+
+function openSelectedCoachAgeGroups() {
+
+    if (
+        selectedAgeGroups.length === 0
+    ) {
+
+        alert(
+            "Please select at least one age group."
+        );
+
+        return;
+
+    }
 
     currentAgeGroup =
-        ageGroup;
+        selectedAgeGroups[0];
 
     showCoachDashboard();
 
@@ -1842,27 +2534,46 @@ function selectCoachAgeGroup(ageGroup) {
 
 function showCoachDashboard() {
 
-    const active =
-        getActivePlayers(
-            currentAgeGroup
-        );
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
 
-    const register =
-        getTodayRegister(
-            currentAgeGroup
-        );
+    let activeCount = 0;
+    let presentCount = 0;
 
-    const present =
-        register
-        ? active.filter(player =>
-            register.attendance[player.id] === true
-        ).length
-        : 0;
+    groups.forEach(ageGroup => {
 
-    const absent =
-        register
-        ? active.length - present
-        : 0;
+        const active =
+            getActivePlayers(
+                ageGroup
+            );
+
+        const register =
+            getTodayRegister(
+                ageGroup
+            );
+
+        activeCount +=
+            active.length;
+
+        if (register) {
+
+            presentCount +=
+                active.filter(
+                    player =>
+                        register.attendance[
+                            player.id
+                        ] === true
+                ).length;
+
+        }
+
+    });
+
+    const absentCount =
+        activeCount -
+        presentCount;
 
     renderShell(`
 
@@ -1871,45 +2582,69 @@ function showCoachDashboard() {
             <button
                 class="back-button"
                 onclick="showCoachAgeGroups()">
+
                 ← Age Groups
+
             </button>
 
-            <h2>${currentAgeGroup}</h2>
+            <h2>
+                ${
+                    groups.length === 1
+                    ? groups[0]
+                    : "Multiple Age Groups"
+                }
+            </h2>
 
             <div class="subtitle">
+
+                ${
+                    groups.join(
+                        " + "
+                    )
+                }
+
+                <br>
+
                 Coach Dashboard
+
             </div>
 
             <div class="stats">
 
                 <div class="stat">
+
                     <div class="stat-number">
-                        ${active.length}
+                        ${activeCount}
                     </div>
 
                     <div class="stat-label">
                         Players
                     </div>
+
                 </div>
 
                 <div class="stat">
+
                     <div class="stat-number">
-                        ${present}
+                        ${presentCount}
                     </div>
 
                     <div class="stat-label">
                         Present
                     </div>
+
                 </div>
 
                 <div class="stat">
+
                     <div class="stat-number">
-                        ${absent}
+                        ${absentCount}
                     </div>
 
                     <div class="stat-label">
                         Absent
                     </div>
+
                 </div>
 
             </div>
@@ -1919,19 +2654,27 @@ function showCoachDashboard() {
                 <button
                     class="menu-button"
                     onclick="showRegister()">
-                    Today's<br>Register
+
+                    Today's<br>
+                    Register
+
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showRoster()">
+
                     Roster
+
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showSessionHistory()">
-                    Session<br>History
+
+                    Session<br>
+                    History
+
                 </button>
 
             </div>
@@ -1943,22 +2686,36 @@ function showCoachDashboard() {
 }
 
 /* =========================================================
-   REGISTER
+   MULTI-AGE REGISTER
    ========================================================= */
 
 function showRegister() {
 
-    const register =
-        getTodayRegister(
-            currentAgeGroup
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
+
+    const registerExists =
+        groups.some(
+            ageGroup =>
+                getTodayRegister(
+                    ageGroup
+                )
         );
 
-    const active =
-        register
-        ? getActivePlayers(
-            currentAgeGroup
-        )
-        : [];
+    const allSubmitted =
+        groups.every(ageGroup => {
+
+            const register =
+                getTodayRegister(
+                    ageGroup
+                );
+
+            return register &&
+                register.submitted;
+
+        });
 
     renderShell(`
 
@@ -1967,234 +2724,309 @@ function showRegister() {
             <button
                 class="back-button"
                 onclick="showCoachDashboard()">
+
                 ← Back
+
             </button>
 
-            <h2>Today's Register</h2>
+            <h2>
+                Today's Register
+            </h2>
 
             <div class="subtitle">
-                ${currentAgeGroup}
+
+                ${groups.join(" + ")}
+
                 ·
-                ${getDisplayDate(getTodayKey())}
+
+                ${getDisplayDate(
+                    getTodayKey()
+                )}
+
             </div>
 
             ${
-                !register
+                !registerExists
 
                 ? `
 
                     <div class="info-box">
 
-                        Today's register has not been opened yet.
-                        Opening it will create today's register.
+                        Today's registers have not been
+                        opened yet.
+
+                        <br><br>
+
+                        Opening the register will create
+                        one register for each selected
+                        age group.
 
                     </div>
 
                     <button
                         class="primary-button"
-                        onclick="openTodayRegister()">
+                        onclick="
+                            openTodayRegister()
+                        ">
+
                         Take Register
+
                     </button>
-
-                `
-
-                : register.submitted
-
-                ? `
-
-                    <div class="register-status register-submitted">
-
-                        Register submitted.
-
-                    </div>
-
-                    <div class="info-box">
-
-                        This register can still be reopened
-                        during today if another player arrives
-                        late.
-
-                    </div>
-
-                    ${
-                        register.closedAutomatically
-                        ? `
-
-                            <div class="info-box">
-
-                                This register was automatically
-                                closed because the day ended.
-
-                            </div>
-
-                        `
-                        : `
-
-                            <button
-                                class="blue-button"
-                                onclick="
-                                    reopenTodayRegister()
-                                ">
-                                Reopen Today's Register
-                            </button>
-
-                        `
-                    }
-
-                    <br><br>
-
-                    ${
-                        active.length === 0
-
-                        ? `
-
-                            <div class="empty">
-                                No active players were recorded.
-                            </div>
-
-                        `
-
-                        : active.map(player => {
-
-                            const present =
-                                register.attendance[
-                                    player.id
-                                ] === true;
-
-                            return `
-
-                                <div class="player-row">
-
-                                    <div class="player-info">
-
-                                        <div class="player-name">
-                                            ${escapeHTML(
-                                                player.name
-                                            )}
-                                        </div>
-
-                                    </div>
-
-                                    <label
-                                        class="toggle ${
-                                            present
-                                            ? "present"
-                                            : "absent"
-                                        }">
-
-                                        <input
-                                            type="checkbox"
-                                            ${
-                                                present
-                                                ? "checked"
-                                                : ""
-                                            }
-                                            disabled>
-
-                                        <span
-                                            class="toggle-knob">
-                                        </span>
-
-                                        <span
-                                            class="toggle-label">
-
-                                            ${
-                                                present
-                                                ? "PRESENT"
-                                                : "ABSENT"
-                                            }
-
-                                        </span>
-
-                                    </label>
-
-                                </div>
-
-                            `;
-
-                        }).join("")
-                    }
 
                 `
 
                 : `
 
-                    <div class="register-status register-open">
-
-                        Register open — you can edit it
-                        throughout today.
-
-                    </div>
-
                     ${
-                        active.length === 0
+                        allSubmitted
 
                         ? `
 
-                            <div class="empty">
-                                No active players.
+                            <div class="
+                                register-status
+                                register-submitted
+                            ">
+
+                                All selected registers
+                                have been submitted.
+
                             </div>
 
-                        `
+                            <div class="info-box">
 
-                        : active.map(player => {
+                                The registers can still be
+                                reopened during today if
+                                another player arrives late.
 
-                            const present =
-                                register.attendance[
-                                    player.id
-                                ] === true;
+                            </div>
 
-                            return `
+                            ${
+                                groups.every(
+                                    ageGroup => {
 
-                                <div class="player-row">
+                                        const register =
+                                            getTodayRegister(
+                                                ageGroup
+                                            );
 
-                                    <div class="player-info">
+                                        return register &&
+                                            !register.closedAutomatically;
 
-                                        <div class="player-name">
-                                            ${escapeHTML(
-                                                player.name
-                                            )}
-                                        </div>
+                                    }
+                                )
+
+                                ? `
+
+                                    <button
+                                        class="blue-button"
+                                        onclick="
+                                            reopenTodayRegister()
+                                        ">
+
+                                        Reopen Today's Registers
+
+                                    </button>
+
+                                `
+
+                                : `
+
+                                    <div class="
+                                        info-box
+                                        warning-box
+                                    ">
+
+                                        One or more registers
+                                        have automatically closed
+                                        because the day ended.
 
                                     </div>
 
-                                    <label
-                                        class="toggle ${
-                                            present
-                                            ? "present"
-                                            : "absent"
-                                        }">
+                                `
+                            }
 
-                                        <input
-                                            type="checkbox"
-                                            ${
-                                                present
-                                                ? "checked"
-                                                : ""
-                                            }
-                                            onchange="
-                                                setAttendance(
-                                                    ${player.id},
-                                                    this.checked
+                        `
+
+                        : `
+
+                            <div class="
+                                register-status
+                                register-open
+                            ">
+
+                                Register open — you can
+                                edit it throughout today.
+
+                            </div>
+
+                        `
+                    }
+
+                    ${
+                        groups.map(ageGroup => {
+
+                            const register =
+                                getTodayRegister(
+                                    ageGroup
+                                );
+
+                            const active =
+                                getActivePlayers(
+                                    ageGroup
+                                );
+
+                            if (!register) {
+
+                                return `
+
+                                    <div
+                                        class="
+                                            info-box
+                                            warning-box
+                                        ">
+
+                                        ${ageGroup} register
+                                        has not been opened.
+
+                                        <br><br>
+
+                                        <button
+                                            class="secondary-button"
+                                            onclick="
+                                                openAgeGroupRegister(
+                                                    '${ageGroup}'
                                                 )
                                             ">
 
-                                        <span
-                                            class="toggle-knob">
+                                            Open ${ageGroup}
+
+                                        </button>
+
+                                    </div>
+
+                                `;
+
+                            }
+
+                            return `
+
+                                <div class="age-section">
+
+                                    <div class="
+                                        age-section-title
+                                    ">
+
+                                        <span>
+                                            ${ageGroup}
                                         </span>
 
                                         <span
-                                            class="toggle-label">
+                                            class="age-section-count">
 
-                                            ${
-                                                present
-                                                ? "PRESENT"
-                                                : "ABSENT"
+                                            ${active.length}
+                                            player${
+                                                active.length === 1
+                                                ? ""
+                                                : "s"
                                             }
 
                                         </span>
 
-                                    </label>
+                                    </div>
+
+                                    ${
+                                        active.length === 0
+
+                                        ? `
+
+                                            <div class="empty">
+
+                                                No active players.
+
+                                            </div>
+
+                                        `
+
+                                        : active.map(
+                                            player => {
+
+                                            const present =
+                                                register.attendance[
+                                                    player.id
+                                                ] === true;
+
+                                            return `
+
+                                                <div
+                                                    class="player-row">
+
+                                                    <div
+                                                        class="player-info">
+
+                                                        <div
+                                                            class="player-name">
+
+                                                            ${escapeHTML(
+                                                                player.name
+                                                            )}
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    <label
+                                                        class="
+                                                            toggle
+                                                            ${
+                                                                present
+                                                                ? "present"
+                                                                : "absent"
+                                                            }
+                                                        ">
+
+                                                        <input
+                                                            type="checkbox"
+                                                            ${
+                                                                present
+                                                                ? "checked"
+                                                                : ""
+                                                            }
+                                                            ${
+                                                                register.submitted
+                                                                ? "disabled"
+                                                                : `
+                                                                    onchange="
+                                                                        setAttendance(
+                                                                            ${player.id},
+                                                                            this.checked
+                                                                        )
+                                                                    "
+                                                                `
+                                                            }>
+
+                                                        <span
+                                                            class="toggle-knob">
+                                                        </span>
+
+                                                        <span
+                                                            class="toggle-label">
+
+                                                            ${
+                                                                present
+                                                                ? "PRESENT"
+                                                                : "ABSENT"
+                                                            }
+
+                                                        </span>
+
+                                                    </label>
+
+                                                </div>
+
+                                            `;
+
+                                        }).join("")
+                                    }
 
                                 </div>
 
@@ -2203,25 +3035,37 @@ function showRegister() {
                         }).join("")
                     }
 
-                    <br>
+                    ${
+                        !allSubmitted
+                        ? `
 
-                    <button
-                        class="green-button"
-                        onclick="showCoachAddPlayer()">
+                            <br>
 
-                        + Add Player
+                            <button
+                                class="green-button"
+                                onclick="
+                                    showCoachAddPlayer()
+                                ">
 
-                    </button>
+                                + Add Player
 
-                    <br><br>
+                            </button>
 
-                    <button
-                        class="primary-button"
-                        onclick="saveSession()">
+                            <br><br>
 
-                        Submit Today's Register
+                            <button
+                                class="primary-button"
+                                onclick="
+                                    saveSession()
+                                ">
 
-                    </button>
+                                Submit Today's Registers
+
+                            </button>
+
+                        `
+                        : ""
+                    }
 
                 `
             }
@@ -2234,8 +3078,31 @@ function showRegister() {
 
 function openTodayRegister() {
 
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
+
+    groups.forEach(
+        ageGroup => {
+
+            createTodayRegister(
+                ageGroup
+            );
+
+        }
+    );
+
+    showRegister();
+
+}
+
+function openAgeGroupRegister(
+    ageGroup
+) {
+
     createTodayRegister(
-        currentAgeGroup
+        ageGroup
     );
 
     showRegister();
@@ -2247,9 +3114,23 @@ function setAttendance(
     present
 ) {
 
+    let foundAgeGroup = null;
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+    foundAgeGroup =
+        player.ageGroup;
+
     const register =
         getTodayRegister(
-            currentAgeGroup
+            foundAgeGroup
         );
 
     if (
@@ -2259,8 +3140,17 @@ function setAttendance(
         return;
     }
 
-    register.attendance[playerID] =
+    register.attendance[
+        playerID
+    ] =
         present;
+
+    if (present) {
+
+        player.lastAttendanceDate =
+            getTodayKey();
+
+    }
 
     saveData();
 
@@ -2270,22 +3160,33 @@ function setAttendance(
 
 function saveSession() {
 
-    const register =
-        getTodayRegister(
-            currentAgeGroup
-        );
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
 
-    if (
-        !register ||
-        register.submitted
-    ) {
-        return;
-    }
+    groups.forEach(
+        ageGroup => {
 
-    submitDailyRegister(
-        getTodayKey(),
-        currentAgeGroup,
-        false
+            const register =
+                getTodayRegister(
+                    ageGroup
+                );
+
+            if (
+                register &&
+                !register.submitted
+            ) {
+
+                submitDailyRegister(
+                    getTodayKey(),
+                    ageGroup,
+                    false
+                );
+
+            }
+
+        }
     );
 
     showCoachDashboard();
@@ -2298,10 +3199,10 @@ function saveSession() {
 
 function showRoster() {
 
-    const active =
-        getActivePlayers(
-            currentAgeGroup
-        );
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
 
     renderShell(`
 
@@ -2310,111 +3211,165 @@ function showRoster() {
             <button
                 class="back-button"
                 onclick="showCoachDashboard()">
+
                 ← Back
+
             </button>
 
-            <h2>Roster</h2>
+            <h2>
+                Roster
+            </h2>
 
             <div class="subtitle">
-                ${currentAgeGroup}
+
+                ${groups.join(" + ")}
+
             </div>
 
             ${
-                active.length === 0
+                groups.map(ageGroup => {
 
-                ? `
-
-                    <div class="empty">
-                        No active players.
-                    </div>
-
-                `
-
-                : active.map(player => {
-
-                    const seniorConfirmed =
-                        player.gms === true;
-
-                    const coachSuggested =
-                        player.coachGmsSuggestion === true;
-
-                    const toggleOn =
-                        seniorConfirmed ||
-                        coachSuggested;
+                    const active =
+                        getActivePlayers(
+                            ageGroup
+                        );
 
                     return `
 
-                        <div class="player-row player-management-row">
+                        <div class="age-section">
 
-                            <div class="player-info">
+                            <div class="
+                                age-section-title
+                            ">
 
-                                <div class="player-name">
-                                    ${escapeHTML(player.name)}
-                                </div>
+                                <span>
+                                    ${ageGroup}
+                                </span>
 
-                                <div class="player-small">
+                                <span
+                                    class="age-section-count">
 
-                                    ${
-                                        seniorConfirmed
-                                        ? "Senior GMS confirmed"
-                                        : coachSuggested
-                                            ? "Coach suggests registered"
-                                            : "GMS not confirmed"
-                                    }
+                                    ${active.length}
 
-                                </div>
+                                </span>
 
                             </div>
 
-                            <div class="row-actions">
+                            ${
+                                active.length === 0
 
-                                <label
-                                    class="
-                                        toggle
-                                        gms-toggle
-                                        ${
-                                            toggleOn
-                                            ? "confirmed"
-                                            : "not-confirmed"
-                                        }
-                                        ${
-                                            seniorConfirmed
-                                            ? "locked"
-                                            : ""
-                                        }
-                                    ">
+                                ? `
 
-                                    <input
-                                        type="checkbox"
-                                        ${
-                                            toggleOn
-                                            ? "checked"
-                                            : ""
-                                        }
-                                        ${
-                                            seniorConfirmed
-                                            ? "disabled"
-                                            : `
-                                                onchange="
-                                                    setCoachGMSSuggestion(
-                                                        ${player.id},
-                                                        this.checked
-                                                    )
-                                                "
-                                            `
-                                        }>
+                                    <div class="empty">
+                                        No active players.
+                                    </div>
 
-                                    <span
-                                        class="toggle-knob">
-                                    </span>
+                                `
 
-                                    <span
-                                        class="toggle-label">
-                                    </span>
+                                : active.map(
+                                    player => {
 
-                                </label>
+                                    const seniorConfirmed =
+                                        player.gms === true;
 
-                            </div>
+                                    const coachSuggested =
+                                        player.coachGmsSuggestion === true;
+
+                                    const toggleOn =
+                                        seniorConfirmed ||
+                                        coachSuggested;
+
+                                    return `
+
+                                        <div class="
+                                            player-row
+                                            player-management-row
+                                        ">
+
+                                            <div
+                                                class="player-info">
+
+                                                <div
+                                                    class="player-name">
+
+                                                    ${escapeHTML(
+                                                        player.name
+                                                    )}
+
+                                                </div>
+
+                                                <div
+                                                    class="player-small">
+
+                                                    ${
+                                                        seniorConfirmed
+                                                        ? "Senior GMS confirmed"
+                                                        : coachSuggested
+                                                            ? "Coach suggests registered"
+                                                            : "GMS not confirmed"
+                                                    }
+
+                                                </div>
+
+                                            </div>
+
+                                            <div
+                                                class="row-actions">
+
+                                                <label
+                                                    class="
+                                                        toggle
+                                                        gms-toggle
+                                                        ${
+                                                            toggleOn
+                                                            ? "confirmed"
+                                                            : "not-confirmed"
+                                                        }
+                                                        ${
+                                                            seniorConfirmed
+                                                            ? "locked"
+                                                            : ""
+                                                        }
+                                                    ">
+
+                                                    <input
+                                                        type="checkbox"
+                                                        ${
+                                                            toggleOn
+                                                            ? "checked"
+                                                            : ""
+                                                        }
+                                                        ${
+                                                            seniorConfirmed
+                                                            ? "disabled"
+                                                            : `
+                                                                onchange="
+                                                                    setCoachGMSSuggestion(
+                                                                        ${player.id},
+                                                                        this.checked
+                                                                    )
+                                                                "
+                                                            `
+                                                        }>
+
+                                                    <span
+                                                        class="toggle-knob">
+                                                    </span>
+
+                                                    <span
+                                                        class="toggle-label">
+                                                    </span>
+
+                                                </label>
+
+                                            </div>
+
+                                        </div>
+
+                                    `;
+
+                                }).join("")
+                            }
 
                         </div>
 
@@ -2425,14 +3380,13 @@ function showRoster() {
 
             <div class="info-box">
 
-                Green means you are suggesting that you believe
-                the player is registered.
+                Green means you are suggesting that you
+                believe the player is registered.
 
                 <br><br>
 
-                Once a Senior Member confirms GMS, the status is
-                locked for coaches and the Senior confirmation
-                becomes authoritative.
+                Once a Senior Member confirms GMS, the status
+                is locked for coaches.
 
             </div>
 
@@ -2447,45 +3401,30 @@ function setCoachGMSSuggestion(
     suggested
 ) {
 
-    for (const ageGroup of ageGroups) {
+    const player =
+        findPlayerByID(
+            playerID
+        );
 
-        if (!players[ageGroup]) {
-            continue;
-        }
-
-        const player =
-            players[ageGroup]
-                .find(player =>
-                    player.id === playerID
-                );
-
-        if (player) {
-
-            /*
-               Senior confirmation is authoritative.
-               Coaches cannot change a confirmed status.
-            */
-            if (player.gms === true) {
-                return;
-            }
-
-            player.coachGmsSuggestion =
-                suggested;
-
-            saveData();
-
-            showRoster();
-
-            return;
-
-        }
-
+    if (!player) {
+        return;
     }
+
+    if (player.gms === true) {
+        return;
+    }
+
+    player.coachGmsSuggestion =
+        suggested;
+
+    saveData();
+
+    showRoster();
 
 }
 
 /* =========================================================
-   COACH ADD PLAYER
+   COACH ADD / RESTORE PLAYER
    ========================================================= */
 
 function showCoachAddPlayer() {
@@ -2497,13 +3436,28 @@ function showCoachAddPlayer() {
             <button
                 class="back-button"
                 onclick="showRegister()">
+
                 ← Register
+
             </button>
 
-            <h2>Add Player</h2>
+            <h2>
+                Add Player
+            </h2>
 
             <div class="subtitle">
-                Add a player to the squad and today's register.
+
+                Add a new player or search the archive
+                for a returning player.
+
+            </div>
+
+            <div class="info-box">
+
+                If this player has previously been archived,
+                search for them below and restore their
+                existing record instead of creating a duplicate.
+
             </div>
 
             <div class="form-group">
@@ -2516,15 +3470,22 @@ function showCoachAddPlayer() {
                     id="coachPlayerName"
                     class="text-input"
                     maxlength="100"
-                    autocomplete="off">
+                    autocomplete="off"
+                    oninput="
+                        searchArchivedPlayers()
+                    ">
 
             </div>
+
+            <div id="archiveSearchResults"></div>
+
+            <br>
 
             <button
                 class="green-button"
                 onclick="coachAddPlayer()">
 
-                Add Player
+                Add as New Player
 
             </button>
 
@@ -2535,6 +3496,164 @@ function showCoachAddPlayer() {
     document.getElementById(
         "coachPlayerName"
     ).focus();
+
+}
+
+function searchArchivedPlayers() {
+
+    const input =
+        document.getElementById(
+            "coachPlayerName"
+        );
+
+    const results =
+        document.getElementById(
+            "archiveSearchResults"
+        );
+
+    if (!input || !results) {
+        return;
+    }
+
+    const search =
+        input.value.trim().toLowerCase();
+
+    if (!search) {
+
+        results.innerHTML = "";
+
+        return;
+
+    }
+
+    const matches = [];
+
+    ageGroups.forEach(
+        ageGroup => {
+
+            (players[ageGroup] || [])
+                .forEach(player => {
+
+                    if (
+                        player.archived &&
+                        player.name
+                            .toLowerCase()
+                            .includes(search)
+                    ) {
+
+                        matches.push({
+                            player:
+                                player,
+
+                            previousAgeGroup:
+                                ageGroup
+                        });
+
+                    }
+
+                });
+
+        }
+    );
+
+    if (matches.length === 0) {
+
+        results.innerHTML = `
+
+            <div class="info-box">
+
+                No archived player matches
+                <strong>
+                    "${escapeHTML(input.value.trim())}"
+                </strong>.
+
+                <br><br>
+
+                You can add them as a new player if
+                this is a new registration.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    results.innerHTML = `
+
+        <div class="
+            info-box
+            success-box
+        ">
+
+            Archived player found.
+
+            <br>
+
+            Select the player below to restore
+            their existing record.
+
+        </div>
+
+        ${
+            matches.map(
+                match => `
+
+                    <div class="list-row">
+
+                        <div class="list-title">
+
+                            ${escapeHTML(
+                                match.player.name
+                            )}
+
+                        </div>
+
+                        <div class="list-sub">
+
+                            Previously:
+                            ${match.previousAgeGroup}
+
+                            ${
+                                match.player.lastAttendanceDate
+                                ? `
+                                    · Last attended:
+                                    ${
+                                        getDisplayDate(
+                                            match.player.lastAttendanceDate
+                                        )
+                                    }
+                                `
+                                : ""
+                            }
+
+                        </div>
+
+                        <br>
+
+                        <button
+                            class="blue-button"
+                            onclick="
+                                restoreArchivedPlayer(
+                                    ${match.player.id}
+                                )
+                            ">
+
+                            Restore to
+                            ${selectedAgeGroups.join(
+                                " + "
+                            )}
+
+                        </button>
+
+                    </div>
+
+                `
+            ).join("")
+        }
+
+    `;
 
 }
 
@@ -2554,9 +3673,24 @@ function coachAddPlayer() {
         return;
     }
 
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
+
+    if (!groups.length) {
+
+        alert(
+            "Please select an age group first."
+        );
+
+        return;
+
+    }
+
     const register =
         getTodayRegister(
-            currentAgeGroup
+            groups[0]
         );
 
     if (
@@ -2573,13 +3707,126 @@ function coachAddPlayer() {
 
     const newPlayer =
         addPlayerToAgeGroup(
-            currentAgeGroup,
+            groups[0],
             name,
             false
         );
 
     register.attendance[
         newPlayer.id
+    ] = true;
+
+    newPlayer.lastAttendanceDate =
+        getTodayKey();
+
+    saveData();
+
+    showRegister();
+
+}
+
+function restoreArchivedPlayer(
+    playerID
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
+
+    if (!groups.length) {
+        return;
+    }
+
+    const targetAgeGroup =
+        groups[0];
+
+    const register =
+        getTodayRegister(
+            targetAgeGroup
+        );
+
+    if (
+        !register ||
+        register.submitted
+    ) {
+
+        alert(
+            "Today's register is not open."
+        );
+
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Restore "
+            + player.name
+            + " to "
+            + targetAgeGroup
+            + "?\n\n"
+            + "Their historical attendance will be retained.\n"
+            + "GMS will be reset and require Senior confirmation."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    /* Remove from old age-group array */
+    ageGroups.forEach(
+        ageGroup => {
+
+            if (!players[ageGroup]) {
+                return;
+            }
+
+            players[ageGroup] =
+                players[ageGroup].filter(
+                    item =>
+                        item.id !== player.id
+                );
+
+        }
+    );
+
+    player.ageGroup =
+        targetAgeGroup;
+
+    player.active =
+        true;
+
+    player.archived =
+        false;
+
+    player.gms =
+        false;
+
+    player.coachGmsSuggestion =
+        false;
+
+    player.lastAttendanceDate =
+        getTodayKey();
+
+    if (!players[targetAgeGroup]) {
+        players[targetAgeGroup] = [];
+    }
+
+    players[targetAgeGroup].push(
+        player
+    );
+
+    register.attendance[
+        player.id
     ] = true;
 
     saveData();
@@ -2594,8 +3841,10 @@ function coachAddPlayer() {
 
 function showSessionHistory() {
 
-    const history =
-        sessions[currentAgeGroup] || [];
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
 
     renderShell(`
 
@@ -2604,49 +3853,90 @@ function showSessionHistory() {
             <button
                 class="back-button"
                 onclick="showCoachDashboard()">
+
                 ← Back
+
             </button>
 
-            <h2>Session History</h2>
+            <h2>
+                Session History
+            </h2>
 
             <div class="subtitle">
-                ${currentAgeGroup}
+
+                ${groups.join(" + ")}
+
             </div>
 
             ${
-                history.length === 0
+                groups.map(
+                    ageGroup => {
 
-                ? `
+                    const history =
+                        sessions[ageGroup] || [];
 
-                    <div class="empty">
-                        No sessions recorded yet.
-                    </div>
+                    return `
 
-                `
+                        <div class="age-section">
 
-                : history
-                    .slice()
-                    .reverse()
-                    .map(session => `
+                            <div class="
+                                age-section-title
+                            ">
 
-                    <div class="list-row">
+                                <span>
+                                    ${ageGroup}
+                                </span>
 
-                        <div class="list-title">
-                            ${session.date}
+                            </div>
+
+                            ${
+                                history.length === 0
+
+                                ? `
+
+                                    <div class="empty">
+                                        No sessions recorded yet.
+                                    </div>
+
+                                `
+
+                                : history
+                                    .slice()
+                                    .reverse()
+                                    .map(
+                                        session => `
+
+                                            <div
+                                                class="list-row">
+
+                                                <div
+                                                    class="list-title">
+
+                                                    ${session.date}
+
+                                                </div>
+
+                                                <div
+                                                    class="list-sub">
+
+                                                    ${session.present}
+                                                    of
+                                                    ${session.total}
+                                                    present
+
+                                                </div>
+
+                                            </div>
+
+                                        `
+                                    ).join("")
+                            }
+
                         </div>
 
-                        <div class="list-sub">
+                    `;
 
-                            ${session.present}
-                            of
-                            ${session.total}
-                            present
-
-                        </div>
-
-                    </div>
-
-                `).join("")
+                }).join("")
             }
 
         </div>
@@ -2659,6 +3949,17 @@ function showSessionHistory() {
    SENIOR DASHBOARD
    ========================================================= */
 
+function getArchiveReviewCount() {
+
+    return getAllActivePlayers()
+        .filter(
+            player =>
+                isArchiveReviewDue(player)
+        )
+        .length;
+
+}
+
 function showSeniorDashboard() {
 
     const active =
@@ -2669,11 +3970,16 @@ function showSeniorDashboard() {
             player => player.gms
         ).length;
 
+    const archiveReviewCount =
+        getArchiveReviewCount();
+
     renderShell(`
 
         <div class="card">
 
-            <h2>Senior Dashboard</h2>
+            <h2>
+                Senior Dashboard
+            </h2>
 
             <div class="subtitle">
                 Season ${currentSeason}
@@ -2719,13 +4025,45 @@ function showSeniorDashboard() {
 
             </div>
 
+            ${
+                archiveReviewCount > 0
+
+                ? `
+
+                    <div class="
+                        info-box
+                        archive-due
+                    ">
+
+                        <strong>
+                            ${archiveReviewCount}
+                        </strong>
+
+                        player${
+                            archiveReviewCount === 1
+                            ? ""
+                            : "s"
+                        }
+
+                        require an archive review
+                        because they have not attended
+                        for 12 weeks or more.
+
+                    </div>
+
+                `
+
+                : ""
+            }
+
             <div class="menu-grid">
 
                 <button
                     class="menu-button"
                     onclick="showSeniorAgeGroups()">
 
-                    All Age<br>Groups
+                    All Age<br>
+                    Groups
 
                 </button>
 
@@ -2733,7 +4071,31 @@ function showSeniorDashboard() {
                     class="menu-button"
                     onclick="showPlayerManagement()">
 
-                    Player<br>Management
+                    Player<br>
+                    Management
+
+                </button>
+
+                <button
+                    class="menu-button"
+                    onclick="showArchiveReview()">
+
+                    Archive<br>
+                    Review
+                    ${
+                        archiveReviewCount > 0
+                        ? `<br>(${archiveReviewCount})`
+                        : ""
+                    }
+
+                </button>
+
+                <button
+                    class="menu-button"
+                    onclick="showArchiveList()">
+
+                    Archived<br>
+                    Players
 
                 </button>
 
@@ -2741,7 +4103,8 @@ function showSeniorDashboard() {
                     class="menu-button blue"
                     onclick="showNewSeason()">
 
-                    New<br>Season
+                    New<br>
+                    Season
 
                 </button>
 
@@ -2749,7 +4112,8 @@ function showSeniorDashboard() {
                     class="menu-button"
                     onclick="showPINManagement()">
 
-                    Manage<br>PINs
+                    Manage<br>
+                    PINs
 
                 </button>
 
@@ -2779,21 +4143,28 @@ function showSeniorAgeGroups() {
 
             </button>
 
-            <h2>All Age Groups</h2>
+            <h2>
+                All Age Groups
+            </h2>
 
             <div class="subtitle">
+
                 All active players grouped by age group.
+
             </div>
 
             ${
-                ageGroups.map(ageGroup => {
+                ageGroups.map(
+                    ageGroup => {
 
                     const active =
                         getActivePlayers(
                             ageGroup
                         );
 
-                    if (active.length === 0) {
+                    if (
+                        active.length === 0
+                    ) {
                         return "";
                     }
 
@@ -2834,13 +4205,16 @@ function showSeniorAgeGroups() {
                             </div>
 
                             ${
-                                active.map(player => `
+                                active.map(
+                                    player => `
 
                                     <div class="player-row">
 
-                                        <div class="player-info">
+                                        <div
+                                            class="player-info">
 
-                                            <div class="player-name">
+                                            <div
+                                                class="player-name">
 
                                                 ${escapeHTML(
                                                     player.name
@@ -2862,7 +4236,8 @@ function showSeniorAgeGroups() {
 
                                     </div>
 
-                                `).join("")
+                                `
+                                ).join("")
                             }
 
                         </div>
@@ -2872,19 +4247,420 @@ function showSeniorAgeGroups() {
                 }).join("")
             }
 
+        </div>
+
+    `);
+
+}
+
+/* =========================================================
+   ARCHIVE REVIEW
+   ========================================================= */
+
+function showArchiveReview() {
+
+    const reviewPlayers =
+        getAllActivePlayers()
+            .filter(
+                player =>
+                    isArchiveReviewDue(
+                        player
+                    )
+            );
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showSeniorDashboard()">
+
+                ← Back
+
+            </button>
+
+            <h2>
+                Archive Review
+            </h2>
+
+            <div class="subtitle">
+
+                Review players who have not attended
+                for 12 weeks or more.
+
+            </div>
+
+            <div class="
+                info-box
+                warning-box
+            ">
+
+                <strong>
+                    Review only — nothing is automatic.
+                </strong>
+
+                <br><br>
+
+                A player is only archived when a Senior
+                Member decides that they should no longer
+                remain on the active register.
+
+                <br><br>
+
+                Holiday, injury or other known absences
+                can simply be left active.
+
+            </div>
+
             ${
-                getAllActivePlayers().length === 0
+                reviewPlayers.length === 0
 
                 ? `
 
                     <div class="empty">
-                        No active players.
+
+                        No players currently require
+                        an archive review.
+
                     </div>
 
                 `
 
-                : ""
+                : ageGroups.map(
+                    ageGroup => {
+
+                    const groupPlayers =
+                        reviewPlayers.filter(
+                            player =>
+                                player.ageGroup ===
+                                ageGroup
+                        );
+
+                    if (
+                        groupPlayers.length === 0
+                    ) {
+                        return "";
+                    }
+
+                    return `
+
+                        <div class="age-section">
+
+                            <div class="
+                                age-section-title
+                            ">
+
+                                <span>
+                                    ${ageGroup}
+                                </span>
+
+                                <span
+                                    class="age-section-count">
+
+                                    ${groupPlayers.length}
+
+                                </span>
+
+                            </div>
+
+                            ${
+                                groupPlayers.map(
+                                    player => {
+
+                                    const days =
+                                        getDaysSinceDate(
+                                            player.lastAttendanceDate
+                                        );
+
+                                    const weeks =
+                                        getWeeksSinceDate(
+                                            player.lastAttendanceDate
+                                        );
+
+                                    return `
+
+                                        <div
+                                            class="player-row">
+
+                                            <div
+                                                class="player-info">
+
+                                                <div
+                                                    class="player-name">
+
+                                                    ${escapeHTML(
+                                                        player.name
+                                                    )}
+
+                                                </div>
+
+                                                <div
+                                                    class="player-small">
+
+                                                    Last attended:
+                                                    ${
+                                                        getDisplayDate(
+                                                            player.lastAttendanceDate
+                                                        )
+                                                    }
+
+                                                    ·
+                                                    ${
+                                                        weeks
+                                                    }
+                                                    week${
+                                                        weeks === 1
+                                                        ? ""
+                                                        : "s"
+                                                    }
+
+                                                    ago
+
+                                                    ·
+                                                    ${days}
+                                                    days
+
+                                                </div>
+
+                                            </div>
+
+                                            <button
+                                                class="
+                                                    red-button
+                                                    small-button
+                                                "
+                                                onclick="
+                                                    archivePlayer(
+                                                        ${player.id}
+                                                    )
+                                                ">
+
+                                                Archive
+
+                                            </button>
+
+                                        </div>
+
+                                    `;
+
+                                }).join("")
+                            }
+
+                        </div>
+
+                    `;
+
+                }).join("")
             }
+
+        </div>
+
+    `);
+
+}
+
+function archivePlayer(
+    playerID
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Archive "
+            + player.name
+            + "?\n\n"
+            + "Their historical attendance will be retained.\n"
+            + "They will disappear from active registers."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    player.active =
+        false;
+
+    player.archived =
+        true;
+
+    player.coachGmsSuggestion =
+        false;
+
+    saveData();
+
+    showArchiveReview();
+
+}
+
+/* =========================================================
+   ARCHIVED PLAYER LIST
+   ========================================================= */
+
+function getAllArchivedPlayers() {
+
+    let result = [];
+
+    ageGroups.forEach(
+        ageGroup => {
+
+        (players[ageGroup] || [])
+            .forEach(player => {
+
+                if (player.archived) {
+
+                    result.push(player);
+
+                }
+
+            });
+
+    });
+
+    return result;
+
+}
+
+function showArchiveList() {
+
+    const archived =
+        getAllArchivedPlayers();
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showSeniorDashboard()">
+
+                ← Back
+
+            </button>
+
+            <h2>
+                Archived Players
+            </h2>
+
+            <div class="subtitle">
+
+                Archived players remain available for
+                historical records and coach restoration.
+
+            </div>
+
+            ${
+                archived.length === 0
+
+                ? `
+
+                    <div class="empty">
+
+                        No players are currently archived.
+
+                    </div>
+
+                `
+
+                : ageGroups.map(
+                    ageGroup => {
+
+                    const groupPlayers =
+                        archived.filter(
+                            player =>
+                                player.ageGroup ===
+                                ageGroup
+                        );
+
+                    if (
+                        groupPlayers.length === 0
+                    ) {
+                        return "";
+                    }
+
+                    return `
+
+                        <div class="age-section">
+
+                            <div class="
+                                age-section-title
+                                archive-age-title
+                            ">
+
+                                <span>
+                                    ${ageGroup}
+                                </span>
+
+                                <span
+                                    class="age-section-count">
+
+                                    ${groupPlayers.length}
+
+                                </span>
+
+                            </div>
+
+                            ${
+                                groupPlayers.map(
+                                    player => `
+
+                                    <div
+                                        class="list-row">
+
+                                        <div
+                                            class="list-title">
+
+                                            ${escapeHTML(
+                                                player.name
+                                            )}
+
+                                        </div>
+
+                                        <div
+                                            class="list-sub">
+
+                                            Last attended:
+
+                                            ${
+                                                player.lastAttendanceDate
+                                                ? getDisplayDate(
+                                                    player.lastAttendanceDate
+                                                )
+                                                : "No recorded attendance"
+                                            }
+
+                                        </div>
+
+                                    </div>
+
+                                `
+                                ).join("")
+                            }
+
+                        </div>
+
+                    `;
+
+                }).join("")
+            }
+
+            <br>
+
+            <div class="info-box">
+
+                Coaches can restore archived players through
+                <strong>+ Add Player</strong> when taking
+                a register.
+
+            </div>
 
         </div>
 
@@ -2901,7 +4677,8 @@ function showPlayerManagement(
 ) {
 
     if (selectedAge) {
-        currentAgeGroup = selectedAge;
+        currentAgeGroup =
+            selectedAge;
     } else {
         currentAgeGroup = null;
     }
@@ -2918,11 +4695,13 @@ function showPlayerManagement(
 
             </button>
 
-            <h2>Player Management</h2>
+            <h2>
+                Player Management
+            </h2>
 
             <div class="subtitle">
 
-                Add, remove and manage GMS status.
+                Add, archive and manage GMS status.
 
                 <br>
 
@@ -2934,7 +4713,8 @@ function showPlayerManagement(
             <div class="age-grid">
 
                 ${
-                    ageGroups.map(age => {
+                    ageGroups.map(
+                        age => {
 
                         const needsGMS =
                             ageGroupNeedsGMSConfirmation(
@@ -2996,7 +4776,9 @@ function renderPlayerManagementList(
 
         <div class="card">
 
-            <h3>${ageGroup}</h3>
+            <h3>
+                ${ageGroup}
+            </h3>
 
             ${
                 active.length === 0
@@ -3009,16 +4791,19 @@ function renderPlayerManagementList(
 
                 `
 
-                : active.map(player => `
+                : active.map(
+                    player => `
 
                     <div class="
                         player-row
                         player-management-row
                     ">
 
-                        <div class="player-info">
+                        <div
+                            class="player-info">
 
-                            <div class="player-name">
+                            <div
+                                class="player-name">
 
                                 ${escapeHTML(
                                     player.name
@@ -3026,7 +4811,8 @@ function renderPlayerManagementList(
 
                             </div>
 
-                            <div class="player-small">
+                            <div
+                                class="player-small">
 
                                 ${
                                     player.gms
@@ -3040,7 +4826,8 @@ function renderPlayerManagementList(
 
                         </div>
 
-                        <div class="row-actions">
+                        <div
+                            class="row-actions">
 
                             <label
                                 class="
@@ -3083,12 +4870,12 @@ function renderPlayerManagementList(
                                     small-button
                                 "
                                 onclick="
-                                    removePlayer(
+                                    archivePlayer(
                                         ${player.id}
                                     )
                                 ">
 
-                                Remove
+                                Archive
 
                             </button>
 
@@ -3096,7 +4883,8 @@ function renderPlayerManagementList(
 
                     </div>
 
-                `).join("")
+                `
+                ).join("")
             }
 
             <br>
@@ -3124,100 +4912,24 @@ function setGMS(
     confirmed
 ) {
 
-    for (const ageGroup of ageGroups) {
-
-        if (!players[ageGroup]) {
-            continue;
-        }
-
-        const player =
-            players[ageGroup]
-                .find(player =>
-                    player.id === playerID
-                );
-
-        if (player) {
-
-            player.gms =
-                confirmed;
-
-            /*
-               Senior confirmation is authoritative.
-               Once confirmed, the coach suggestion is
-               no longer needed.
-            */
-            if (confirmed) {
-
-                player.coachGmsSuggestion =
-                    false;
-
-            }
-
-            saveData();
-
-            showPlayerManagement(
-                currentAgeGroup
-            );
-
-            return;
-
-        }
-
-    }
-
-}
-
-/* =========================================================
-   REMOVE PLAYER
-   ========================================================= */
-
-function removePlayer(
-    playerID
-) {
-
-    let playerFound = null;
-
-    for (const ageGroup of ageGroups) {
-
-        if (!players[ageGroup]) {
-            continue;
-        }
-
-        const player =
-            players[ageGroup]
-                .find(player =>
-                    player.id === playerID
-                );
-
-        if (player) {
-
-            playerFound =
-                player;
-
-            break;
-
-        }
-
-    }
-
-    if (!playerFound) {
-        return;
-    }
-
-    const confirmed =
-        confirm(
-            "Remove "
-            + playerFound.name
-            + " from the active register?\n\n"
-            + "Their historical attendance will be retained."
+    const player =
+        findPlayerByID(
+            playerID
         );
 
-    if (!confirmed) {
+    if (!player) {
         return;
     }
 
-    playerFound.active =
-        false;
+    player.gms =
+        confirmed;
+
+    if (confirmed) {
+
+        player.coachGmsSuggestion =
+            false;
+
+    }
 
     saveData();
 
@@ -3254,7 +4966,9 @@ function showSeniorAddPlayer(
 
             </button>
 
-            <h2>Add Player</h2>
+            <h2>
+                Add Player
+            </h2>
 
             <div class="subtitle">
                 ${ageGroup}
@@ -3434,7 +5148,13 @@ function addPlayerToAgeGroup(
             false,
 
         active:
-            true
+            true,
+
+        archived:
+            false,
+
+        lastAttendanceDate:
+            null
 
     };
 
@@ -3471,7 +5191,9 @@ function showNewSeason() {
 
             </button>
 
-            <h2>New Season</h2>
+            <h2>
+                New Season
+            </h2>
 
             <div class="subtitle">
 
@@ -3479,7 +5201,10 @@ function showNewSeason() {
 
             </div>
 
-            <div class="info-box warning-box">
+            <div class="
+                info-box
+                warning-box
+            ">
 
                 <strong>
                     Current season:
@@ -3504,7 +5229,8 @@ function showNewSeason() {
             ${
                 ageGroups
                     .slice(0, -1)
-                    .map(ageGroup => {
+                    .map(
+                        ageGroup => {
 
                         const next =
                             getNextAgeGroup(
@@ -3519,9 +5245,7 @@ function showNewSeason() {
                         return `
 
                             <div
-                                class="
-                                    promotion-row
-                                ">
+                                class="promotion-row">
 
                                 <span>
 
@@ -3539,8 +5263,7 @@ function showNewSeason() {
 
                         `;
 
-                    })
-                    .join("")
+                    }).join("")
             }
 
             <div class="promotion-row">
@@ -3627,13 +5350,17 @@ function performNewSeason(
 
     const newPlayers = {};
 
-    ageGroups.forEach(ageGroup => {
+    ageGroups.forEach(
+        ageGroup => {
 
-        newPlayers[ageGroup] = [];
+            newPlayers[ageGroup] =
+                [];
 
-    });
+        }
+    );
 
-    ageGroups.forEach(ageGroup => {
+    ageGroups.forEach(
+        ageGroup => {
 
         if (!players[ageGroup]) {
             players[ageGroup] = [];
@@ -3641,24 +5368,29 @@ function performNewSeason(
 
         const inactive =
             players[ageGroup]
-                .filter(player =>
-                    !player.active
+                .filter(
+                    player =>
+                        !player.active
                 );
 
-        inactive.forEach(player => {
+        inactive.forEach(
+            player => {
 
-            newPlayers[ageGroup]
-                .push(player);
+                newPlayers[ageGroup]
+                    .push(player);
 
-        });
+            }
+        );
 
         const active =
             players[ageGroup]
-                .filter(player =>
-                    player.active
+                .filter(
+                    player =>
+                        player.active
                 );
 
-        active.forEach(player => {
+        active.forEach(
+            player => {
 
             const next =
                 getNextAgeGroup(
@@ -3717,7 +5449,9 @@ function showPINManagement() {
 
             </button>
 
-            <h2>Manage PINs</h2>
+            <h2>
+                Manage PINs
+            </h2>
 
             <div class="subtitle">
 
@@ -3959,11 +5693,14 @@ closeExpiredRegisters();
 
 showWelcome();
 
-setInterval(() => {
+setInterval(
+    () => {
 
-    closeExpiredRegisters();
+        closeExpiredRegisters();
 
-}, 60000);
+    },
+    60000
+);
 
 </script>
 

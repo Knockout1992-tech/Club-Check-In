@@ -13,366 +13,453 @@
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
+    background: #f2f2f2;
+    color: #111;
+}
+
+header {
     background: #000;
-    color: #000;
-}
-
-.app {
-    width: 100%;
-    max-width: 600px;
-    min-height: 100vh;
-    margin: auto;
-    background: #fff;
-}
-
-.screen {
-    display: none;
-    min-height: 100vh;
-    padding: 25px;
-}
-
-.screen.active {
-    display: block;
-}
-
-/* ---------- GENERAL ---------- */
-
-.header {
+    color: #fff;
+    padding: 14px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #000;
-    padding-bottom: 15px;
-    margin-bottom: 25px;
+    gap: 15px;
 }
 
-.header-title {
-    font-size: 22px;
-    font-weight: 900;
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.logo-small {
-    width: 55px;
-    height: 55px;
-}
-
-.logo-small img {
-    width: 100%;
-    height: 100%;
+.header-left img {
+    width: 48px;
+    height: 48px;
     object-fit: contain;
 }
 
-h1 {
-    font-size: 36px;
-    margin: 0 0 8px;
-    letter-spacing: 2px;
+.header-title {
+    font-size: 20px;
+    font-weight: bold;
 }
 
-h2 {
-    font-size: 26px;
-    margin: 0 0 20px;
+.header-season {
+    font-size: 13px;
+    color: #ccc;
 }
 
-h3 {
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+h1, h2, h3 {
     margin-top: 0;
 }
 
-p {
-    line-height: 1.4;
-}
-
 button {
-    font-family: inherit;
-}
-
-.button {
-    width: 100%;
-    padding: 16px;
-    margin: 6px 0;
+    border: none;
     border-radius: 8px;
-    border: 2px solid #000;
-    font-size: 17px;
+    padding: 12px 16px;
+    font-size: 15px;
     font-weight: bold;
     cursor: pointer;
 }
 
-.black {
+button:active {
+    transform: scale(0.98);
+}
+
+.btn-black {
     background: #000;
     color: #fff;
 }
 
-.white {
-    background: #fff;
-    color: #000;
+.btn-grey {
+    background: #ddd;
+    color: #111;
 }
 
-.button:hover {
-    opacity: 0.8;
+.btn-green {
+    background: #198754;
+    color: #fff;
 }
 
-.back-button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 20px;
-    background: none;
-    border: none;
-    text-decoration: underline;
-    cursor: pointer;
-    font-size: 15px;
+.btn-red {
+    background: #c82333;
+    color: #fff;
 }
 
-.card {
-    border: 2px solid #000;
-    border-radius: 10px;
-    padding: 18px;
+.btn-blue {
+    background: #0d6efd;
+    color: #fff;
+}
+
+.btn-small {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.welcome {
+    text-align: center;
+    padding: 35px 20px;
+}
+
+.welcome img {
+    width: 150px;
+    max-width: 60%;
     margin-bottom: 15px;
 }
 
-.stat-grid {
+.welcome h1 {
+    font-size: 34px;
+    margin-bottom: 5px;
+}
+
+.welcome p {
+    color: #555;
+    margin-bottom: 28px;
+}
+
+.role-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    max-width: 500px;
+    margin: auto;
+}
+
+.role-buttons button {
+    padding: 20px;
+    font-size: 18px;
+}
+
+.pin-box {
+    max-width: 420px;
+    margin: 40px auto;
+    text-align: center;
+}
+
+.pin-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 24px;
+    text-align: center;
+    letter-spacing: 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.error {
+    color: #c82333;
+    font-weight: bold;
+    min-height: 22px;
+}
+
+.age-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.age-grid button {
+    padding: 20px 10px;
+    font-size: 18px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.dashboard-grid button {
+    min-height: 85px;
+    font-size: 16px;
+}
+
+.stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
 .stat {
-    border: 2px solid #000;
-    border-radius: 8px;
-    padding: 15px 5px;
+    background: #f7f7f7;
+    border-radius: 10px;
+    padding: 16px;
     text-align: center;
 }
 
 .stat-number {
-    display: block;
-    font-size: 27px;
-    font-weight: 900;
+    font-size: 28px;
+    font-weight: bold;
 }
 
 .stat-label {
-    font-size: 11px;
-    text-transform: uppercase;
-}
-
-input,
-select {
-    width: 100%;
-    padding: 14px;
-    border: 2px solid #000;
-    border-radius: 7px;
-    font-size: 17px;
-    margin-bottom: 10px;
-}
-
-.message {
-    min-height: 25px;
-    margin: 10px 0;
-    text-align: center;
-    font-weight: bold;
-}
-
-.small-text {
     font-size: 13px;
     color: #666;
+    margin-top: 4px;
 }
-
-.footer {
-    margin-top: 35px;
-    text-align: center;
-    color: #777;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* ---------- WELCOME ---------- */
-
-#welcomeScreen {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-#welcomeScreen.active {
-    display: flex;
-}
-
-.welcome-content {
-    width: 100%;
-}
-
-.main-logo {
-    width: 190px;
-    height: 190px;
-    margin: 0 auto 25px;
-}
-
-.main-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.club-name {
-    font-size: 17px;
-    font-weight: bold;
-    margin-bottom: 45px;
-}
-
-/* ---------- PIN ---------- */
-
-.pin-screen {
-    text-align: center;
-    padding-top: 80px;
-}
-
-.pin-logo {
-    width: 110px;
-    height: 110px;
-    margin: 0 auto 25px;
-}
-
-.pin-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.pin-input {
-    width: 220px;
-    text-align: center;
-    font-size: 30px;
-    letter-spacing: 8px;
-}
-
-/* ---------- AGE GROUP ---------- */
-
-.age-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-
-.age-button {
-    padding: 22px 5px;
-    border: 2px solid #000;
-    background: #fff;
-    border-radius: 8px;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.age-button:hover {
-    background: #000;
-    color: #fff;
-}
-
-/* ---------- PLAYER LIST ---------- */
 
 .player-row {
-    border: 2px solid #000;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.player-row:last-child {
+    border-bottom: none;
 }
 
 .player-name {
     font-weight: bold;
-    flex: 1;
 }
 
-.attendance-buttons {
+.player-sub {
+    font-size: 12px;
+    color: #777;
+    margin-top: 3px;
+}
+
+.actions {
     display: flex;
-    gap: 5px;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
-.attendance-buttons button {
-    border: 2px solid #000;
-    border-radius: 6px;
-    padding: 8px 10px;
-    cursor: pointer;
+.empty {
+    color: #777;
+    text-align: center;
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    font-size: 16px;
+}
+
+.back {
+    margin-bottom: 15px;
+}
+
+.session-row {
+    padding: 13px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.session-row:last-child {
+    border-bottom: none;
+}
+
+.session-date {
     font-weight: bold;
 }
 
-.present {
+.session-summary {
+    color: #666;
+    font-size: 13px;
+    margin-top: 3px;
+}
+
+/* TOGGLE */
+
+.toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 108px;
+    height: 38px;
+    border-radius: 30px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.toggle input {
+    display: none;
+}
+
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+}
+
+.toggle-knob {
+    position: absolute;
+    top: 4px;
+    width: 30px;
+    height: 30px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    z-index: 2;
+}
+
+.toggle-label {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.toggle.present,
+.toggle.confirmed {
+    background: #198754;
+}
+
+.toggle.absent,
+.toggle.not-confirmed {
+    background: #c82333;
+}
+
+.toggle.present .toggle-knob,
+.toggle.confirmed .toggle-knob {
+    left: 74px;
+}
+
+.toggle.absent .toggle-knob,
+.toggle.not-confirmed .toggle-knob {
+    left: 4px;
+}
+
+.toggle.present .toggle-label,
+.toggle.confirmed .toggle-label {
+    justify-content: flex-start;
+    padding-left: 12px;
+}
+
+.toggle.absent .toggle-label,
+.toggle.not-confirmed .toggle-label {
+    justify-content: flex-end;
+    padding-right: 10px;
+}
+
+.warning-box {
+    background: #fff3cd;
+    border: 1px solid #ffe69c;
+    color: #664d03;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 15px;
+}
+
+.success-box {
+    background: #d1e7dd;
+    border: 1px solid #a3cfbb;
+    color: #0f5132;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 15px;
+}
+
+.danger-box {
+    background: #f8d7da;
+    border: 1px solid #f1aeb5;
+    color: #842029;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 15px;
+}
+
+.promotion-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.promotion-row:last-child {
+    border-bottom: none;
+}
+
+.age-badge {
+    display: inline-block;
     background: #000;
     color: #fff;
-}
-
-.absent {
-    background: #fff;
-    color: #000;
-}
-
-.present.selected {
-    background: #000;
-    color: #fff;
-}
-
-.absent.selected {
-    background: #ddd;
-}
-
-/* ---------- GMS ---------- */
-
-.gms-status {
-    padding: 5px 8px;
     border-radius: 5px;
+    padding: 4px 7px;
     font-size: 12px;
     font-weight: bold;
 }
 
-.gms-ok {
-    background: #000;
-    color: #fff;
+.inactive {
+    opacity: 0.55;
 }
 
-.gms-no {
-    background: #ddd;
-    color: #000;
-}
-
-.gms-button {
-    padding: 8px 10px;
-    border: 2px solid #000;
-    background: #fff;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-/* ---------- TABLE ---------- */
-
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #ddd;
-}
-
-.info-row:last-child {
-    border-bottom: none;
-}
-
-.danger {
-    border-color: #000;
-}
-
-/* ---------- DESKTOP ---------- */
-
-@media (min-width: 700px) {
-    .app {
-        min-height: 100vh;
-        box-shadow: 0 0 30px rgba(0,0,0,0.4);
+@media (max-width: 700px) {
+    .age-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
 
-    .screen {
-        padding: 35px;
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .player-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .player-row .actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .role-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 450px) {
+    .age-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
     }
 }
 </style>
@@ -380,1402 +467,1796 @@ select {
 
 <body>
 
-<div class="app">
-
-<!-- ===================================================== -->
-<!-- WELCOME -->
-<!-- ===================================================== -->
-
-<div id="welcomeScreen" class="screen active">
-
-    <div class="welcome-content">
-
-        <div class="main-logo">
-            <img src="RHRFC.jpg" alt="Rushden & Higham RFC">
-        </div>
-
-        <h1>CLUB CHECK-IN</h1>
-
-        <div class="club-name">
-            Rushden &amp; Higham RFC
-        </div>
-
-        <button class="button black" onclick="showScreen('coachPinScreen')">
-            Coach
-        </button>
-
-        <button class="button white" onclick="showScreen('seniorPinScreen')">
-            Senior Member
-        </button>
-
-        <div class="footer">
-            Digital Club Attendance
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- COACH PIN -->
-<!-- ===================================================== -->
-
-<div id="coachPinScreen" class="screen pin-screen">
-
-    <div class="pin-logo">
+<header>
+    <div class="header-left">
         <img src="RHRFC.jpg" alt="RHRFC">
-    </div>
-
-    <h2>Coach Access</h2>
-
-    <p>Enter the Coach PIN</p>
-
-    <input
-        id="coachPin"
-        class="pin-input"
-        type="password"
-        inputmode="numeric"
-        maxlength="4"
-    >
-
-    <div id="coachPinMessage" class="message"></div>
-
-    <button class="button black" onclick="checkCoachPin()">
-        Continue
-    </button>
-
-    <button class="back-button" onclick="showScreen('welcomeScreen')">
-        Back
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- SENIOR PIN -->
-<!-- ===================================================== -->
-
-<div id="seniorPinScreen" class="screen pin-screen">
-
-    <div class="pin-logo">
-        <img src="RHRFC.jpg" alt="RHRFC">
-    </div>
-
-    <h2>Senior Member Access</h2>
-
-    <p>Enter the Senior PIN</p>
-
-    <input
-        id="seniorPin"
-        class="pin-input"
-        type="password"
-        inputmode="numeric"
-        maxlength="4"
-    >
-
-    <div id="seniorPinMessage" class="message"></div>
-
-    <button class="button black" onclick="checkSeniorPin()">
-        Continue
-    </button>
-
-    <button class="back-button" onclick="showScreen('welcomeScreen')">
-        Back
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- COACH AGE GROUP -->
-<!-- ===================================================== -->
-
-<div id="coachAgeScreen" class="screen">
-
-    <div class="header">
-
-        <div class="header-title">
-            Select Age Group
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <p>Select the age group you want to manage.</p>
-
-    <div id="coachAgeGrid" class="age-grid"></div>
-
-    <button class="back-button" onclick="showScreen('welcomeScreen')">
-        Log Out
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- COACH DASHBOARD -->
-<!-- ===================================================== -->
-
-<div id="coachDashboardScreen" class="screen">
-
-    <div class="header">
-
         <div>
-            <div class="header-title">Coach Dashboard</div>
-            <div id="coachAgeTitle" class="small-text"></div>
+            <div class="header-title">CLUB CHECK-IN</div>
+            <div class="header-season" id="headerSeason"></div>
         </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
     </div>
 
-    <div class="stat-grid">
+    <button class="btn-grey btn-small" onclick="showWelcome()">Home</button>
+</header>
 
-        <div class="stat">
-            <span id="playerCount" class="stat-number">0</span>
-            <span class="stat-label">Players</span>
-        </div>
-
-        <div class="stat">
-            <span id="sessionCount" class="stat-number">0</span>
-            <span class="stat-label">Sessions</span>
-        </div>
-
-        <div class="stat">
-            <span id="gmsCount" class="stat-number">0</span>
-            <span class="stat-label">GMS</span>
-        </div>
-
-    </div>
-
-    <button class="button black" onclick="openRegister()">
-        Take Today's Register
-    </button>
-
-    <button class="button white" onclick="openRoster()">
-        View Roster
-    </button>
-
-    <button class="button white" onclick="openHistory()">
-        Session History
-    </button>
-
-    <button class="button white" onclick="openAddPlayer()">
-        Add Player
-    </button>
-
-    <button class="back-button" onclick="showScreen('coachAgeScreen')">
-        Change Age Group
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- REGISTER -->
-<!-- ===================================================== -->
-
-<div id="registerScreen" class="screen">
-
-    <div class="header">
-
-        <div>
-            <div class="header-title">Today's Register</div>
-            <div id="registerAgeTitle" class="small-text"></div>
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div id="registerDate" class="card"></div>
-
-    <div id="registerList"></div>
-
-    <button class="button black" onclick="saveRegister()">
-        Save Register
-    </button>
-
-    <div id="registerMessage" class="message"></div>
-
-    <button class="back-button" onclick="showScreen('coachDashboardScreen')">
-        Back to Dashboard
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- ROSTER -->
-<!-- ===================================================== -->
-
-<div id="rosterScreen" class="screen">
-
-    <div class="header">
-
-        <div>
-            <div class="header-title">Roster</div>
-            <div id="rosterAgeTitle" class="small-text"></div>
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div id="rosterList"></div>
-
-    <button class="button black" onclick="openAddPlayer()">
-        Add Player
-    </button>
-
-    <button class="back-button" onclick="showScreen('coachDashboardScreen')">
-        Back to Dashboard
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- ADD PLAYER -->
-<!-- ===================================================== -->
-
-<div id="addPlayerScreen" class="screen">
-
-    <div class="header">
-
-        <div class="header-title">
-            Add Player
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div class="card">
-
-        <p>
-            Adding player to:
-            <strong id="addPlayerAge"></strong>
-        </p>
-
-        <input
-            id="newPlayerName"
-            type="text"
-            placeholder="Player name"
-        >
-
-        <label>
-            <strong>GMS Status</strong>
-        </label>
-
-        <select id="newPlayerGMS">
-            <option value="false">Not Confirmed</option>
-            <option value="true">Confirmed</option>
-        </select>
-
-        <button class="button black" onclick="addPlayer()">
-            Add Player
-        </button>
-
-        <div id="addPlayerMessage" class="message"></div>
-
-    </div>
-
-    <button class="back-button" onclick="showScreen('coachDashboardScreen')">
-        Cancel
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- HISTORY -->
-<!-- ===================================================== -->
-
-<div id="historyScreen" class="screen">
-
-    <div class="header">
-
-        <div>
-            <div class="header-title">Session History</div>
-            <div id="historyAgeTitle" class="small-text"></div>
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div id="historyList"></div>
-
-    <button class="back-button" onclick="showScreen('coachDashboardScreen')">
-        Back to Dashboard
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- SENIOR DASHBOARD -->
-<!-- ===================================================== -->
-
-<div id="seniorDashboardScreen" class="screen">
-
-    <div class="header">
-
-        <div class="header-title">
-            Senior Dashboard
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div class="stat-grid">
-
-        <div class="stat">
-            <span id="seniorPlayerCount" class="stat-number">0</span>
-            <span class="stat-label">Players</span>
-        </div>
-
-        <div class="stat">
-            <span id="seniorGMSCount" class="stat-number">0</span>
-            <span class="stat-label">GMS</span>
-        </div>
-
-        <div class="stat">
-            <span id="seniorAgeCount" class="stat-number">12</span>
-            <span class="stat-label">Age Groups</span>
-        </div>
-
-    </div>
-
-    <button class="button black" onclick="openSeniorAgeGroups()">
-        View All Age Groups
-    </button>
-
-    <button class="button white" onclick="openGMS()">
-        GMS Verification
-    </button>
-
-    <button class="button white" onclick="openSeniorPlayers()">
-        Player Management
-    </button>
-
-    <button class="button white" onclick="openChangePIN()">
-        Change Senior PIN
-    </button>
-
-    <button class="back-button" onclick="showScreen('welcomeScreen')">
-        Log Out
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- SENIOR AGE GROUPS -->
-<!-- ===================================================== -->
-
-<div id="seniorAgeScreen" class="screen">
-
-    <div class="header">
-
-        <div class="header-title">
-            All Age Groups
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div id="seniorAgeGrid" class="age-grid"></div>
-
-    <button class="back-button" onclick="showScreen('seniorDashboardScreen')">
-        Back to Dashboard
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- SENIOR AGE GROUP DETAIL -->
-<!-- ===================================================== -->
-
-<div id="seniorAgeDetailScreen" class="screen">
-
-    <div class="header">
-
-        <div>
-            <div class="header-title" id="seniorAgeDetailTitle"></div>
-            <div class="small-text">Player Overview</div>
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div id="seniorAgeDetailList"></div>
-
-    <button class="back-button" onclick="showScreen('seniorAgeScreen')">
-        Back to Age Groups
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- GMS -->
-<!-- ===================================================== -->
-
-<div id="gmsScreen" class="screen">
-
-    <div class="header">
-
-        <div class="header-title">
-            GMS Verification
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div id="gmsList"></div>
-
-    <button class="back-button" onclick="showScreen('seniorDashboardScreen')">
-        Back to Dashboard
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- SENIOR PLAYER MANAGEMENT -->
-<!-- ===================================================== -->
-
-<div id="seniorPlayersScreen" class="screen">
-
-    <div class="header">
-
-        <div class="header-title">
-            Player Management
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <p class="small-text">
-        Select an age group to manage players.
-    </p>
-
-    <div id="seniorPlayerAgeGrid" class="age-grid"></div>
-
-    <button class="back-button" onclick="showScreen('seniorDashboardScreen')">
-        Back to Dashboard
-    </button>
-
-</div>
-
-
-<!-- ===================================================== -->
-<!-- CHANGE PIN -->
-<!-- ===================================================== -->
-
-<div id="changePinScreen" class="screen">
-
-    <div class="header">
-
-        <div class="header-title">
-            Change Senior PIN
-        </div>
-
-        <div class="logo-small">
-            <img src="RHRFC.jpg" alt="RHRFC">
-        </div>
-
-    </div>
-
-    <div class="card">
-
-        <p>
-            Enter a new four-digit Senior PIN.
-        </p>
-
-        <input
-            id="newSeniorPin"
-            type="password"
-            inputmode="numeric"
-            maxlength="4"
-            placeholder="New PIN"
-        >
-
-        <input
-            id="confirmSeniorPin"
-            type="password"
-            inputmode="numeric"
-            maxlength="4"
-            placeholder="Confirm PIN"
-        >
-
-        <button class="button black" onclick="changeSeniorPIN()">
-            Change PIN
-        </button>
-
-        <div id="changePinMessage" class="message"></div>
-
-    </div>
-
-    <button class="back-button" onclick="showScreen('seniorDashboardScreen')">
-        Back to Dashboard
-    </button>
-
-</div>
-
-
-</div>
-
+<div class="container" id="app"></div>
 
 <script>
 
 /* =========================================================
-   DATA
+   CLUB CHECK-IN
+   Prototype V2
    ========================================================= */
 
-var ageGroups = [
-    "U7", "U8", "U9", "U10",
-    "U11", "U12", "U13", "U14",
-    "U15", "U16", "U17", "U18"
+const ageGroups = [
+    "U7", "U8", "U9", "U10", "U11", "U12",
+    "U13", "U14", "U15", "U16", "U17", "U18"
 ];
 
-var coachPIN = "1234";
-var seniorPIN = "9999";
+let coachPIN = "1234";
+let seniorPIN = "9999";
 
-var currentAgeGroup = "";
-var players = {};
+let currentSeason = "2026/27";
 
-var sessions = {};
+let currentRole = null;
+let currentAgeGroup = null;
 
-ageGroups.forEach(function(age) {
-
-    players[age] = [];
-    sessions[age] = [];
-
-});
-
+let todayAttendance = {};
 
 /* =========================================================
-   SAMPLE PLAYERS
+   PLAYER DATA
    ========================================================= */
 
-players["U8"] = [
-    {
-        id: 1,
-        name: "Player One",
-        gms: true,
-        active: true
-    },
-    {
-        id: 2,
-        name: "Player Two",
-        gms: true,
-        active: true
-    },
-    {
-        id: 3,
-        name: "Player Three",
-        gms: false,
-        active: true
-    },
-    {
-        id: 4,
-        name: "Player Four",
-        gms: false,
-        active: true
-    }
-];
+let players = {
 
-sessions["U8"] = [
-    {
-        date: "28/09/2026",
-        present: 3,
-        total: 4
-    }
-];
+    U7: [],
 
+    U8: [
+        {
+            id: 1,
+            name: "Player One",
+            ageGroup: "U8",
+            gms: true,
+            active: true
+        },
+        {
+            id: 2,
+            name: "Player Two",
+            ageGroup: "U8",
+            gms: true,
+            active: true
+        },
+        {
+            id: 3,
+            name: "Player Three",
+            ageGroup: "U8",
+            gms: false,
+            active: true
+        },
+        {
+            id: 4,
+            name: "Player Four",
+            ageGroup: "U8",
+            gms: false,
+            active: true
+        }
+    ],
+
+    U9: [],
+    U10: [],
+    U11: [],
+    U12: [],
+    U13: [],
+    U14: [],
+    U15: [],
+    U16: [],
+    U17: [],
+    U18: []
+};
 
 /* =========================================================
-   SCREEN CONTROL
+   SESSION DATA
    ========================================================= */
 
-function showScreen(screenId) {
+let sessions = {
 
-    document.querySelectorAll(".screen").forEach(function(screen) {
-        screen.classList.remove("active");
-    });
+    U8: [
+        {
+            date: "28/09/2026",
+            present: 3,
+            total: 4
+        }
+    ]
 
-    document.getElementById(screenId).classList.add("active");
-
-    window.scrollTo(0, 0);
-}
-
+};
 
 /* =========================================================
-   PIN LOGIN
+   HELPERS
    ========================================================= */
 
-function checkCoachPin() {
+function getActivePlayers(ageGroup) {
 
-    var entered = document.getElementById("coachPin").value;
-    var message = document.getElementById("coachPinMessage");
-
-    if (entered === coachPIN) {
-
-        message.textContent = "";
-
-        document.getElementById("coachPin").value = "";
-
-        buildCoachAgeGrid();
-
-        showScreen("coachAgeScreen");
-
-    } else {
-
-        message.textContent = "Incorrect PIN";
-
-        document.getElementById("coachPin").value = "";
-
-    }
-}
-
-
-function checkSeniorPin() {
-
-    var entered = document.getElementById("seniorPin").value;
-    var message = document.getElementById("seniorPinMessage");
-
-    if (entered === seniorPIN) {
-
-        message.textContent = "";
-
-        document.getElementById("seniorPin").value = "";
-
-        updateSeniorStats();
-
-        showScreen("seniorDashboardScreen");
-
-    } else {
-
-        message.textContent = "Incorrect PIN";
-
-        document.getElementById("seniorPin").value = "";
-
-    }
-}
-
-
-/* =========================================================
-   AGE GROUP GRIDS
-   ========================================================= */
-
-function buildCoachAgeGrid() {
-
-    var grid = document.getElementById("coachAgeGrid");
-
-    grid.innerHTML = "";
-
-    ageGroups.forEach(function(age) {
-
-        var button = document.createElement("button");
-
-        button.className = "age-button";
-        button.textContent = age;
-
-        button.onclick = function() {
-            selectCoachAge(age);
-        };
-
-        grid.appendChild(button);
-
-    });
-}
-
-
-function buildSeniorAgeGrid() {
-
-    var grid = document.getElementById("seniorAgeGrid");
-
-    grid.innerHTML = "";
-
-    ageGroups.forEach(function(age) {
-
-        var button = document.createElement("button");
-
-        button.className = "age-button";
-        button.textContent = age;
-
-        button.onclick = function() {
-            openSeniorAgeDetail(age);
-        };
-
-        grid.appendChild(button);
-
-    });
-}
-
-
-function buildSeniorPlayerAgeGrid() {
-
-    var grid = document.getElementById("seniorPlayerAgeGrid");
-
-    grid.innerHTML = "";
-
-    ageGroups.forEach(function(age) {
-
-        var button = document.createElement("button");
-
-        button.className = "age-button";
-        button.textContent = age;
-
-        button.onclick = function() {
-            openSeniorAgeDetail(age);
-        };
-
-        grid.appendChild(button);
-
-    });
-}
-
-
-/* =========================================================
-   COACH AGE GROUP
-   ========================================================= */
-
-function selectCoachAge(age) {
-
-    currentAgeGroup = age;
-
-    document.getElementById("coachAgeTitle").textContent = age;
-
-    updateCoachStats();
-
-    showScreen("coachDashboardScreen");
-}
-
-
-/* =========================================================
-   COACH STATS
-   ========================================================= */
-
-function updateCoachStats() {
-
-    var list = players[currentAgeGroup] || [];
-
-    var gms = list.filter(function(player) {
-        return player.gms;
-    }).length;
-
-    document.getElementById("playerCount").textContent = list.length;
-
-    document.getElementById("sessionCount").textContent =
-        (sessions[currentAgeGroup] || []).length;
-
-    document.getElementById("gmsCount").textContent = gms;
-}
-
-
-/* =========================================================
-   REGISTER
-   ========================================================= */
-
-function openRegister() {
-
-    document.getElementById("registerAgeTitle").textContent =
-        currentAgeGroup;
-
-    document.getElementById("registerDate").innerHTML =
-        "<strong>Date:</strong> " + getTodayDate();
-
-    var list = document.getElementById("registerList");
-
-    list.innerHTML = "";
-
-    var agePlayers = players[currentAgeGroup] || [];
-
-    if (agePlayers.length === 0) {
-
-        list.innerHTML =
-            '<div class="card">No players have been added yet.</div>';
-
-        showScreen("registerScreen");
-
-        return;
+    if (!players[ageGroup]) {
+        return [];
     }
 
-    agePlayers.forEach(function(player) {
-
-        var row = document.createElement("div");
-
-        row.className = "player-row";
-
-        row.innerHTML =
-            '<div class="player-name">' +
-            escapeHTML(player.name) +
-            '</div>' +
-
-            '<div class="attendance-buttons">' +
-
-            '<button id="present-' + player.id + '"' +
-            ' class="present"' +
-            ' onclick="setAttendance(' + player.id + ', true)">' +
-            'P' +
-            '</button>' +
-
-            '<button id="absent-' + player.id + '"' +
-            ' class="absent"' +
-            ' onclick="setAttendance(' + player.id + ', false)">' +
-            'A' +
-            '</button>' +
-
-            '</div>';
-
-        list.appendChild(row);
-
-    });
-
-    showScreen("registerScreen");
+    return players[ageGroup].filter(p => p.active);
 }
 
+function getAllActivePlayers() {
 
-var todayAttendance = {};
+    let result = [];
 
+    ageGroups.forEach(age => {
 
-function setAttendance(playerId, present) {
+        if (players[age]) {
 
-    todayAttendance[playerId] = present;
+            players[age].forEach(player => {
 
-    var p = document.getElementById("present-" + playerId);
-    var a = document.getElementById("absent-" + playerId);
+                if (player.active) {
+                    result.push(player);
+                }
 
-    p.classList.remove("selected");
-    a.classList.remove("selected");
+            });
 
-    if (present) {
-        p.classList.add("selected");
-    } else {
-        a.classList.add("selected");
-    }
-}
-
-
-function saveRegister() {
-
-    var agePlayers = players[currentAgeGroup] || [];
-
-    var presentCount = 0;
-
-    agePlayers.forEach(function(player) {
-
-        if (todayAttendance[player.id] === true) {
-            presentCount++;
         }
 
     });
 
-    sessions[currentAgeGroup].push({
+    return result;
+}
 
-        date: getTodayDate(),
+function getTotalActivePlayers() {
+    return getAllActivePlayers().length;
+}
 
-        present: presentCount,
+function getTotalGMSConfirmed() {
 
-        total: agePlayers.length
+    return getAllActivePlayers()
+        .filter(p => p.gms)
+        .length;
+}
 
-    });
+function getNextAgeGroup(ageGroup) {
 
-    todayAttendance = {};
+    const index = ageGroups.indexOf(ageGroup);
 
-    document.getElementById("registerMessage").textContent =
-        "Register saved";
+    if (index === -1) {
+        return null;
+    }
 
-    updateCoachStats();
+    if (index === ageGroups.length - 1) {
+        return null;
+    }
+
+    return ageGroups[index + 1];
+}
+
+function updateHeader() {
+
+    document.getElementById("headerSeason").textContent =
+        "Season " + currentSeason;
+}
+
+function showWelcome() {
+
+    currentRole = null;
+    currentAgeGroup = null;
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card welcome">
+
+            <img src="RHRFC.jpg" alt="Rushden & Higham RFC">
+
+            <h1>CLUB CHECK-IN</h1>
+
+            <p>Rushden & Higham RFC</p>
+
+            <div class="role-buttons">
+
+                <button class="btn-black"
+                        onclick="showPIN('coach')">
+                    Coach
+                </button>
+
+                <button class="btn-black"
+                        onclick="showPIN('senior')">
+                    Senior Member
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+    updateHeader();
+}
+
+function showPIN(role) {
+
+    currentRole = role;
+
+    const roleName =
+        role === "coach"
+        ? "Coach"
+        : "Senior Member";
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card pin-box">
+
+            <h2>${roleName} Access</h2>
+
+            <p>Enter your PIN.</p>
+
+            <input
+                id="pinInput"
+                class="pin-input"
+                type="password"
+                inputmode="numeric"
+                maxlength="8"
+                autocomplete="off"
+            >
+
+            <div id="pinError" class="error"></div>
+
+            <button class="btn-black"
+                    onclick="checkPIN()">
+                Continue
+            </button>
+
+            <br><br>
+
+            <button class="btn-grey"
+                    onclick="showWelcome()">
+                Back
+            </button>
+
+        </div>
+
+    `;
+
+    document.getElementById("pinInput").focus();
+}
+
+function checkPIN() {
+
+    const entered =
+        document.getElementById("pinInput").value;
+
+    if (
+        currentRole === "coach" &&
+        entered === coachPIN
+    ) {
+
+        showCoachAgeGroups();
+
+        return;
+    }
+
+    if (
+        currentRole === "senior" &&
+        entered === seniorPIN
+    ) {
+
+        showSeniorDashboard();
+
+        return;
+    }
+
+    document.getElementById("pinError").textContent =
+        "Incorrect PIN.";
+}
+
+/* =========================================================
+   AGE GROUP SELECTION
+   ========================================================= */
+
+function showCoachAgeGroups() {
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card">
+
+            <div class="back">
+                <button class="btn-grey btn-small"
+                        onclick="showWelcome()">
+                    ← Back
+                </button>
+            </div>
+
+            <h2>Select Age Group</h2>
+
+            <p>
+                Choose the age group you are taking the register for.
+            </p>
+
+            <div class="age-grid">
+
+                ${ageGroups.map(age => `
+
+                    <button
+                        class="btn-black"
+                        onclick="selectCoachAgeGroup('${age}')">
+                        ${age}
+                    </button>
+
+                `).join("")}
+
+            </div>
+
+        </div>
+
+    `;
 
 }
 
+function selectCoachAgeGroup(ageGroup) {
+
+    currentAgeGroup = ageGroup;
+
+    showCoachDashboard();
+
+}
+
+/* =========================================================
+   COACH DASHBOARD
+   ========================================================= */
+
+function showCoachDashboard() {
+
+    const active =
+        getActivePlayers(currentAgeGroup);
+
+    const present =
+        active.filter(p =>
+            todayAttendance[p.id] === true
+        ).length;
+
+    const absent =
+        active.length - present;
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card">
+
+            <div class="back">
+                <button class="btn-grey btn-small"
+                        onclick="showCoachAgeGroups()">
+                    ← Age Groups
+                </button>
+            </div>
+
+            <h2>${currentAgeGroup} Dashboard</h2>
+
+            <div class="stats">
+
+                <div class="stat">
+                    <div class="stat-number">
+                        ${active.length}
+                    </div>
+                    <div class="stat-label">
+                        Players
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-number">
+                        ${present}
+                    </div>
+                    <div class="stat-label">
+                        Present
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-number">
+                        ${absent}
+                    </div>
+                    <div class="stat-label">
+                        Absent
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="dashboard-grid">
+
+                <button class="btn-black"
+                        onclick="showRegister()">
+                    Today's Register
+                </button>
+
+                <button class="btn-black"
+                        onclick="showRoster()">
+                    Roster
+                </button>
+
+                <button class="btn-black"
+                        onclick="showSessionHistory()">
+                    Session History
+                </button>
+
+                <button class="btn-black"
+                        onclick="showAddPlayer()">
+                    Add Player
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+/* =========================================================
+   ATTENDANCE REGISTER
+   ========================================================= */
+
+function showRegister() {
+
+    const active =
+        getActivePlayers(currentAgeGroup);
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card">
+
+            <button class="btn-grey btn-small back"
+                    onclick="showCoachDashboard()">
+                ← Back
+            </button>
+
+            <h2>${currentAgeGroup} - Today's Register</h2>
+
+            ${
+                active.length === 0
+                ? `<div class="empty">
+                       No active players.
+                   </div>`
+                : active.map(player => {
+
+                    const present =
+                        todayAttendance[player.id] === true;
+
+                    return `
+
+                        <div class="player-row">
+
+                            <div>
+                                <div class="player-name">
+                                    ${escapeHTML(player.name)}
+                                </div>
+                            </div>
+
+                            <label class="toggle ${
+                                present
+                                ? "present"
+                                : "absent"
+                            }">
+
+                                <input
+                                    type="checkbox"
+                                    ${present ? "checked" : ""}
+                                    onchange="setAttendance(
+                                        ${player.id},
+                                        this.checked
+                                    )"
+                                >
+
+                                <span class="toggle-track"></span>
+
+                                <span class="toggle-knob"></span>
+
+                                <span class="toggle-label">
+                                    ${
+                                        present
+                                        ? "PRESENT"
+                                        : "ABSENT"
+                                    }
+                                </span>
+
+                            </label>
+
+                        </div>
+
+                    `;
+
+                }).join("")
+            }
+
+            ${
+                active.length > 0
+                ? `
+                    <br>
+
+                    <button class="btn-green"
+                            onclick="saveSession()">
+                        Save Session
+                    </button>
+                `
+                : ""
+            }
+
+        </div>
+
+    `;
+
+}
+
+function setAttendance(playerID, present) {
+
+    todayAttendance[playerID] = present;
+
+    showRegister();
+
+}
+
+/* =========================================================
+   SAVE SESSION
+   ========================================================= */
+
+function saveSession() {
+
+    const active =
+        getActivePlayers(currentAgeGroup);
+
+    const present =
+        active.filter(p =>
+            todayAttendance[p.id] === true
+        ).length;
+
+    if (!sessions[currentAgeGroup]) {
+        sessions[currentAgeGroup] = [];
+    }
+
+    const now = new Date();
+
+    const date =
+        String(now.getDate()).padStart(2, "0")
+        + "/"
+        + String(now.getMonth() + 1).padStart(2, "0")
+        + "/"
+        + now.getFullYear();
+
+    sessions[currentAgeGroup].push({
+
+        date: date,
+        present: present,
+        total: active.length
+
+    });
+
+    alert(
+        "Session saved.\n\n"
+        + present
+        + " of "
+        + active.length
+        + " players present."
+    );
+
+    todayAttendance = {};
+
+    showCoachDashboard();
+
+}
 
 /* =========================================================
    ROSTER
    ========================================================= */
 
-function openRoster() {
+function showRoster() {
 
-    document.getElementById("rosterAgeTitle").textContent =
-        currentAgeGroup;
+    const active =
+        getActivePlayers(currentAgeGroup);
 
-    var list = document.getElementById("rosterList");
+    document.getElementById("app").innerHTML = `
 
-    list.innerHTML = "";
+        <div class="card">
 
-    var agePlayers = players[currentAgeGroup] || [];
+            <button class="btn-grey btn-small back"
+                    onclick="showCoachDashboard()">
+                ← Back
+            </button>
 
-    if (agePlayers.length === 0) {
+            <h2>${currentAgeGroup} Roster</h2>
 
-        list.innerHTML =
-            '<div class="card">No players added yet.</div>';
+            ${
+                active.length === 0
+                ? `<div class="empty">
+                       No active players.
+                   </div>`
+                : active.map(player => `
 
-    } else {
+                    <div class="player-row">
 
-        agePlayers.forEach(function(player) {
+                        <div>
+                            <div class="player-name">
+                                ${escapeHTML(player.name)}
+                            </div>
+                        </div>
 
-            var row = document.createElement("div");
+                        <span class="age-badge">
+                            ${player.ageGroup}
+                        </span>
 
-            row.className = "player-row";
+                    </div>
 
-            row.innerHTML =
-                '<div class="player-name">' +
-                escapeHTML(player.name) +
-                '</div>' +
+                `).join("")
+            }
 
-                '<span class="gms-status ' +
-                (player.gms ? "gms-ok" : "gms-no") +
-                '">' +
-                (player.gms ? "GMS Confirmed" : "GMS Not Confirmed") +
-                '</span>';
+        </div>
 
-            list.appendChild(row);
+    `;
 
-        });
-
-    }
-
-    showScreen("rosterScreen");
 }
-
 
 /* =========================================================
    ADD PLAYER
    ========================================================= */
 
-function openAddPlayer() {
+function showAddPlayer() {
 
-    document.getElementById("addPlayerAge").textContent =
-        currentAgeGroup;
+    document.getElementById("app").innerHTML = `
 
-    document.getElementById("newPlayerName").value = "";
+        <div class="card">
 
-    document.getElementById("newPlayerGMS").value = "false";
+            <button class="btn-grey btn-small back"
+                    onclick="showCoachDashboard()">
+                ← Back
+            </button>
 
-    document.getElementById("addPlayerMessage").textContent = "";
+            <h2>Add Player</h2>
 
-    showScreen("addPlayerScreen");
+            <div class="form-group">
+
+                <label>
+                    Player Name
+                </label>
+
+                <input
+                    id="newPlayerName"
+                    type="text"
+                    maxlength="100"
+                    autocomplete="off"
+                >
+
+            </div>
+
+            <button class="btn-green"
+                    onclick="addPlayer()">
+                Add Player
+            </button>
+
+        </div>
+
+    `;
+
+    document.getElementById("newPlayerName").focus();
+
 }
-
 
 function addPlayer() {
 
-    var name =
-        document.getElementById("newPlayerName").value.trim();
+    const name =
+        document.getElementById("newPlayerName")
+        .value
+        .trim();
 
-    var gms =
-        document.getElementById("newPlayerGMS").value === "true";
+    if (!name) {
 
-    var message =
-        document.getElementById("addPlayerMessage");
-
-    if (name === "") {
-
-        message.textContent = "Please enter a player name.";
+        alert("Please enter a player name.");
 
         return;
     }
 
-    var newPlayer = {
-
-        id: Date.now(),
-
-        name: name,
-
-        gms: gms,
-
-        active: true
-
-    };
-
-    players[currentAgeGroup].push(newPlayer);
-
-    message.textContent = "Player added.";
-
-    updateCoachStats();
-
-    setTimeout(function() {
-
-        openRoster();
-
-    }, 700);
-}
-
-
-/* =========================================================
-   HISTORY
-   ========================================================= */
-
-function openHistory() {
-
-    document.getElementById("historyAgeTitle").textContent =
-        currentAgeGroup;
-
-    var list = document.getElementById("historyList");
-
-    list.innerHTML = "";
-
-    var history = sessions[currentAgeGroup] || [];
-
-    if (history.length === 0) {
-
-        list.innerHTML =
-            '<div class="card">No sessions recorded yet.</div>';
-
-    } else {
-
-        history.slice().reverse().forEach(function(session) {
-
-            var card = document.createElement("div");
-
-            card.className = "card";
-
-            card.innerHTML =
-                "<strong>" +
-                session.date +
-                "</strong>" +
-
-                "<div class='info-row'>" +
-                "<span>Present</span>" +
-                "<strong>" + session.present + "</strong>" +
-                "</div>" +
-
-                "<div class='info-row'>" +
-                "<span>Total</span>" +
-                "<strong>" + session.total + "</strong>" +
-                "</div>";
-
-            list.appendChild(card);
-
-        });
-
+    if (!players[currentAgeGroup]) {
+        players[currentAgeGroup] = [];
     }
 
-    showScreen("historyScreen");
+    const id =
+        Date.now()
+        + Math.floor(Math.random() * 1000);
+
+    players[currentAgeGroup].push({
+
+        id: id,
+        name: name,
+        ageGroup: currentAgeGroup,
+        gms: false,
+        active: true
+
+    });
+
+    alert(
+        name
+        + " has been added to "
+        + currentAgeGroup
+        + "."
+    );
+
+    showCoachDashboard();
+
 }
 
+/* =========================================================
+   SESSION HISTORY
+   ========================================================= */
+
+function showSessionHistory() {
+
+    const history =
+        sessions[currentAgeGroup] || [];
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card">
+
+            <button class="btn-grey btn-small back"
+                    onclick="showCoachDashboard()">
+                ← Back
+            </button>
+
+            <h2>${currentAgeGroup} Session History</h2>
+
+            ${
+                history.length === 0
+                ? `<div class="empty">
+                       No sessions recorded yet.
+                   </div>`
+                : history.slice().reverse().map(session => `
+
+                    <div class="session-row">
+
+                        <div class="session-date">
+                            ${session.date}
+                        </div>
+
+                        <div class="session-summary">
+                            ${session.present}
+                            of
+                            ${session.total}
+                            present
+                        </div>
+
+                    </div>
+
+                `).join("")
+            }
+
+        </div>
+
+    `;
+
+}
 
 /* =========================================================
    SENIOR DASHBOARD
    ========================================================= */
 
-function updateSeniorStats() {
+function showSeniorDashboard() {
 
-    var totalPlayers = 0;
-    var totalGMS = 0;
+    const active =
+        getTotalActivePlayers();
 
-    ageGroups.forEach(function(age) {
+    const gms =
+        getTotalGMSConfirmed();
 
-        var list = players[age] || [];
+    document.getElementById("app").innerHTML = `
 
-        totalPlayers += list.length;
+        <div class="card">
 
-        totalGMS += list.filter(function(player) {
-            return player.gms;
-        }).length;
+            <h2>Senior Dashboard</h2>
 
-    });
+            <p>
+                Season ${currentSeason}
+            </p>
 
-    document.getElementById("seniorPlayerCount").textContent =
-        totalPlayers;
+            <div class="stats">
 
-    document.getElementById("seniorGMSCount").textContent =
-        totalGMS;
+                <div class="stat">
+                    <div class="stat-number">
+                        ${active}
+                    </div>
+                    <div class="stat-label">
+                        Active Players
+                    </div>
+                </div>
 
-    document.getElementById("seniorAgeCount").textContent =
-        ageGroups.length;
+                <div class="stat">
+                    <div class="stat-number">
+                        ${gms}
+                    </div>
+                    <div class="stat-label">
+                        GMS Confirmed
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-number">
+                        ${active - gms}
+                    </div>
+                    <div class="stat-label">
+                        GMS Outstanding
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="dashboard-grid">
+
+                <button class="btn-black"
+                        onclick="showSeniorAgeGroups()">
+                    View All Age Groups
+                </button>
+
+                <button class="btn-black"
+                        onclick="showGMSVerification()">
+                    GMS Verification
+                </button>
+
+                <button class="btn-black"
+                        onclick="showPlayerManagement()">
+                    Player Management
+                </button>
+
+                <button class="btn-blue"
+                        onclick="showNewSeason()">
+                    New Season
+                </button>
+
+                <button class="btn-black"
+                        onclick="showChangeSeniorPIN()">
+                    Change Senior PIN
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
 }
-
-
-function openSeniorAgeGroups() {
-
-    buildSeniorAgeGrid();
-
-    showScreen("seniorAgeScreen");
-}
-
 
 /* =========================================================
-   SENIOR AGE DETAIL
+   SENIOR AGE GROUPS
    ========================================================= */
 
-function openSeniorAgeDetail(age) {
+function showSeniorAgeGroups() {
 
-    document.getElementById("seniorAgeDetailTitle").textContent =
-        age;
+    document.getElementById("app").innerHTML = `
 
-    var list = document.getElementById("seniorAgeDetailList");
+        <div class="card">
 
-    list.innerHTML = "";
+            <button class="btn-grey btn-small back"
+                    onclick="showSeniorDashboard()">
+                ← Back
+            </button>
 
-    var agePlayers = players[age] || [];
+            <h2>All Age Groups</h2>
 
-    if (agePlayers.length === 0) {
+            <div class="age-grid">
 
-        list.innerHTML =
-            '<div class="card">No players registered for ' +
-            age +
-            '.</div>';
+                ${ageGroups.map(age => `
 
-    } else {
+                    <button
+                        class="btn-black"
+                        onclick="showSeniorAgeGroup('${age}')">
+                        ${age}
+                    </button>
 
-        agePlayers.forEach(function(player) {
+                `).join("")}
 
-            var row = document.createElement("div");
+            </div>
 
-            row.className = "player-row";
+        </div>
 
-            row.innerHTML =
-                '<div class="player-name">' +
-                escapeHTML(player.name) +
-                '</div>' +
+    `;
 
-                '<span class="gms-status ' +
-                (player.gms ? "gms-ok" : "gms-no") +
-                '">' +
-                (player.gms ? "GMS Confirmed" : "GMS Not Confirmed") +
-                '</span>';
-
-            list.appendChild(row);
-
-        });
-
-    }
-
-    showScreen("seniorAgeDetailScreen");
 }
 
+function showSeniorAgeGroup(ageGroup) {
+
+    const active =
+        getActivePlayers(ageGroup);
+
+    const gms =
+        active.filter(p => p.gms).length;
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card">
+
+            <button class="btn-grey btn-small back"
+                    onclick="showSeniorAgeGroups()">
+                ← Age Groups
+            </button>
+
+            <h2>${ageGroup}</h2>
+
+            <div class="stats">
+
+                <div class="stat">
+                    <div class="stat-number">
+                        ${active.length}
+                    </div>
+                    <div class="stat-label">
+                        Players
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-number">
+                        ${gms}
+                    </div>
+                    <div class="stat-label">
+                        GMS Confirmed
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-number">
+                        ${active.length - gms}
+                    </div>
+                    <div class="stat-label">
+                        Outstanding
+                    </div>
+                </div>
+
+            </div>
+
+            ${
+                active.length === 0
+                ? `<div class="empty">
+                       No active players.
+                   </div>`
+                : active.map(player => `
+
+                    <div class="player-row">
+
+                        <div>
+                            <div class="player-name">
+                                ${escapeHTML(player.name)}
+                            </div>
+                        </div>
+
+                        <span class="age-badge">
+                            ${player.gms
+                            ? "GMS CONFIRMED"
+                            : "GMS OUTSTANDING"}
+                        </span>
+
+                    </div>
+
+                `).join("")
+            }
+
+        </div>
+
+    `;
+
+}
 
 /* =========================================================
    GMS VERIFICATION
    ========================================================= */
 
-function openGMS() {
+function showGMSVerification() {
 
-    var list = document.getElementById("gmsList");
+    document.getElementById("app").innerHTML = `
 
-    list.innerHTML = "";
+        <div class="card">
 
-    ageGroups.forEach(function(age) {
+            <button class="btn-grey btn-small back"
+                    onclick="showSeniorDashboard()">
+                ← Back
+            </button>
 
-        var agePlayers = players[age] || [];
+            <h2>GMS Verification</h2>
 
-        if (agePlayers.length === 0) {
-            return;
+            <p>
+                GMS changes are made through Player Management.
+            </p>
+
+            ${
+                ageGroups.map(age => {
+
+                    const active =
+                        getActivePlayers(age);
+
+                    if (active.length === 0) {
+                        return "";
+                    }
+
+                    const confirmed =
+                        active.filter(p => p.gms).length;
+
+                    return `
+
+                        <div class="session-row">
+
+                            <div class="player-row">
+
+                                <div>
+                                    <div class="player-name">
+                                        ${age}
+                                    </div>
+
+                                    <div class="player-sub">
+                                        ${confirmed}
+                                        of
+                                        ${active.length}
+                                        confirmed
+                                    </div>
+                                </div>
+
+                                <button
+                                    class="btn-black btn-small"
+                                    onclick="showPlayerManagement('${age}')">
+                                    Manage
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }).join("")
+            }
+
+        </div>
+
+    `;
+
+}
+
+/* =========================================================
+   PLAYER MANAGEMENT
+   ========================================================= */
+
+function showPlayerManagement(selectedAge = null) {
+
+    if (selectedAge) {
+        currentAgeGroup = selectedAge;
+    }
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card">
+
+            <button class="btn-grey btn-small back"
+                    onclick="showSeniorDashboard()">
+                ← Back
+            </button>
+
+            <h2>Player Management</h2>
+
+            <p>
+                Manage players and confirm GMS status.
+            </p>
+
+            <div class="age-grid">
+
+                ${ageGroups.map(age => `
+
+                    <button
+                        class="${
+                            age === currentAgeGroup
+                            ? "btn-blue"
+                            : "btn-black"
+                        }"
+                        onclick="showPlayerManagement('${age}')">
+                        ${age}
+                    </button>
+
+                `).join("")}
+
+            </div>
+
+        </div>
+
+        ${
+            currentAgeGroup
+            ? renderPlayerManagementList(currentAgeGroup)
+            : ""
         }
 
-        var heading = document.createElement("h3");
+    `;
 
-        heading.textContent = age;
+}
 
-        list.appendChild(heading);
+function renderPlayerManagementList(ageGroup) {
 
-        agePlayers.forEach(function(player) {
+    const active =
+        getActivePlayers(ageGroup);
 
-            var row = document.createElement("div");
+    return `
 
-            row.className = "player-row";
+        <div class="card">
 
-            row.innerHTML =
-                '<div class="player-name">' +
-                escapeHTML(player.name) +
-                '</div>' +
+            <h3>${ageGroup} Players</h3>
 
-                '<span id="gmsStatus-' + player.id + '"' +
-                ' class="gms-status ' +
-                (player.gms ? "gms-ok" : "gms-no") +
-                '">' +
-                (player.gms ? "Confirmed" : "Not Confirmed") +
-                '</span>' +
+            ${
+                active.length === 0
+                ? `<div class="empty">
+                       No active players.
+                   </div>`
+                : active.map(player => `
 
-                '<button class="gms-button"' +
-                ' onclick="toggleGMS(' + player.id + ')">' +
-                'Change' +
-                '</button>';
+                    <div class="player-row">
 
-            list.appendChild(row);
+                        <div>
+                            <div class="player-name">
+                                ${escapeHTML(player.name)}
+                            </div>
 
-        });
+                            <div class="player-sub">
+                                GMS status
+                            </div>
+                        </div>
 
-    });
+                        <div class="actions">
 
-    if (list.innerHTML === "") {
+                            <label class="toggle ${
+                                player.gms
+                                ? "confirmed"
+                                : "not-confirmed"
+                            }">
 
-        list.innerHTML =
-            '<div class="card">No players have been added yet.</div>';
+                                <input
+                                    type="checkbox"
+                                    ${player.gms ? "checked" : ""}
+                                    onchange="setGMS(
+                                        ${player.id},
+                                        this.checked
+                                    )"
+                                >
+
+                                <span class="toggle-track"></span>
+
+                                <span class="toggle-knob"></span>
+
+                                <span class="toggle-label">
+                                    ${
+                                        player.gms
+                                        ? "CONFIRMED"
+                                        : "NOT CONF."
+                                    }
+                                </span>
+
+                            </label>
+
+                            <button
+                                class="btn-red btn-small"
+                                onclick="removePlayer(${player.id})">
+                                Remove
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `).join("")
+            }
+
+            <br>
+
+            <button
+                class="btn-green"
+                onclick="showSeniorAddPlayer('${ageGroup}')">
+                Add Player
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+function setGMS(playerID, confirmed) {
+
+    for (const age of ageGroups) {
+
+        const player =
+            players[age]
+                .find(p => p.id === playerID);
+
+        if (player) {
+
+            player.gms = confirmed;
+
+            break;
+        }
 
     }
 
-    showScreen("gmsScreen");
+    showPlayerManagement(currentAgeGroup);
+
 }
 
+/* =========================================================
+   REMOVE PLAYER
+   ========================================================= */
 
-function toggleGMS(playerId) {
+function removePlayer(playerID) {
 
-    var foundPlayer = null;
+    let playerFound = null;
 
-    ageGroups.forEach(function(age) {
+    for (const age of ageGroups) {
 
-        players[age].forEach(function(player) {
+        const player =
+            players[age]
+                .find(p => p.id === playerID);
 
-            if (player.id === playerId) {
-                foundPlayer = player;
+        if (player) {
+
+            playerFound = player;
+
+            break;
+        }
+
+    }
+
+    if (!playerFound) {
+        return;
+    }
+
+    const confirmRemove =
+        confirm(
+            "Remove "
+            + playerFound.name
+            + " from the active register?\n\n"
+            + "Their historical attendance will be retained."
+        );
+
+    if (!confirmRemove) {
+        return;
+    }
+
+    playerFound.active = false;
+
+    alert(
+        playerFound.name
+        + " has been removed from the active register."
+    );
+
+    showPlayerManagement(currentAgeGroup);
+
+}
+
+/* =========================================================
+   SENIOR ADD PLAYER
+   ========================================================= */
+
+function showSeniorAddPlayer(ageGroup) {
+
+    currentAgeGroup = ageGroup;
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card">
+
+            <button class="btn-grey btn-small back"
+                    onclick="showPlayerManagement('${ageGroup}')">
+                ← Back
+            </button>
+
+            <h2>Add Player - ${ageGroup}</h2>
+
+            <div class="form-group">
+
+                <label>
+                    Player Name
+                </label>
+
+                <input
+                    id="seniorNewPlayerName"
+                    type="text"
+                    maxlength="100"
+                    autocomplete="off"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    GMS Status
+                </label>
+
+                <label class="toggle not-confirmed"
+                       id="newPlayerGMSToggle">
+
+                    <input
+                        id="newPlayerGMS"
+                        type="checkbox"
+                        onchange="updateNewPlayerGMSToggle()"
+                    >
+
+                    <span class="toggle-track"></span>
+                    <span class="toggle-knob"></span>
+
+                    <span class="toggle-label">
+                        NOT CONF.
+                    </span>
+
+                </label>
+
+            </div>
+
+            <button class="btn-green"
+                    onclick="seniorAddPlayer('${ageGroup}')">
+                Add Player
+            </button>
+
+        </div>
+
+    `;
+
+    document.getElementById("seniorNewPlayerName").focus();
+
+}
+
+function updateNewPlayerGMSToggle() {
+
+    const input =
+        document.getElementById("newPlayerGMS");
+
+    const toggle =
+        document.getElementById("newPlayerGMSToggle");
+
+    if (input.checked) {
+
+        toggle.classList.remove("not-confirmed");
+        toggle.classList.add("confirmed");
+
+        toggle.querySelector(".toggle-label")
+            .textContent = "CONFIRMED";
+
+    } else {
+
+        toggle.classList.remove("confirmed");
+        toggle.classList.add("not-confirmed");
+
+        toggle.querySelector(".toggle-label")
+            .textContent = "NOT CONF.";
+
+    }
+
+}
+
+function seniorAddPlayer(ageGroup) {
+
+    const name =
+        document.getElementById("seniorNewPlayerName")
+        .value
+        .trim();
+
+    const gms =
+        document.getElementById("newPlayerGMS")
+        .checked;
+
+    if (!name) {
+
+        alert("Please enter a player name.");
+
+        return;
+    }
+
+    const id =
+        Date.now()
+        + Math.floor(Math.random() * 1000);
+
+    players[ageGroup].push({
+
+        id: id,
+        name: name,
+        ageGroup: ageGroup,
+        gms: gms,
+        active: true
+
+    });
+
+    alert(
+        name
+        + " has been added to "
+        + ageGroup
+        + "."
+    );
+
+    showPlayerManagement(ageGroup);
+
+}
+
+/* =========================================================
+   NEW SEASON
+   ========================================================= */
+
+function showNewSeason() {
+
+    const nextSeason =
+        calculateNextSeason(currentSeason);
+
+    const counts = {};
+
+    ageGroups.forEach(age => {
+
+        counts[age] =
+            getActivePlayers(age).length;
+
+    });
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="card">
+
+            <button class="btn-grey btn-small back"
+                    onclick="showSeniorDashboard()">
+                ← Back
+            </button>
+
+            <h2>Start New Season</h2>
+
+            <div class="warning-box">
+
+                <strong>This will move active players up one age group.</strong>
+
+                <br><br>
+
+                The change should only be made once at the start
+                of the new season.
+
+            </div>
+
+            <p>
+                Current season:
+                <strong>${currentSeason}</strong>
+            </p>
+
+            <p>
+                New season:
+                <strong>${nextSeason}</strong>
+            </p>
+
+            <h3>Promotion Preview</h3>
+
+            ${
+                ageGroups.slice(0, -1).map(age => {
+
+                    const next =
+                        getNextAgeGroup(age);
+
+                    return `
+
+                        <div class="promotion-row">
+
+                            <span>
+                                ${age}
+                                →
+                                ${next}
+                            </span>
+
+                            <strong>
+                                ${counts[age]}
+                            </strong>
+
+                        </div>
+
+                    `;
+
+                }).join("")
+            }
+
+            <div class="promotion-row">
+
+                <span>
+                    U18 → Leaving Active Register
+                </span>
+
+                <strong>
+                    ${counts.U18}
+                </strong>
+
+            </div>
+
+            <br>
+
+            <div class="danger-box">
+
+                <strong>
+                    This action cannot be undone by the button.
+                </strong>
+
+                <br><br>
+
+                Check the numbers above before continuing.
+
+            </div>
+
+            <button
+                class="btn-blue"
+                onclick="confirmNewSeason()">
+                Confirm New Season
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+function calculateNextSeason(season) {
+
+    const parts =
+        season.split("/");
+
+    const start =
+        parseInt(parts[0], 10);
+
+    const end =
+        parseInt(parts[1], 10);
+
+    return (
+        start + 1
+    ) + "/" + (
+        String(end + 1).slice(-2)
+    );
+
+}
+
+function confirmNewSeason() {
+
+    const nextSeason =
+        calculateNextSeason(currentSeason);
+
+    const confirmed =
+        confirm(
+            "Start season "
+            + nextSeason
+            + "?\n\n"
+            + "All active players will move up one age group."
+            + "\n\n"
+            + "U18 players will leave the active register."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    performNewSeason(nextSeason);
+
+}
+
+function performNewSeason(nextSeason) {
+
+    const newPlayers = {
+
+        U7: [],
+        U8: [],
+        U9: [],
+        U10: [],
+        U11: [],
+        U12: [],
+        U13: [],
+        U14: [],
+        U15: [],
+        U16: [],
+        U17: [],
+        U18: []
+
+    };
+
+    ageGroups.forEach(age => {
+
+        const active =
+            players[age]
+                .filter(p => p.active);
+
+        const inactive =
+            players[age]
+                .filter(p => !p.active);
+
+        /*
+            Keep inactive players in their existing age group
+            so historical records aren't lost.
+        */
+
+        inactive.forEach(player => {
+
+            newPlayers[age].push(player);
+
+        });
+
+        /*
+            Move active players forward.
+        */
+
+        active.forEach(player => {
+
+            const next =
+                getNextAgeGroup(age);
+
+            if (next) {
+
+                player.ageGroup = next;
+
+                newPlayers[next].push(player);
+
+            } else {
+
+                /*
+                    U18 becomes inactive/graduated.
+                */
+
+                player.active = false;
+
+                newPlayers[age].push(player);
+
             }
 
         });
 
     });
 
-    if (!foundPlayer) {
-        return;
-    }
+    players = newPlayers;
 
-    foundPlayer.gms = !foundPlayer.gms;
+    currentSeason = nextSeason;
 
-    openGMS();
+    todayAttendance = {};
 
-    updateSeniorStats();
+    alert(
+        "New season "
+        + currentSeason
+        + " has started."
+    );
+
+    showSeniorDashboard();
+
 }
-
-
-/* =========================================================
-   SENIOR PLAYER MANAGEMENT
-   ========================================================= */
-
-function openSeniorPlayers() {
-
-    buildSeniorPlayerAgeGrid();
-
-    showScreen("seniorPlayersScreen");
-}
-
 
 /* =========================================================
    CHANGE SENIOR PIN
    ========================================================= */
 
-function openChangePIN() {
+function showChangeSeniorPIN() {
 
-    document.getElementById("newSeniorPin").value = "";
+    document.getElementById("app").innerHTML = `
 
-    document.getElementById("confirmSeniorPin").value = "";
+        <div class="card">
 
-    document.getElementById("changePinMessage").textContent = "";
+            <button class="btn-grey btn-small back"
+                    onclick="showSeniorDashboard()">
+                ← Back
+            </button>
 
-    showScreen("changePinScreen");
+            <h2>Change Senior PIN</h2>
+
+            <div class="form-group">
+
+                <label>
+                    New PIN
+                </label>
+
+                <input
+                    id="newSeniorPIN"
+                    class="pin-input"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="8"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    Confirm New PIN
+                </label>
+
+                <input
+                    id="confirmSeniorPIN"
+                    class="pin-input"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="8"
+                >
+
+            </div>
+
+            <div id="pinChangeError"
+                 class="error">
+            </div>
+
+            <button class="btn-green"
+                    onclick="changeSeniorPIN()">
+                Change PIN
+            </button>
+
+        </div>
+
+    `;
+
 }
-
 
 function changeSeniorPIN() {
 
-    var newPIN =
-        document.getElementById("newSeniorPin").value;
+    const newPIN =
+        document.getElementById("newSeniorPIN")
+        .value;
 
-    var confirmPIN =
-        document.getElementById("confirmSeniorPin").value;
+    const confirmPIN =
+        document.getElementById("confirmSeniorPIN")
+        .value;
 
-    var message =
-        document.getElementById("changePinMessage");
+    const error =
+        document.getElementById("pinChangeError");
 
-    if (!/^\d{4}$/.test(newPIN)) {
+    error.textContent = "";
 
-        message.textContent =
-            "PIN must be exactly 4 numbers.";
+    if (!newPIN || !confirmPIN) {
+
+        error.textContent =
+            "Please enter and confirm the new PIN.";
 
         return;
     }
 
     if (newPIN !== confirmPIN) {
 
-        message.textContent =
-            "PINs do not match.";
+        error.textContent =
+            "The PINs do not match.";
+
+        return;
+    }
+
+    if (!/^\d+$/.test(newPIN)) {
+
+        error.textContent =
+            "PIN must contain numbers only.";
+
+        return;
+    }
+
+    if (newPIN.length < 4) {
+
+        error.textContent =
+            "PIN must be at least 4 digits.";
 
         return;
     }
 
     seniorPIN = newPIN;
 
-    message.textContent =
-        "Senior PIN changed.";
+    alert("Senior PIN changed.");
+
+    showSeniorDashboard();
 
 }
-
 
 /* =========================================================
-   HELPERS
+   HTML SAFETY
    ========================================================= */
-
-function getTodayDate() {
-
-    var d = new Date();
-
-    var day =
-        String(d.getDate()).padStart(2, "0");
-
-    var month =
-        String(d.getMonth() + 1).padStart(2, "0");
-
-    var year =
-        d.getFullYear();
-
-    return day + "/" + month + "/" + year;
-}
-
 
 function escapeHTML(value) {
 
-    return value
+    return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+
 }
 
-
 /* =========================================================
-   INITIALISE
+   START
    ========================================================= */
 
-buildCoachAgeGrid();
-buildSeniorAgeGrid();
-buildSeniorPlayerAgeGrid();
-updateSeniorStats();
+showWelcome();
 
 </script>
 

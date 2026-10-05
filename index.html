@@ -3592,17 +3592,20 @@ function searchArchivedPlayers() {
 
                     if (
                         player.archived &&
+                        player.name &&
                         player.name
                             .toLowerCase()
                             .includes(search)
                     ) {
 
                         matches.push({
+
                             player:
                                 player,
 
                             previousAgeGroup:
                                 ageGroup
+
                         });
 
                     }
@@ -3620,7 +3623,9 @@ function searchArchivedPlayers() {
 
                 No archived player matches
                 <strong>
-                    "${escapeHTML(input.value.trim())}"
+                    "${escapeHTML(
+                        input.value.trim()
+                    )}"
                 </strong>.
 
                 <br><br>
@@ -3669,7 +3674,9 @@ function searchArchivedPlayers() {
                         <div class="list-sub">
 
                             Previously:
-                            ${match.previousAgeGroup}
+                            ${escapeHTML(
+                                match.previousAgeGroup
+                            )}
 
                             ${
                                 match.player.lastAttendanceDate
@@ -3696,10 +3703,7 @@ function searchArchivedPlayers() {
                                 )
                             ">
 
-                            Restore to
-                            ${selectedAgeGroups.join(
-                                " + "
-                            )}
+                            Restore Player
 
                         </button>
 
@@ -3745,80 +3749,17 @@ function coachAddPlayer() {
 
     }
 
-    let targetAgeGroup;
+    let targetAgeGroup =
+        groups[0];
 
-    if (groups.length === 1) {
+    if (groups.length > 1) {
 
-        targetAgeGroup =
-            groups[0];
-
-    } else {
-
-        const options =
-            groups.map(
-                age =>
-                    `<option value="${age}">
-                        ${age}
-                    </option>`
-            ).join("");
-
-        const selectHTML = `
-
-            <div class="form-group">
-
-                <label
-                    class="title"
-                    for="targetAgeGroup">
-
-                    Add player to:
-
-                </label>
-
-                <select
-                    id="targetAgeGroup"
-                    class="text-input">
-
-                    <option value="">
-                        Select age group
-                    </option>
-
-                    ${options}
-
-                </select>
-
-            </div>
-
-        `;
-
-        const existing =
+        const select =
             document.getElementById(
                 "targetAgeGroup"
             );
 
-        if (!existing) {
-
-            const addButton =
-                document.querySelector(
-                    ".green-button"
-                );
-
-            addButton.insertAdjacentHTML(
-                "beforebegin",
-                selectHTML
-            );
-
-            document.getElementById(
-                "targetAgeGroup"
-            ).focus();
-
-            return;
-
-        }
-
-        targetAgeGroup =
-            existing.value;
-
-        if (!targetAgeGroup) {
+        if (!select || !select.value) {
 
             alert(
                 "Please select an age group."
@@ -3827,6 +3768,64 @@ function coachAddPlayer() {
             return;
 
         }
+
+        targetAgeGroup =
+            select.value;
+
+    }
+
+    /*
+        Check for an existing player
+        with the same name.
+    */
+
+    const existingPlayers =
+        players[targetAgeGroup] || [];
+
+    const matchingPlayer =
+        existingPlayers.find(
+            player =>
+                player.name
+                    .trim()
+                    .toLowerCase() ===
+                name.toLowerCase()
+        );
+
+    if (matchingPlayer) {
+
+        if (matchingPlayer.archived) {
+
+            const restore =
+                confirm(
+                    name +
+                    " is already recorded as an archived player " +
+                    "in " +
+                    targetAgeGroup +
+                    ".\n\n" +
+                    "Would you like to restore their existing record?"
+                );
+
+            if (restore) {
+
+                restoreArchivedPlayer(
+                    matchingPlayer.id
+                );
+
+            }
+
+            return;
+
+        }
+
+        alert(
+            name +
+            " is already registered in " +
+            targetAgeGroup +
+            ".\n\n" +
+            "A duplicate player has not been created."
+        );
+
+        return;
 
     }
 
@@ -3892,8 +3891,30 @@ function restoreArchivedPlayer(
         return;
     }
 
-    const targetAgeGroup =
+    let targetAgeGroup =
         groups[0];
+
+    if (groups.length > 1) {
+
+        const select =
+            document.getElementById(
+                "targetAgeGroup"
+            );
+
+        if (!select || !select.value) {
+
+            alert(
+                "Please select the age group to restore the player to."
+            );
+
+            return;
+
+        }
+
+        targetAgeGroup =
+            select.value;
+
+    }
 
     const register =
         getTodayRegister(
@@ -3906,10 +3927,13 @@ function restoreArchivedPlayer(
     ) {
 
         alert(
-            "Today's register is not open."
+            "Today's register is not open for "
+            + targetAgeGroup
+            + "."
         );
 
         return;
+
     }
 
     const confirmed =
@@ -3920,6 +3944,7 @@ function restoreArchivedPlayer(
             + targetAgeGroup
             + "?\n\n"
             + "Their historical attendance will be retained.\n"
+            + "They will NOT be marked as attending today.\n"
             + "GMS will be reset and require Senior confirmation."
         );
 
@@ -3928,6 +3953,7 @@ function restoreArchivedPlayer(
     }
 
     /* Remove from old age-group array */
+
     ageGroups.forEach(
         ageGroup => {
 
@@ -3944,6 +3970,8 @@ function restoreArchivedPlayer(
         }
     );
 
+    /* Update player */
+
     player.ageGroup =
         targetAgeGroup;
 
@@ -3959,27 +3987,27 @@ function restoreArchivedPlayer(
     player.coachGmsSuggestion =
         false;
 
-    player.lastAttendanceDate =
-        getTodayKey();
+    /*
+        Do not change lastAttendanceDate.
+        Restoring a player does not count
+        as attendance.
+    */
 
     if (!players[targetAgeGroup]) {
+
         players[targetAgeGroup] = [];
+
     }
 
     players[targetAgeGroup].push(
         player
     );
 
-    register.attendance[
-        player.id
-    ] = true;
-
     saveData();
 
     showRegister();
 
 }
-
 /* =========================================================
    SESSION HISTORY
    ========================================================= */

@@ -1857,9 +1857,16 @@ function submitDailyRegister(
         return;
     }
 
+    /*
+        Only prevent an automatic close
+        from running more than once.
+
+        Normal manual use does NOT get blocked.
+    */
+
     if (
         register.submitted &&
-        !automatic
+        automatic
     ) {
         return;
     }
@@ -1873,16 +1880,19 @@ function submitDailyRegister(
         register.attendance || {};
 
     const presentPlayers =
-        active.filter(player =>
-            attendance[player.id] === true
+        active.filter(
+            player =>
+                attendance[player.id] === true
         );
 
-    presentPlayers.forEach(player => {
+    presentPlayers.forEach(
+        player => {
 
-        player.lastAttendanceDate =
-            dateKey;
+            player.lastAttendanceDate =
+                dateKey;
 
-    });
+        }
+    );
 
     const present =
         presentPlayers.length;
@@ -1900,7 +1910,9 @@ function submitDailyRegister(
     if (existingSession) {
 
         existingSession.date =
-            getDisplayDate(dateKey);
+            getDisplayDate(
+                dateKey
+            );
 
         existingSession.present =
             present;
@@ -1913,7 +1925,9 @@ function submitDailyRegister(
         sessions[ageGroup].push({
 
             date:
-                getDisplayDate(dateKey),
+                getDisplayDate(
+                    dateKey
+                ),
 
             dateKey:
                 dateKey,
@@ -1928,8 +1942,14 @@ function submitDailyRegister(
 
     }
 
+    /*
+        Record that the register has been
+        processed, but do NOT use this as
+        a lock for the coach.
+    */
+
     register.submitted =
-        true;
+        automatic;
 
     register.closedAutomatically =
         automatic;
@@ -2017,19 +2037,19 @@ function reopenTodayRegister() {
                     ageGroup
                 );
 
-            if (
-                register &&
-                register.submitted &&
-                !register.closedAutomatically
-            ) {
-
-                register.submitted =
-                    false;
-
-                register.closedAutomatically =
-                    false;
-
+            if (!register) {
+                return;
             }
+
+            /*
+                Today's register is always editable.
+            */
+
+            register.submitted =
+                false;
+
+            register.closedAutomatically =
+                false;
 
         }
     );
@@ -2760,19 +2780,6 @@ function showRegister() {
                 )
         );
 
-    const allSubmitted =
-        groups.every(ageGroup => {
-
-            const register =
-                getTodayRegister(
-                    ageGroup
-                );
-
-            return register &&
-                register.submitted;
-
-        });
-
     renderShell(`
 
         <div class="card">
@@ -2833,297 +2840,226 @@ function showRegister() {
 
                 : `
 
-                    ${
-                        allSubmitted
+                    <div class="
+                        register-status
+                        register-open
+                    ">
 
-                        ? `
+                        Register open — you can
+                        edit it throughout today.
 
-                            <div class="
-                                register-status
-                                register-submitted
-                            ">
-
-                                All selected registers
-                                have been submitted.
-
-                            </div>
-
-                            <div class="info-box">
-
-                                The registers can still be
-                                reopened during today if
-                                another player arrives late.
-
-                            </div>
-
-                            ${
-                                groups.every(
-                                    ageGroup => {
-
-                                        const register =
-                                            getTodayRegister(
-                                                ageGroup
-                                            );
-
-                                        return register &&
-                                            !register.closedAutomatically;
-
-                                    }
-                                )
-
-                                ? `
-
-                                    <button
-                                        class="blue-button"
-                                        onclick="
-                                            reopenTodayRegister()
-                                        ">
-
-                                        Reopen Today's Registers
-
-                                    </button>
-
-                                `
-
-                                : `
-
-                                    <div class="
-                                        info-box
-                                        warning-box
-                                    ">
-
-                                        One or more registers
-                                        have automatically closed
-                                        because the day ended.
-
-                                    </div>
-
-                                `
-                            }
-
-                        `
-
-                        : `
-
-                            <div class="
-                                register-status
-                                register-open
-                            ">
-
-                                Register open — you can
-                                edit it throughout today.
-
-                            </div>
-
-                        `
-                    }
+                    </div>
 
                     ${
-                        groups.map(ageGroup => {
+                        groups.map(
+                            ageGroup => {
 
-                            const register =
-                                getTodayRegister(
-                                    ageGroup
-                                );
+                                const register =
+                                    getTodayRegister(
+                                        ageGroup
+                                    );
 
-                            const active =
-                                getActivePlayers(
-                                    ageGroup
-                                );
+                                const active =
+                                    getActivePlayers(
+                                        ageGroup
+                                    );
 
-                            if (!register) {
+                                if (!register) {
+
+                                    return `
+
+                                        <div
+                                            class="
+                                                info-box
+                                                warning-box
+                                            ">
+
+                                            ${ageGroup} register
+                                            has not been opened.
+
+                                            <br><br>
+
+                                            <button
+                                                class="
+                                                    secondary-button
+                                                "
+                                                onclick="
+                                                    openAgeGroupRegister(
+                                                        '${ageGroup}'
+                                                    )
+                                                ">
+
+                                                Open ${ageGroup}
+
+                                            </button>
+
+                                        </div>
+
+                                    `;
+
+                                }
 
                                 return `
 
-                                    <div
-                                        class="
-                                            info-box
-                                            warning-box
+                                    <div class="age-section">
+
+                                        <div class="
+                                            age-section-title
                                         ">
 
-                                        ${ageGroup} register
-                                        has not been opened.
+                                            <span>
+                                                ${ageGroup}
+                                            </span>
 
-                                        <br><br>
+                                            <span
+                                                class="
+                                                    age-section-count
+                                                ">
 
-                                        <button
-                                            class="secondary-button"
-                                            onclick="
-                                                openAgeGroupRegister(
-                                                    '${ageGroup}'
-                                                )
-                                            ">
+                                                ${active.length}
+                                                player${
+                                                    active.length === 1
+                                                    ? ""
+                                                    : "s"
+                                                }
 
-                                            Open ${ageGroup}
+                                            </span>
 
-                                        </button>
+                                        </div>
+
+                                        ${
+                                            active.length === 0
+
+                                            ? `
+
+                                                <div class="empty">
+
+                                                    No active players.
+
+                                                </div>
+
+                                            `
+
+                                            : active.map(
+                                                player => {
+
+                                                    const present =
+                                                        register.attendance[
+                                                            player.id
+                                                        ] === true;
+
+                                                    return `
+
+                                                        <div
+                                                            class="
+                                                                player-row
+                                                            ">
+
+                                                            <div
+                                                                class="
+                                                                    player-info
+                                                                ">
+
+                                                                <div
+                                                                    class="
+                                                                        player-name
+                                                                    ">
+
+                                                                    ${escapeHTML(
+                                                                        player.name
+                                                                    )}
+
+                                                                </div>
+
+                                                            </div>
+
+                                                            <label
+                                                                class="
+                                                                    toggle
+                                                                    ${
+                                                                        present
+                                                                        ? "present"
+                                                                        : "absent"
+                                                                    }
+                                                                ">
+
+                                                                <input
+                                                                    type="checkbox"
+                                                                    ${
+                                                                        present
+                                                                        ? "checked"
+                                                                        : ""
+                                                                    }
+                                                                    onchange="
+                                                                        setAttendance(
+                                                                            ${player.id},
+                                                                            this.checked
+                                                                        )
+                                                                    ">
+
+                                                                <span
+                                                                    class="
+                                                                        toggle-knob
+                                                                    ">
+                                                                </span>
+
+                                                                <span
+                                                                    class="
+                                                                        toggle-label
+                                                                    ">
+
+                                                                    ${
+                                                                        present
+                                                                        ? "PRESENT"
+                                                                        : "ABSENT"
+                                                                    }
+
+                                                                </span>
+
+                                                            </label>
+
+                                                        </div>
+
+                                                    `;
+
+                                                }
+                                            ).join("")
+                                        }
 
                                     </div>
 
                                 `;
 
                             }
-
-                            return `
-
-                                <div class="age-section">
-
-                                    <div class="
-                                        age-section-title
-                                    ">
-
-                                        <span>
-                                            ${ageGroup}
-                                        </span>
-
-                                        <span
-                                            class="age-section-count">
-
-                                            ${active.length}
-                                            player${
-                                                active.length === 1
-                                                ? ""
-                                                : "s"
-                                            }
-
-                                        </span>
-
-                                    </div>
-
-                                    ${
-                                        active.length === 0
-
-                                        ? `
-
-                                            <div class="empty">
-
-                                                No active players.
-
-                                            </div>
-
-                                        `
-
-                                        : active.map(
-                                            player => {
-
-                                            const present =
-                                                register.attendance[
-                                                    player.id
-                                                ] === true;
-
-                                            return `
-
-                                                <div
-                                                    class="player-row">
-
-                                                    <div
-                                                        class="player-info">
-
-                                                        <div
-                                                            class="player-name">
-
-                                                            ${escapeHTML(
-                                                                player.name
-                                                            )}
-
-                                                        </div>
-
-                                                    </div>
-
-                                                    <label
-                                                        class="
-                                                            toggle
-                                                            ${
-                                                                present
-                                                                ? "present"
-                                                                : "absent"
-                                                            }
-                                                        ">
-
-                                                        <input
-                                                            type="checkbox"
-                                                            ${
-                                                                present
-                                                                ? "checked"
-                                                                : ""
-                                                            }
-                                                            ${
-                                                                register.submitted
-                                                                ? "disabled"
-                                                                : `
-                                                                    onchange="
-                                                                        setAttendance(
-                                                                            ${player.id},
-                                                                            this.checked
-                                                                        )
-                                                                    "
-                                                                `
-                                                            }>
-
-                                                        <span
-                                                            class="toggle-knob">
-                                                        </span>
-
-                                                        <span
-                                                            class="toggle-label">
-
-                                                            ${
-                                                                present
-                                                                ? "PRESENT"
-                                                                : "ABSENT"
-                                                            }
-
-                                                        </span>
-
-                                                    </label>
-
-                                                </div>
-
-                                            `;
-
-                                        }).join("")
-                                    }
-
-                                </div>
-
-                            `;
-
-                        }).join("")
+                        ).join("")
                     }
 
-                    ${
-                        !allSubmitted
-                        ? `
+                    <br>
 
-                            <br>
+                    <button
+                        class="green-button"
+                        onclick="
+                            showCoachAddPlayer()
+                        ">
 
-                            <button
-                                class="green-button"
-                                onclick="
-                                    showCoachAddPlayer()
-                                ">
+                        + Add Player
 
-                                + Add Player
+                    </button>
 
-                            </button>
+                    <br><br>
 
-                            <br><br>
+                    <button
+                        class="primary-button"
+                        onclick="
+                            saveSession()
+                        ">
 
-                            <button
-                                class="primary-button"
-                                onclick="
-                                    saveSession()
-                                ">
+                        Save Today's Registers
 
-                                Submit Today's Registers
-
-                            </button>
-
-                        `
-                        : ""
-                    }
+                    </button>
 
                 `
+
             }
 
         </div>
@@ -3131,7 +3067,6 @@ function showRegister() {
     `);
 
 }
-
 function openTodayRegister() {
 
     const groups =

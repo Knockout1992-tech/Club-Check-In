@@ -4128,7 +4128,7 @@ function restoreArchivedPlayer(
             + targetAgeGroup
             + "?\n\n"
             + "Their historical attendance will be retained.\n"
-            + "They will NOT be marked as attending today.\n"
+            + "They will be marked as PRESENT today.\n"
             + "GMS will be reset and require Senior confirmation."
         );
 
@@ -4177,36 +4177,34 @@ function restoreArchivedPlayer(
         false;
 
     /*
-        Do NOT change lastAttendanceDate.
-        Restoring a player does not count
-        as attendance today.
+        Add the player to the new age group.
     */
 
     if (!players[targetAgeGroup]) {
 
-    players[targetAgeGroup] = [];
+        players[targetAgeGroup] = [];
 
-}
+    }
 
-players[targetAgeGroup].push(
-    player
-);
+    players[targetAgeGroup].push(
+        player
+    );
 
-/*
-    Restored during today's register:
-    mark the player as present today.
-*/
+    /*
+        Restored during today's register:
+        mark the player as present today.
+    */
 
-register.attendance[
-    player.id
-] = true;
+    register.attendance[
+        player.id
+    ] = true;
 
-player.lastAttendanceDate =
-    getTodayKey();
+    player.lastAttendanceDate =
+        getTodayKey();
 
-saveData();
+    saveData();
 
-showRegister();
+    showRegister();
 
 }
 

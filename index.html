@@ -3561,7 +3561,8 @@ function showCoachAddPlayer() {
 
             <div class="form-group">
 
-                <label class="title">
+                <label
+                    class="title">
 
                     Player Name
 
@@ -3600,6 +3601,7 @@ function showCoachAddPlayer() {
 
 }
 
+
 function coachAddPlayer() {
 
     const name =
@@ -3635,6 +3637,11 @@ function coachAddPlayer() {
     let targetAgeGroup =
         groups[0];
 
+    /*
+        If multiple age groups are selected,
+        use the age group selected in the dropdown.
+    */
+
     if (groups.length > 1) {
 
         const select =
@@ -3658,59 +3665,147 @@ function coachAddPlayer() {
     }
 
     /*
-        Check for an existing player
-        with the same name.
+        Find players with the same name
+        across all age groups.
     */
 
-    const existingPlayers =
-        players[targetAgeGroup] || [];
+    const matchingPlayers = [];
 
-    const matchingPlayer =
-        existingPlayers.find(
-            player =>
-                player.name
-                    .trim()
-                    .toLowerCase() ===
-                name.toLowerCase()
+    ageGroups.forEach(
+        ageGroup => {
+
+            (players[ageGroup] || [])
+                .forEach(
+                    player => {
+
+                        if (
+                            player.name &&
+                            player.name
+                                .trim()
+                                .toLowerCase() ===
+                            name.toLowerCase()
+                        ) {
+
+                            matchingPlayers.push({
+
+                                player:
+                                    player,
+
+                                ageGroup:
+                                    ageGroup
+
+                            });
+
+                        }
+
+                    }
+                );
+
+        }
+    );
+
+    /*
+        Check for an archived match first.
+    */
+
+    const archivedMatch =
+        matchingPlayers.find(
+            match =>
+                match.player.archived === true
         );
 
-    if (matchingPlayer) {
+    if (archivedMatch) {
 
-        if (matchingPlayer.archived) {
+        const restore =
+            confirm(
+                name +
+                " is already recorded as an archived player " +
+                "in " +
+                archivedMatch.ageGroup +
+                ".\n\n" +
+                "Would you like to restore their existing record " +
+                "to " +
+                targetAgeGroup +
+                "?"
+            );
 
-            const restore =
-                confirm(
-                    name +
-                    " is already recorded as an archived player " +
-                    "in " +
-                    targetAgeGroup +
-                    ".\n\n" +
-                    "Would you like to restore their existing record?"
-                );
+        if (restore) {
 
-            if (restore) {
+            restoreArchivedPlayer(
+                archivedMatch.player.id
+            );
 
-                restoreArchivedPlayer(
-                    matchingPlayer.id
-                );
+        }
 
-            }
+        return;
+
+    }
+
+    /*
+        Check for an active match.
+    */
+
+    const activeMatch =
+        matchingPlayers.find(
+            match =>
+                match.player.active === true &&
+                match.player.archived !== true
+        );
+
+    if (activeMatch) {
+
+        /*
+            Same age group.
+        */
+
+        if (
+            activeMatch.ageGroup ===
+            targetAgeGroup
+        ) {
+
+            alert(
+                name +
+                " is already registered in " +
+                targetAgeGroup +
+                ".\n\n" +
+                "A duplicate player has not been created."
+            );
 
             return;
 
         }
 
-        alert(
-            name +
-            " is already registered in " +
-            targetAgeGroup +
-            ".\n\n" +
-            "A duplicate player has not been created."
-        );
+        /*
+            Same name but different age group.
+            Allow the coach to confirm that this
+            is genuinely a different player.
+        */
 
-        return;
+        const differentPlayer =
+            confirm(
+                name +
+                " is already registered in " +
+                activeMatch.ageGroup +
+                ".\n\n" +
+                "You are trying to add them to " +
+                targetAgeGroup +
+                ".\n\n" +
+                "If this is the same player, cancel.\n\n" +
+                "If this is a different player with the same name, " +
+                "press OK to continue."
+            );
+
+        if (!differentPlayer) {
+
+            return;
+
+        }
 
     }
+
+    /*
+        Check that today's register is open.
+    */
 
     const register =
         getTodayRegister(
@@ -3732,12 +3827,21 @@ function coachAddPlayer() {
 
     }
 
+    /*
+        Create the new player.
+    */
+
     const newPlayer =
         addPlayerToAgeGroup(
             targetAgeGroup,
             name,
             false
         );
+
+    /*
+        A player added during today's register
+        is automatically marked as attending.
+    */
 
     register.attendance[
         newPlayer.id
@@ -3751,6 +3855,7 @@ function coachAddPlayer() {
     showRegister();
 
 }
+
 
 function searchArchivedPlayers() {
 
@@ -3781,36 +3886,46 @@ function searchArchivedPlayers() {
 
     const matches = [];
 
+    /*
+        Search all age groups for archived players.
+    */
+
     ageGroups.forEach(
         ageGroup => {
 
             (players[ageGroup] || [])
-                .forEach(player => {
+                .forEach(
+                    player => {
 
-                    if (
-                        player.archived &&
-                        player.name &&
-                        player.name
-                            .toLowerCase()
-                            .includes(search)
-                    ) {
+                        if (
+                            player.archived &&
+                            player.name &&
+                            player.name
+                                .toLowerCase()
+                                .includes(search)
+                        ) {
 
-                        matches.push({
+                            matches.push({
 
-                            player:
-                                player,
+                                player:
+                                    player,
 
-                            previousAgeGroup:
-                                ageGroup
+                                previousAgeGroup:
+                                    ageGroup
 
-                        });
+                            });
+
+                        }
 
                     }
-
-                });
+                );
 
         }
     );
+
+    /*
+        No archived matches found.
+    */
 
     if (matches.length === 0) {
 
@@ -3837,6 +3952,10 @@ function searchArchivedPlayers() {
         return;
 
     }
+
+    /*
+        Display archived matches.
+    */
 
     results.innerHTML = `
 
@@ -3914,6 +4033,7 @@ function searchArchivedPlayers() {
 
 }
 
+
 function restoreArchivedPlayer(
     playerID
 ) {
@@ -3933,11 +4053,22 @@ function restoreArchivedPlayer(
         : [currentAgeGroup];
 
     if (!groups.length) {
+
+        alert(
+            "Please select an age group first."
+        );
+
         return;
+
     }
 
     let targetAgeGroup =
         groups[0];
+
+    /*
+        If multiple age groups are selected,
+        use the dropdown.
+    */
 
     if (groups.length > 1) {
 
@@ -3961,6 +4092,10 @@ function restoreArchivedPlayer(
 
     }
 
+    /*
+        Make sure today's register is open.
+    */
+
     const register =
         getTodayRegister(
             targetAgeGroup
@@ -3981,6 +4116,10 @@ function restoreArchivedPlayer(
 
     }
 
+    /*
+        Confirm the restore.
+    */
+
     const confirmed =
         confirm(
             "Restore "
@@ -3997,7 +4136,10 @@ function restoreArchivedPlayer(
         return;
     }
 
-    /* Remove from old age-group array */
+    /*
+        Remove the player from any existing
+        age-group array.
+    */
 
     ageGroups.forEach(
         ageGroup => {
@@ -4015,7 +4157,9 @@ function restoreArchivedPlayer(
         }
     );
 
-    /* Update player */
+    /*
+        Update the player's current status.
+    */
 
     player.ageGroup =
         targetAgeGroup;
@@ -4033,9 +4177,9 @@ function restoreArchivedPlayer(
         false;
 
     /*
-        Do not change lastAttendanceDate.
+        Do NOT change lastAttendanceDate.
         Restoring a player does not count
-        as attendance.
+        as attendance today.
     */
 
     if (!players[targetAgeGroup]) {
@@ -4053,6 +4197,7 @@ function restoreArchivedPlayer(
     showRegister();
 
 }
+
 /* =========================================================
    SESSION HISTORY
    ========================================================= */

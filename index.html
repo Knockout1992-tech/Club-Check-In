@@ -3754,33 +3754,74 @@ function coachAddPlayer() {
 
     } else {
 
-        const choice =
-            prompt(
-                "Which age group should "
-                + name
-                + " be added to?\n\n"
-                + groups.join(
-                    "\n"
-                )
+        const options =
+            groups.map(
+                age =>
+                    `<option value="${age}">
+                        ${age}
+                    </option>`
+            ).join("");
+
+        const selectHTML = `
+
+            <div class="form-group">
+
+                <label
+                    class="title"
+                    for="targetAgeGroup">
+
+                    Add player to:
+
+                </label>
+
+                <select
+                    id="targetAgeGroup"
+                    class="text-input">
+
+                    <option value="">
+                        Select age group
+                    </option>
+
+                    ${options}
+
+                </select>
+
+            </div>
+
+        `;
+
+        const existing =
+            document.getElementById(
+                "targetAgeGroup"
             );
 
-        if (!choice) {
+        if (!existing) {
+
+            const addButton =
+                document.querySelector(
+                    ".green-button"
+                );
+
+            addButton.insertAdjacentHTML(
+                "beforebegin",
+                selectHTML
+            );
+
+            document.getElementById(
+                "targetAgeGroup"
+            ).focus();
 
             return;
 
         }
 
         targetAgeGroup =
-            choice.trim().toUpperCase();
+            existing.value;
 
-        if (
-            !groups.includes(
-                targetAgeGroup
-            )
-        ) {
+        if (!targetAgeGroup) {
 
             alert(
-                "Please select one of the age groups shown."
+                "Please select an age group."
             );
 
             return;

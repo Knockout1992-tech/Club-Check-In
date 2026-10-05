@@ -3485,6 +3485,49 @@ function setCoachGMSSuggestion(
 
 function showCoachAddPlayer() {
 
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
+
+    const ageGroupSelector =
+        groups.length > 1
+        ? `
+
+            <div class="form-group">
+
+                <label
+                    class="title"
+                    for="targetAgeGroup">
+
+                    Add / Restore to:
+
+                </label>
+
+                <select
+                    id="targetAgeGroup"
+                    class="text-input">
+
+                    <option value="">
+                        Select age group
+                    </option>
+
+                    ${
+                        groups.map(
+                            age =>
+                                `<option value="${age}">
+                                    ${age}
+                                </option>`
+                        ).join("")
+                    }
+
+                </select>
+
+            </div>
+
+        `
+        : "";
+
     renderShell(`
 
         <div class="card">
@@ -3508,6 +3551,8 @@ function showCoachAddPlayer() {
 
             </div>
 
+            ${ageGroupSelector}
+
             <div class="info-box">
 
                 If this player has previously been archived,
@@ -3519,7 +3564,9 @@ function showCoachAddPlayer() {
             <div class="form-group">
 
                 <label class="title">
+
                     Player Name
+
                 </label>
 
                 <input
@@ -3554,6 +3601,7 @@ function showCoachAddPlayer() {
     ).focus();
 
 }
+
 
 function searchArchivedPlayers() {
 
@@ -3641,49 +3689,6 @@ function searchArchivedPlayers() {
 
     }
 
-    const groups =
-        selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
-
-    const restoreSelector =
-        groups.length > 1
-        ? `
-
-            <div class="form-group">
-
-                <label
-                    class="title"
-                    for="restoreTargetAgeGroup">
-
-                    Restore to:
-
-                </label>
-
-                <select
-                    id="restoreTargetAgeGroup"
-                    class="text-input">
-
-                    <option value="">
-                        Select age group
-                    </option>
-
-                    ${
-                        groups.map(
-                            age =>
-                                `<option value="${age}">
-                                    ${age}
-                                </option>`
-                        ).join("")
-                    }
-
-                </select>
-
-            </div>
-
-        `
-        : "";
-
     results.innerHTML = `
 
         <div class="
@@ -3699,8 +3704,6 @@ function searchArchivedPlayers() {
             their existing record.
 
         </div>
-
-        ${restoreSelector}
 
         ${
             matches.map(
@@ -3943,7 +3946,7 @@ function restoreArchivedPlayer(
 
         const select =
             document.getElementById(
-                "restoreTargetAgeGroup"
+                "TargetAgeGroup"
             );
 
         if (!select || !select.value) {

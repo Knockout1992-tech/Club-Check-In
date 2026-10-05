@@ -3641,6 +3641,49 @@ function searchArchivedPlayers() {
 
     }
 
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
+
+    const restoreSelector =
+        groups.length > 1
+        ? `
+
+            <div class="form-group">
+
+                <label
+                    class="title"
+                    for="restoreTargetAgeGroup">
+
+                    Restore to:
+
+                </label>
+
+                <select
+                    id="restoreTargetAgeGroup"
+                    class="text-input">
+
+                    <option value="">
+                        Select age group
+                    </option>
+
+                    ${
+                        groups.map(
+                            age =>
+                                `<option value="${age}">
+                                    ${age}
+                                </option>`
+                        ).join("")
+                    }
+
+                </select>
+
+            </div>
+
+        `
+        : "";
+
     results.innerHTML = `
 
         <div class="
@@ -3656,6 +3699,8 @@ function searchArchivedPlayers() {
             their existing record.
 
         </div>
+
+        ${restoreSelector}
 
         ${
             matches.map(
@@ -3898,7 +3943,7 @@ function restoreArchivedPlayer(
 
         const select =
             document.getElementById(
-                "targetAgeGroup"
+                "restoreTargetAgeGroup"
             );
 
         if (!select || !select.value) {

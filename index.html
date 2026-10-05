@@ -3508,14 +3508,12 @@ function showCoachAddPlayer() {
                     id="targetAgeGroup"
                     class="text-input">
 
-                    <option value="">
-                        Select age group
-                    </option>
-
                     ${
                         groups.map(
-                            age =>
-                                `<option value="${age}">
+                            (age, index) =>
+                                `<option
+                                    value="${age}"
+                                    ${index === 0 ? "selected" : ""}>
                                     ${age}
                                 </option>`
                         ).join("")
@@ -3601,7 +3599,6 @@ function showCoachAddPlayer() {
     ).focus();
 
 }
-
 
 function coachAddPlayer() {
 
@@ -3752,6 +3749,168 @@ function coachAddPlayer() {
     saveData();
 
     showRegister();
+
+}
+
+function searchArchivedPlayers() {
+
+    const input =
+        document.getElementById(
+            "coachPlayerName"
+        );
+
+    const results =
+        document.getElementById(
+            "archiveSearchResults"
+        );
+
+    if (!input || !results) {
+        return;
+    }
+
+    const search =
+        input.value.trim().toLowerCase();
+
+    if (!search) {
+
+        results.innerHTML = "";
+
+        return;
+
+    }
+
+    const matches = [];
+
+    ageGroups.forEach(
+        ageGroup => {
+
+            (players[ageGroup] || [])
+                .forEach(player => {
+
+                    if (
+                        player.archived &&
+                        player.name &&
+                        player.name
+                            .toLowerCase()
+                            .includes(search)
+                    ) {
+
+                        matches.push({
+
+                            player:
+                                player,
+
+                            previousAgeGroup:
+                                ageGroup
+
+                        });
+
+                    }
+
+                });
+
+        }
+    );
+
+    if (matches.length === 0) {
+
+        results.innerHTML = `
+
+            <div class="info-box">
+
+                No archived player matches
+                <strong>
+                    "${escapeHTML(
+                        input.value.trim()
+                    )}"
+                </strong>.
+
+                <br><br>
+
+                You can add them as a new player if
+                this is a new registration.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    results.innerHTML = `
+
+        <div class="
+            info-box
+            success-box
+        ">
+
+            Archived player found.
+
+            <br>
+
+            Select the player below to restore
+            their existing record.
+
+        </div>
+
+        ${
+            matches.map(
+                match => `
+
+                    <div class="list-row">
+
+                        <div class="list-title">
+
+                            ${escapeHTML(
+                                match.player.name
+                            )}
+
+                        </div>
+
+                        <div class="list-sub">
+
+                            Previously:
+                            ${escapeHTML(
+                                match.previousAgeGroup
+                            )}
+
+                            ${
+                                match.player.lastAttendanceDate
+                                ? `
+                                    · Last attended:
+                                    ${
+                                        getDisplayDate(
+                                            match.player.lastAttendanceDate
+                                        )
+                                    }
+                                `
+                                : ""
+                            }
+
+                        </div>
+
+                        <br>
+
+                        <button
+                            class="blue-button"
+                            onclick="
+                                restoreArchivedPlayer(
+                                    ${match.player.id}
+                                )
+                            ">
+
+                            Restore Player
+
+                        </button>
+
+                    </div>
+
+                `
+            ).join("")
+        }
+
+    `;
 
 }
 

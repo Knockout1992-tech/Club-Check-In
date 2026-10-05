@@ -2147,13 +2147,25 @@ function renderShell(
                 showHome
                 ? `
 
-                    <button
-                        class="header-button"
-                        onclick="showWelcome()">
+                    <div class="header-actions">
 
-                        Home
+                        <button
+                            class="header-button"
+                            onclick="goHome()">
 
-                    </button>
+                            Home
+
+                        </button>
+
+                        <button
+                            class="header-button"
+                            onclick="logout()">
+
+                            Logout
+
+                        </button>
+
+                    </div>
 
                 `
                 : ""
@@ -2174,6 +2186,45 @@ function renderShell(
 /* =========================================================
    WELCOME
    ========================================================= */
+
+function goHome() {
+
+    if (
+        currentRole === "coach"
+    ) {
+
+        showCoachDashboard();
+
+        return;
+
+    }
+
+    if (
+        currentRole === "senior"
+    ) {
+
+        showSeniorDashboard();
+
+        return;
+
+    }
+
+    showWelcome();
+
+}
+
+
+function logout() {
+
+    currentRole = null;
+
+    currentAgeGroup = null;
+
+    selectedAgeGroups = [];
+
+    showWelcome();
+
+}
 
 function showWelcome() {
 

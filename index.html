@@ -4432,10 +4432,12 @@ function showArchiveReview() {
                                                     red-button
                                                     small-button
                                                 "
-                                                onclick="
-                                                    archivePlayer(
-                                                        ${player.id}
-                                                    )
+                                               onclick="
+                                                archivePlayer(
+                                                    ${player.id},
+                                                    'archiveReview'
+                                                )
+"
                                                 ">
 
                                                 Archive
@@ -4463,7 +4465,8 @@ function showArchiveReview() {
 }
 
 function archivePlayer(
-    playerID
+    playerID,
+    returnTo
 ) {
 
     const player =
@@ -4499,7 +4502,20 @@ function archivePlayer(
 
     saveData();
 
-    showArchiveReview();
+    if (
+        returnTo ===
+        "playerManagement"
+    ) {
+
+        showPlayerManagement(
+            player.ageGroup
+        );
+
+    } else {
+
+        showArchiveReview();
+
+    }
 
 }
 

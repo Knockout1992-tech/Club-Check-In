@@ -3603,165 +3603,157 @@ function showCoachAddPlayer() {
 }
 
 
-function searchArchivedPlayers() {
+function restoreArchivedPlayer(
+    playerID
+) {
 
-    const input =
-        document.getElementById(
-            "coachPlayerName"
+    const player =
+        findPlayerByID(
+            playerID
         );
 
-    const results =
-        document.getElementById(
-            "archiveSearchResults"
-        );
-
-    if (!input || !results) {
+    if (!player) {
         return;
     }
 
-    const search =
-        input.value.trim().toLowerCase();
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
 
-    if (!search) {
+    if (!groups.length) {
+        return;
+    }
 
-        results.innerHTML = "";
+    let targetAgeGroup =
+        groups[0];
+
+    /*
+        If multiple age groups are selected,
+        use the dropdown on the Add Player screen.
+    */
+
+    if (groups.length > 1) {
+
+        const select =
+            document.getElementById(
+                "targetAgeGroup"
+            );
+
+        if (!select) {
+
+            alert(
+                "Please select an age group."
+            );
+
+            return;
+
+        }
+
+        targetAgeGroup =
+            select.value;
+
+        if (!targetAgeGroup) {
+
+            alert(
+                "Please select an age group."
+            );
+
+            return;
+
+        }
+
+    }
+
+    const register =
+        getTodayRegister(
+            targetAgeGroup
+        );
+
+    if (
+        !register ||
+        register.submitted
+    ) {
+
+        alert(
+            "Today's register is not open for "
+            + targetAgeGroup
+            + "."
+        );
 
         return;
 
     }
 
-    const matches = [];
+    const confirmed =
+        confirm(
+            "Restore "
+            + player.name
+            + " to "
+            + targetAgeGroup
+            + "?\n\n"
+            + "Their historical attendance will be retained.\n"
+            + "They will NOT be marked as attending today.\n"
+            + "GMS will be reset and require Senior confirmation."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    /* Remove from old age-group array */
 
     ageGroups.forEach(
         ageGroup => {
 
-            (players[ageGroup] || [])
-                .forEach(player => {
+            if (!players[ageGroup]) {
+                return;
+            }
 
-                    if (
-                        player.archived &&
-                        player.name &&
-                        player.name
-                            .toLowerCase()
-                            .includes(search)
-                    ) {
-
-                        matches.push({
-
-                            player:
-                                player,
-
-                            previousAgeGroup:
-                                ageGroup
-
-                        });
-
-                    }
-
-                });
+            players[ageGroup] =
+                players[ageGroup].filter(
+                    item =>
+                        item.id !== player.id
+                );
 
         }
     );
 
-    if (matches.length === 0) {
+    /* Update player */
 
-        results.innerHTML = `
+    player.ageGroup =
+        targetAgeGroup;
 
-            <div class="info-box">
+    player.active =
+        true;
 
-                No archived player matches
-                <strong>
-                    "${escapeHTML(
-                        input.value.trim()
-                    )}"
-                </strong>.
+    player.archived =
+        false;
 
-                <br><br>
+    player.gms =
+        false;
 
-                You can add them as a new player if
-                this is a new registration.
+    player.coachGmsSuggestion =
+        false;
 
-            </div>
+    /*
+        Do not change lastAttendanceDate.
+        Restoring does not count as attendance.
+    */
 
-        `;
+    if (!players[targetAgeGroup]) {
 
-        return;
+        players[targetAgeGroup] = [];
 
     }
 
-    results.innerHTML = `
+    players[targetAgeGroup].push(
+        player
+    );
 
-        <div class="
-            info-box
-            success-box
-        ">
+    saveData();
 
-            Archived player found.
-
-            <br>
-
-            Select the player below to restore
-            their existing record.
-
-        </div>
-
-        ${
-            matches.map(
-                match => `
-
-                    <div class="list-row">
-
-                        <div class="list-title">
-
-                            ${escapeHTML(
-                                match.player.name
-                            )}
-
-                        </div>
-
-                        <div class="list-sub">
-
-                            Previously:
-                            ${escapeHTML(
-                                match.previousAgeGroup
-                            )}
-
-                            ${
-                                match.player.lastAttendanceDate
-                                ? `
-                                    · Last attended:
-                                    ${
-                                        getDisplayDate(
-                                            match.player.lastAttendanceDate
-                                        )
-                                    }
-                                `
-                                : ""
-                            }
-
-                        </div>
-
-                        <br>
-
-                        <button
-                            class="blue-button"
-                            onclick="
-                                restoreArchivedPlayer(
-                                    ${match.player.id}
-                                )
-                            ">
-
-                            Restore Player
-
-                        </button>
-
-                    </div>
-
-                `
-            ).join("")
-        }
-
-    `;
+    showRegister();
 
 }
 

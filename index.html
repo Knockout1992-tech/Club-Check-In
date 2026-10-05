@@ -3365,6 +3365,21 @@ function showRoster() {
                                 }).join("")
                             }
 
+                            <br>
+
+                            <button
+                                class="green-button"
+                                onclick="
+    showCoachAddPlayer(
+        true,
+        '${ageGroup}'
+    )
+">
+
+                                + Add Player
+
+                            </button>
+
                         </div>
 
                     `;
@@ -3421,12 +3436,19 @@ function setCoachGMSSuggestion(
    COACH ADD / RESTORE PLAYER
    ========================================================= */
 
-function showCoachAddPlayer() {
+function showCoachAddPlayer(
+    fromRoster = false
+    rosterAgeGroup = null
+) {
 
     const groups =
-        selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
+        rosterAgeGroup
+        ? [rosterAgeGroup]
+        : (
+            selectedAgeGroups.length
+            ? selectedAgeGroups
+            : [currentAgeGroup]
+        );
 
     const ageGroupSelector =
         groups.length > 1
@@ -3468,12 +3490,21 @@ function showCoachAddPlayer() {
 
         <div class="card">
 
-            <button
-                class="back-button"
-                onclick="showRegister()">
-
-                ← Register
-
+                <button
+                    class="back-button"
+                    onclick="
+                        ${
+                            fromRoster
+                            ? "showRoster()"
+                            : "showRegister()"
+                        }
+                    ">
+                
+                    ← ${
+                        fromRoster
+                        ? "Roster"
+                        : "Register"
+                    }
             </button>
 
             <h2>
@@ -3540,7 +3571,10 @@ function showCoachAddPlayer() {
 }
 
 
-function coachAddPlayer() {
+function coachAddPlayer(
+    fromRoster = false,
+    rosterAgeGroup = null
+) {
 
     const name =
         document.getElementById(
@@ -3558,9 +3592,13 @@ function coachAddPlayer() {
     }
 
     const groups =
-        selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
+        rosterAgeGroup
+        ? [rosterAgeGroup]
+        : (
+            selectedAgeGroups.length
+            ? selectedAgeGroups
+            : [currentAgeGroup]
+        );
 
     if (!groups.length) {
 
@@ -3670,7 +3708,9 @@ function coachAddPlayer() {
         if (restore) {
 
             restoreArchivedPlayer(
-                archivedMatch.player.id
+                archivedMatch.player.id,
+                fromRoster,
+                targetAgeGroup
             );
 
         }
@@ -3742,7 +3782,30 @@ function coachAddPlayer() {
     }
 
     /*
-        Check that today's register is open.
+        ROSTER:
+        Add the player without requiring today's
+        register and without marking them present.
+    */
+
+    if (fromRoster) {
+
+        addPlayerToAgeGroup(
+            targetAgeGroup,
+            name,
+            false
+        );
+
+        saveData();
+
+        showRoster();
+
+        return;
+
+    }
+
+    /*
+        REGISTER:
+        Today's register must be open.
     */
 
     const register =
@@ -3793,7 +3856,6 @@ function coachAddPlayer() {
     showRegister();
 
 }
-
 
 function searchArchivedPlayers() {
 
@@ -3973,7 +4035,9 @@ function searchArchivedPlayers() {
 
 
 function restoreArchivedPlayer(
-    playerID
+    playerID,
+    fromRoster = false,
+    rosterAgeGroup = null
 ) {
 
     const player =
@@ -3986,9 +4050,13 @@ function restoreArchivedPlayer(
     }
 
     const groups =
-        selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
+        rosterAgeGroup
+        ? [rosterAgeGroup]
+        : (
+            selectedAgeGroups.length
+            ? selectedAgeGroups
+            : [currentAgeGroup]
+        );
 
     if (!groups.length) {
 
@@ -4031,26 +4099,33 @@ function restoreArchivedPlayer(
     }
 
     /*
+        REGISTER:
         Make sure today's register is open.
     */
 
-    const register =
-        getTodayRegister(
-            targetAgeGroup
-        );
+    let register = null;
 
-    if (
-        !register ||
-        register.submitted
-    ) {
+    if (!fromRoster) {
 
-        alert(
-            "Today's register is not open for "
-            + targetAgeGroup
-            + "."
-        );
+        register =
+            getTodayRegister(
+                targetAgeGroup
+            );
 
-        return;
+        if (
+            !register ||
+            register.submitted
+        ) {
+
+            alert(
+                "Today's register is not open for "
+                + targetAgeGroup
+                + "."
+            );
+
+            return;
+
+        }
 
     }
 
@@ -4066,7 +4141,11 @@ function restoreArchivedPlayer(
             + targetAgeGroup
             + "?\n\n"
             + "Their historical attendance will be retained.\n"
-            + "They will be marked as PRESENT today.\n"
+            + (
+                fromRoster
+                ? "They will be added to the roster but NOT marked as present today.\n"
+                : "They will be marked as PRESENT today.\n"
+            )
             + "GMS will be reset and require Senior confirmation."
         );
 
@@ -4129,23 +4208,38 @@ function restoreArchivedPlayer(
     );
 
     /*
-        Restored during today's register:
-        mark the player as present today.
+        REGISTER:
+        Mark the restored player as present today.
     */
 
-    register.attendance[
-        player.id
-    ] = true;
+    if (!fromRoster) {
 
-    player.lastAttendanceDate =
-        getTodayKey();
+        register.attendance[
+            player.id
+        ] = true;
+
+        player.lastAttendanceDate =
+            getTodayKey();
+
+    }
 
     saveData();
 
-    showRegister();
+    /*
+        Return to the correct screen.
+    */
+
+    if (fromRoster) {
+
+        showRoster();
+
+    } else {
+
+        showRegister();
+
+    }
 
 }
-
 /* =========================================================
    SESSION HISTORY
    ========================================================= */

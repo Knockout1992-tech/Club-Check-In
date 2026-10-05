@@ -4184,17 +4184,29 @@ function restoreArchivedPlayer(
 
     if (!players[targetAgeGroup]) {
 
-        players[targetAgeGroup] = [];
+    players[targetAgeGroup] = [];
 
-    }
+}
 
-    players[targetAgeGroup].push(
-        player
-    );
+players[targetAgeGroup].push(
+    player
+);
 
-    saveData();
+/*
+    Restored during today's register:
+    mark the player as present today.
+*/
 
-    showRegister();
+register.attendance[
+    player.id
+] = true;
+
+player.lastAttendanceDate =
+    getTodayKey();
+
+saveData();
+
+showRegister();
 
 }
 

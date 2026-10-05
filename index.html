@@ -293,6 +293,12 @@ h2 {
     color: #fff;
 }
 
+  .age-button.selected-age {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
+    filter: brightness(0.92);
+}  
+
 /* =========================
    DASHBOARD
    ========================= */
@@ -5061,6 +5067,11 @@ function showPlayerManagement(
                                     ${
                                         needsGMS
                                         ? "gms-needs-confirmation"
+                                        : ""
+                                    }
+                                    ${
+                                        currentAgeGroup === age
+                                        ? "selected-age"
                                         : ""
                                     }
                                 "

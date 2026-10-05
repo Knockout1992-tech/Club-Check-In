@@ -2193,7 +2193,10 @@ function goHome() {
         currentRole === "coach"
     ) {
 
-        showCoachDashboard();
+        currentAgeGroup = null;
+        selectedAgeGroups = [];
+
+        showCoachAgeGroups();
 
         return;
 

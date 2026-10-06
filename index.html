@@ -2414,16 +2414,34 @@ function searchArchivedPlayers(
                             `
                             : `
                                 <button
-                                    class="blue-button"
-                                    onclick="
-                                        restoreArchivedPlayer(
-                                            ${match.player.id}
-                                        )
-                                    ">
+    class="blue-button"
+    onclick="
+        restoreArchivedPlayer(
+            ${match.player.id}
+        )
+    ">
 
-                                    Restore Player
+    Restore Player
 
-                                </button>
+</button>
+
+${
+    currentRole === "senior"
+    ? `
+        <button
+            class="red-button"
+            onclick="
+                permanentlyRemovePlayer(
+                    ${match.player.id}
+                )
+            ">
+
+            Permanently Remove
+
+        </button>
+    `
+    : ""
+}
                             `
                         }
 

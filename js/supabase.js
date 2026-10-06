@@ -9,3 +9,26 @@ const supabaseClient =
         SUPABASE_URL,
         SUPABASE_KEY
     );
+
+async function testSupabaseConnection() {
+
+    const { data, error } =
+        await supabaseClient
+            .from("players")
+            .select("id")
+            .limit(1);
+
+    if (error) {
+
+        alert(
+            "Supabase test failed:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+    alert(
+        "Supabase connection successful!"
+    );
+}

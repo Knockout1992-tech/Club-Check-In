@@ -4502,17 +4502,17 @@ function renderPlayerManagementList(
                             </div>
 
                             ${
-    player.coachGmsSuggestion && !player.gms
-    ? `
-        <div
-            class="player-small">
+                                player.coachGmsSuggestion && !player.gms
+                                ? `
+                                    <div
+                                        class="player-small">
 
-            Coach has suggested GMS
+                                        Coach has suggested GMS
 
-        </div>
-    `
-    : ""
-}
+                                    </div>
+                                `
+                                : ""
+                            }
 
                             <div
                                 class="player-small">
@@ -4576,7 +4576,7 @@ function renderPlayerManagementList(
         small-button
     "
     onclick="
-        movePlayer(
+        showMovePlayer(
             ${player.id}
         )
     ">
@@ -4600,6 +4600,10 @@ function renderPlayerManagementList(
     Archive
 
 </button>
+
+                                Archive
+
+                            </button>
 
                         </div>
 
@@ -4629,7 +4633,7 @@ function renderPlayerManagementList(
 
 }
 
-function movePlayer(
+function showMovePlayer(
     playerID
 ) {
 
@@ -4648,42 +4652,134 @@ function movePlayer(
                 ageGroup !== player.ageGroup
         );
 
-    const newAgeGroup =
-        prompt(
-            "Move "
-            + player.name
-            + " from "
-            + player.ageGroup
-            + " to:\n\n"
-            + availableGroups.join(
-                "\n"
-            )
-            + "\n\n"
-            + "Enter the new age group:"
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="
+                    showPlayerManagement(
+                        '${player.ageGroup}'
+                    )
+                ">
+
+                ← Back
+
+            </button>
+
+            <h2>
+                Move Player
+            </h2>
+
+            <div class="subtitle">
+
+                ${escapeHTML(
+                    player.name
+                )}
+
+            </div>
+
+            <div class="info-box">
+
+                Current age group:
+                <strong>
+                    ${player.ageGroup}
+                </strong>
+
+                <br><br>
+
+                Select the new age group for this player.
+
+                Their Player ID and attendance history
+                will be retained.
+
+            </div>
+
+            <div class="form-group">
+
+                <label
+                    class="title"
+                    for="moveTargetAgeGroup">
+
+                    Move to:
+
+                </label>
+
+                <select
+                    id="moveTargetAgeGroup"
+                    class="text-input">
+
+                    ${
+                        availableGroups.map(
+                            ageGroup => `
+
+                                <option
+                                    value="${ageGroup}">
+
+                                    ${ageGroup}
+
+                                </option>
+
+                            `
+                        ).join("")
+                    }
+
+                </select>
+
+            </div>
+
+            <button
+                class="green-button"
+                onclick="
+                    movePlayer(
+                        ${player.id}
+                    )
+                ">
+
+                Move Player
+
+            </button>
+
+        </div>
+
+    `);
+
+}
+
+function movePlayer(
+    playerID
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
         );
 
-    if (!newAgeGroup) {
+    if (!player) {
         return;
     }
 
-    if (
-        !availableGroups.includes(
-            newAgeGroup.trim().toUpperCase()
-        )
-    ) {
-
-        alert(
-            "Please enter a valid age group."
+    const select =
+        document.getElementById(
+            "moveTargetAgeGroup"
         );
 
+    if (!select || !select.value) {
         return;
-
     }
 
     const targetAgeGroup =
-        newAgeGroup
-            .trim()
-            .toUpperCase();
+        select.value;
+
+    if (
+        targetAgeGroup ===
+        player.ageGroup
+    ) {
+
+        return;
+
+    }
 
     const confirmed =
         confirm(
@@ -4702,24 +4798,32 @@ function movePlayer(
         return;
     }
 
-    ageGroups.forEach(
-        ageGroup => {
+    /*
+        Remove the existing player from
+        their current age-group array.
+    */
 
-            if (!players[ageGroup]) {
-                return;
-            }
+    if (players[player.ageGroup]) {
 
-            players[ageGroup] =
-                players[ageGroup].filter(
-                    item =>
-                        item.id !== player.id
-                );
+        players[player.ageGroup] =
+            players[player.ageGroup].filter(
+                item =>
+                    item.id !== player.id
+            );
 
-        }
-    );
+    }
+
+    /*
+        Update the player's age group.
+    */
 
     player.ageGroup =
         targetAgeGroup;
+
+    /*
+        Add the same player record to
+        the new age-group array.
+    */
 
     if (!players[targetAgeGroup]) {
 
@@ -4739,7 +4843,7 @@ function movePlayer(
     );
 
 }
-
+   
 function setGMS(
     playerID,
     confirmed

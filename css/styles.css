@@ -224,6 +224,12 @@ h2 {
     font-size: 17px;
 }
 
+.welcome-version {
+    color: #666;
+    margin-top: 15px;
+    font-size: 10px;
+}
+
 /* =========================
    PIN
    ========================= */

@@ -4260,7 +4260,7 @@ function showArchiveList() {
             <div class="subtitle">
 
                 Archived players remain available for
-                historical records and coach restoration.
+                historical records and restoration.
 
             </div>
 
@@ -4346,6 +4346,23 @@ function showArchiveList() {
 
                                         </div>
 
+                                        <br>
+
+                                        <button
+                                            class="
+                                                green-button
+                                                small-button
+                                            "
+                                            onclick="
+                                                showSeniorRestorePlayer(
+                                                    ${player.id}
+                                                )
+                                            ">
+
+                                            Restore
+
+                                        </button>
+
                                     </div>
 
                                 `
@@ -4363,11 +4380,156 @@ function showArchiveList() {
 
             <div class="info-box">
 
-                Coaches can restore archived players through
-                <strong>+ Add Player</strong> when taking
-                a register.
+                Senior Members can restore archived players
+                and select their current age group.
+
+                <br><br>
+
+                Player ID and historical attendance
+                will be retained.
 
             </div>
+
+        </div>
+
+    `);
+
+}
+
+function showSeniorRestorePlayer(
+    playerID
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+    const availableGroups =
+        ageGroups;
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showArchiveList()">
+
+                ← Archived Players
+
+            </button>
+
+            <h2>
+                Restore Player
+            </h2>
+
+            <div class="subtitle">
+
+                ${escapeHTML(
+                    player.name
+                )}
+
+            </div>
+
+            <div class="info-box">
+
+                Previous age group:
+                <strong>
+                    ${escapeHTML(
+                        player.ageGroup
+                    )}
+                </strong>
+
+                <br><br>
+
+                Last attended:
+
+                <strong>
+
+                    ${
+                        player.lastAttendanceDate
+                        ? getDisplayDate(
+                            player.lastAttendanceDate
+                        )
+                        : "No recorded attendance"
+                    }
+
+                </strong>
+
+                <br><br>
+
+                Their Player ID and historical
+                attendance will be retained.
+
+            </div>
+
+            <div class="form-group">
+
+                <label
+                    class="title"
+                    for="seniorRestoreAgeGroup">
+
+                    Restore to:
+
+                </label>
+
+                <select
+                    id="seniorRestoreAgeGroup"
+                    class="text-input">
+
+                    ${
+                        availableGroups.map(
+                            ageGroup => `
+
+                                <option
+                                    value="${ageGroup}"
+                                    ${
+                                        ageGroup ===
+                                        player.ageGroup
+                                        ? "selected"
+                                        : ""
+                                    }>
+
+                                    ${ageGroup}
+
+                                </option>
+
+                            `
+                        ).join("")
+                    }
+
+                </select>
+
+            </div>
+
+            <div class="info-box">
+
+                Restoring the player will make them
+                active again.
+
+                <br><br>
+
+                They will <strong>not</strong> be marked
+                as attending today.
+
+            </div>
+
+            <button
+                class="green-button"
+                onclick="
+                    seniorRestorePlayer(
+                        ${player.id}
+                    )
+                ">
+
+                Restore Player
+
+            </button>
 
         </div>
 

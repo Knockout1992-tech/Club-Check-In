@@ -4571,20 +4571,35 @@ function renderPlayerManagementList(
                             </label>
 
                             <button
-                                class="
-                                    red-button
-                                    small-button
-                                "
-                                onclick="
-                                    archivePlayer(
-                                        ${player.id},
-                                        'playerManagement'
-                                    )
-                                ">
+    class="
+        secondary-button
+        small-button
+    "
+    onclick="
+        movePlayer(
+            ${player.id}
+        )
+    ">
 
-                                Archive
+    Move
 
-                            </button>
+</button>
+
+<button
+    class="
+        red-button
+        small-button
+    "
+    onclick="
+        archivePlayer(
+            ${player.id},
+            'playerManagement'
+        )
+    ">
+
+    Archive
+
+</button>
 
                         </div>
 
@@ -4611,6 +4626,117 @@ function renderPlayerManagementList(
         </div>
 
     `;
+
+}
+
+function movePlayer(
+    playerID
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+    const availableGroups =
+        ageGroups.filter(
+            ageGroup =>
+                ageGroup !== player.ageGroup
+        );
+
+    const newAgeGroup =
+        prompt(
+            "Move "
+            + player.name
+            + " from "
+            + player.ageGroup
+            + " to:\n\n"
+            + availableGroups.join(
+                "\n"
+            )
+            + "\n\n"
+            + "Enter the new age group:"
+        );
+
+    if (!newAgeGroup) {
+        return;
+    }
+
+    if (
+        !availableGroups.includes(
+            newAgeGroup.trim().toUpperCase()
+        )
+    ) {
+
+        alert(
+            "Please enter a valid age group."
+        );
+
+        return;
+
+    }
+
+    const targetAgeGroup =
+        newAgeGroup
+            .trim()
+            .toUpperCase();
+
+    const confirmed =
+        confirm(
+            "Move "
+            + player.name
+            + " from "
+            + player.ageGroup
+            + " to "
+            + targetAgeGroup
+            + "?\n\n"
+            + "Their Player ID and attendance history "
+            + "will be retained."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    ageGroups.forEach(
+        ageGroup => {
+
+            if (!players[ageGroup]) {
+                return;
+            }
+
+            players[ageGroup] =
+                players[ageGroup].filter(
+                    item =>
+                        item.id !== player.id
+                );
+
+        }
+    );
+
+    player.ageGroup =
+        targetAgeGroup;
+
+    if (!players[targetAgeGroup]) {
+
+        players[targetAgeGroup] =
+            [];
+
+    }
+
+    players[targetAgeGroup].push(
+        player
+    );
+
+    saveData();
+
+    showPlayerManagement(
+        targetAgeGroup
+    );
 
 }
 

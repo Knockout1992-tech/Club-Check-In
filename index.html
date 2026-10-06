@@ -2795,7 +2795,9 @@ function showCoachAddPlayer(
                     maxlength="100"
                     autocomplete="off"
                     oninput="
-                        searchArchivedPlayers()
+                        searchArchivedPlayers(
+                            ${fromRoster}
+                        )
                     ">
 
             </div>
@@ -2805,12 +2807,17 @@ function showCoachAddPlayer(
             <br>
 
             <button
-    class="green-button"
-    onclick="coachAddPlayer(${fromRoster}, '${rosterAgeGroup || ""}')">
+                class="green-button"
+                onclick="
+                    coachAddPlayer(
+                        ${fromRoster},
+                        '${rosterAgeGroup || ""}'
+                    )
+                ">
 
-    Add as New Player
+                Add as New Player
 
-</button>
+            </button>
 
         </div>
 
@@ -2821,7 +2828,6 @@ function showCoachAddPlayer(
     ).focus();
 
 }
-
 
 function coachAddPlayer(
     fromRoster = false,
@@ -3109,7 +3115,9 @@ function coachAddPlayer(
 
 }
 
-function searchArchivedPlayers() {
+function searchArchivedPlayers(
+    fromRoster = false
+) {
 
     const input =
         document.getElementById(
@@ -3220,8 +3228,17 @@ function searchArchivedPlayers() {
 
             <br>
 
-            Select the player below to restore
-            their existing record.
+            ${
+                fromRoster
+                ? `
+                    Archived players can only be
+                    restored when taking the register.
+                `
+                : `
+                    Select the player below to restore
+                    their existing record.
+                `
+            }
 
         </div>
 
@@ -3263,17 +3280,34 @@ function searchArchivedPlayers() {
 
                         <br>
 
-                        <button
-                            class="blue-button"
-                            onclick="
-                                restoreArchivedPlayer(
-                                    ${match.player.id}
-                                )
-                            ">
+                        ${
+                            fromRoster
+                            ? `
+                                <div class="info-box">
 
-                            Restore Player
+                                    This player is archived.
 
-                        </button>
+                                    <br><br>
+
+                                    Restore them when taking
+                                    the register.
+
+                                </div>
+                            `
+                            : `
+                                <button
+                                    class="blue-button"
+                                    onclick="
+                                        restoreArchivedPlayer(
+                                            ${match.player.id}
+                                        )
+                                    ">
+
+                                    Restore Player
+
+                                </button>
+                            `
+                        }
 
                     </div>
 

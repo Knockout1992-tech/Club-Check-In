@@ -4406,8 +4406,14 @@ function showSeniorRestorePlayer(
         );
 
     if (!player) {
-        return;
-    }
+
+    alert(
+        "Player not found: "
+        + playerID
+    );
+
+    return;
+}
 
     const availableGroups =
         ageGroups;

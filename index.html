@@ -4396,6 +4396,90 @@ function showArchiveList() {
 
 }
 
+function seniorRestorePlayer(playerID) {
+
+    const player =
+        findPlayerByID(playerID);
+
+    if (!player) {
+        alert("Player could not be found.");
+        return;
+    }
+
+    const select =
+        document.getElementById(
+            "seniorRestoreAgeGroup"
+        );
+
+    if (!select || !select.value) {
+        alert(
+            "Please select an age group."
+        );
+        return;
+    }
+
+    const targetAgeGroup =
+        select.value;
+
+    const confirmed =
+        confirm(
+            "Restore "
+            + player.name
+            + " to "
+            + targetAgeGroup
+            + "?\n\n"
+            + "Their Player ID and historical attendance "
+            + "will be retained.\n\n"
+            + "They will NOT be marked as attending today."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    ageGroups.forEach(
+        ageGroup => {
+
+            if (!players[ageGroup]) {
+                return;
+            }
+
+            players[ageGroup] =
+                players[ageGroup].filter(
+                    item =>
+                        item.id !== player.id
+                );
+
+        }
+    );
+
+    player.ageGroup =
+        targetAgeGroup;
+
+    player.active =
+        true;
+
+    player.archived =
+        false;
+
+    player.removed =
+        false;
+
+    if (!players[targetAgeGroup]) {
+        players[targetAgeGroup] = [];
+    }
+
+    players[targetAgeGroup].push(
+        player
+    );
+
+    saveData();
+
+    showPlayerManagement(
+        targetAgeGroup
+    );
+}
+
 function showSeniorRestorePlayer(
     playerID
 ) {

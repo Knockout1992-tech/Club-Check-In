@@ -81,4 +81,6 @@ function permanentlyRemovePlayer(playerID) {
 
     saveData();
 
+showArchiveList();
+
 }

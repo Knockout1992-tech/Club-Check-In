@@ -14,7 +14,7 @@ async function testSupabaseConnection() {
 
     const { data, error } =
         await supabaseClient
-            .from("players")
+            .from("Players")
             .select("id")
             .limit(1);
 

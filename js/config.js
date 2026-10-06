@@ -2,6 +2,8 @@
    CONFIG / APPLICATION STATE
    ========================================================= */
 
+const APP_VERSION = "V0.1.0";
+
 const ageGroups = [
     "U6",
     "U7",

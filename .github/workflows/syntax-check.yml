@@ -1,0 +1,49 @@
+name: JavaScript Syntax Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check index.html JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          import subprocess
+          import sys
+
+          with open("index.html", "r", encoding="utf-8") as f:
+              html = f.read()
+
+          scripts = re.findall(
+              r"<script\b[^>]*>(.*?)</script>",
+              html,
+              re.DOTALL | re.IGNORECASE
+          )
+
+          for i, script in enumerate(scripts, 1):
+              result = subprocess.run(
+                  ["node", "--check"],
+                  input=script,
+                  text=True,
+                  capture_output=True
+              )
+
+              if result.returncode != 0:
+                  print(f"JavaScript syntax error in script block {i}:")
+                  print(result.stderr)
+                  sys.exit(1)
+
+          print(f"JavaScript syntax check passed ({len(scripts)} script blocks checked).")
+          PY

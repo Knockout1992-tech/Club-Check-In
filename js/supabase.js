@@ -32,5 +32,3 @@ async function testSupabaseConnection() {
         "Supabase connection successful!"
     );
 }
-
-testSupabaseConnection();

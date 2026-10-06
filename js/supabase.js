@@ -14,7 +14,7 @@ async function testSupabaseConnection() {
 
     const { data, error } =
         await supabaseClient
-            .from("Players")
+            .from("players")
             .select("id")
             .limit(1);
 
@@ -32,3 +32,5 @@ async function testSupabaseConnection() {
         "Supabase connection successful!"
     );
 }
+
+testSupabaseConnection();

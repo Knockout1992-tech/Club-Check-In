@@ -3485,19 +3485,34 @@ function showArchiveList() {
                                         <br>
 
                                         <button
-                                            class="
-                                                green-button
-                                                small-button
-                                            "
-                                            onclick="
-                                                showSeniorRestorePlayer(
-                                                    ${player.id}
-                                                )
-                                            ">
+    class="
+        green-button
+        small-button
+    "
+    onclick="
+        showSeniorRestorePlayer(
+            ${player.id}
+        )
+    ">
 
-                                            Restore
+    Restore
 
-                                        </button>
+</button>
+
+<button
+    class="
+        red-button
+        small-button
+    "
+    onclick="
+        permanentlyRemovePlayer(
+            ${player.id}
+        )
+    ">
+
+    Permanently Remove
+
+</button>
 
                                     </div>
 

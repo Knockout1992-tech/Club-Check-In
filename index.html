@@ -1711,14 +1711,7 @@ function showRoster() {
                                                         ${
                                                             seniorConfirmed
                                                             ? "disabled"
-                                                            : `
-                                                                onchange='
-                                                                    setCoachGMSSuggestion(
-                                                                        ${JSON.stringify(player.id)},
-                                                                        this.checked
-                                                                    )
-                                                                '
-                                                            `
+                                                            : `onchange='setCoachGMSSuggestion(${JSON.stringify(player.id)}, this.checked)'`
                                                         }>
 
                                                     <span

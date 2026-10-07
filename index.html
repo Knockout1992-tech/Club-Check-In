@@ -1918,7 +1918,7 @@ function showCoachAddPlayer(
 
 }
 
-function coachAddPlayer(
+async function coachAddPlayer(
     fromRoster = false,
     rosterAgeGroup = null
 ) {
@@ -1935,7 +1935,6 @@ function coachAddPlayer(
         );
 
         return;
-
     }
 
     const groups =
@@ -1954,16 +1953,10 @@ function coachAddPlayer(
         );
 
         return;
-
     }
 
     let targetAgeGroup =
         groups[0];
-
-    /*
-        If multiple age groups are selected,
-        use the age group selected in the dropdown.
-    */
 
     if (groups.length > 1) {
 
@@ -1979,12 +1972,10 @@ function coachAddPlayer(
             );
 
             return;
-
         }
 
         targetAgeGroup =
             select.value;
-
     }
 
     /*
@@ -2018,12 +2009,9 @@ function coachAddPlayer(
                                     ageGroup
 
                             });
-
                         }
-
                     }
                 );
-
         }
     );
 
@@ -2054,16 +2042,14 @@ function coachAddPlayer(
 
         if (restore) {
 
-            restoreArchivedPlayer(
+            await restoreArchivedPlayer(
                 archivedMatch.player.id,
                 fromRoster,
                 targetAgeGroup
             );
-
         }
 
         return;
-
     }
 
     /*
@@ -2079,10 +2065,6 @@ function coachAddPlayer(
 
     if (activeMatch) {
 
-        /*
-            Same age group.
-        */
-
         if (
             activeMatch.ageGroup ===
             targetAgeGroup
@@ -2097,14 +2079,7 @@ function coachAddPlayer(
             );
 
             return;
-
         }
-
-        /*
-            Same name but different age group.
-            Allow the coach to confirm that this
-            is genuinely a different player.
-        */
 
         const differentPlayer =
             confirm(
@@ -2123,9 +2098,7 @@ function coachAddPlayer(
         if (!differentPlayer) {
 
             return;
-
         }
-
     }
 
     /*
@@ -2136,18 +2109,20 @@ function coachAddPlayer(
 
     if (fromRoster) {
 
-        addPlayerToAgeGroup(
-            targetAgeGroup,
-            name,
-            false
-        );
+        const newPlayer =
+            await addPlayerToAgeGroup(
+                targetAgeGroup,
+                name,
+                false
+            );
 
-        saveData();
+        if (!newPlayer) {
+            return;
+        }
 
         showRoster();
 
         return;
-
     }
 
     /*
@@ -2172,7 +2147,6 @@ function coachAddPlayer(
         );
 
         return;
-
     }
 
     /*
@@ -2180,15 +2154,22 @@ function coachAddPlayer(
     */
 
     const newPlayer =
-        addPlayerToAgeGroup(
+        await addPlayerToAgeGroup(
             targetAgeGroup,
             name,
             false
         );
 
+    if (!newPlayer) {
+        return;
+    }
+
     /*
         A player added during today's register
         is automatically marked as attending.
+
+        Backend attendance will be wired during
+        the Attendance migration.
     */
 
     register.attendance[
@@ -2201,9 +2182,8 @@ function coachAddPlayer(
     saveData();
 
     showRegister();
-
 }
-
+   
 function searchArchivedPlayers(
     fromRoster = false
 ) {

@@ -33,7 +33,6 @@ async function testSupabaseConnection() {
     );
 }
 
-testSupabaseConnection();
 
 async function testSupabaseInsert() {
 
@@ -66,4 +65,4 @@ async function testSupabaseInsert() {
     );
 }
 
-testSupabaseInsert();
+testSupabaseConnection();

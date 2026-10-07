@@ -67,8 +67,9 @@ async function loadTodayAttendanceRegister(ageGroup) {
         );
 
         alert(
-            "Unable to open today's register. Please try again."
-        );
+    "REGISTER OPEN ERROR\n\n" +
+    JSON.stringify(registerError, null, 2)
+);
 
         return null;
     }

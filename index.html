@@ -20,6 +20,7 @@
 <script src="js/supabase.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/players.js"></script>
+<script src="js/attendance.js"></script>
 <script src="js/senior.js"></script>
 
 <script>
@@ -164,272 +165,6 @@ function getAllActivePlayers() {
     });
 
     return result;
-
-}
-
-/* =========================================================
-   REGISTER HELPERS
-   ========================================================= */
-
-function closeExpiredRegisters() {
-
-    const todayKey =
-        getTodayKey();
-
-    Object.keys(dailyRegisters)
-        .forEach(dateKey => {
-
-            if (dateKey >= todayKey) {
-                return;
-            }
-
-            Object.keys(
-                dailyRegisters[dateKey]
-            ).forEach(ageGroup => {
-
-                const register =
-                    dailyRegisters[
-                        dateKey
-                    ][ageGroup];
-
-                if (
-                    register &&
-                    !register.submitted
-                ) {
-
-                    submitDailyRegister(
-                        dateKey,
-                        ageGroup,
-                        true
-                    );
-
-                }
-
-            });
-
-        });
-
-}
-
-function submitDailyRegister(
-    dateKey,
-    ageGroup,
-    automatic = false
-) {
-
-    if (!dailyRegisters[dateKey]) {
-        return;
-    }
-
-    const register =
-        dailyRegisters[
-            dateKey
-        ][ageGroup];
-
-    if (!register) {
-        return;
-    }
-
-    /*
-        Only prevent an automatic close
-        from running more than once.
-
-        Normal manual use does NOT get blocked.
-    */
-
-    if (
-        register.submitted &&
-        automatic
-    ) {
-        return;
-    }
-
-    const active =
-        getActivePlayers(
-            ageGroup
-        );
-
-    const attendance =
-        register.attendance || {};
-
-    const presentPlayers =
-        active.filter(
-            player =>
-                attendance[player.id] === true
-        );
-
-    presentPlayers.forEach(
-        player => {
-
-            player.lastAttendanceDate =
-                dateKey;
-
-        }
-    );
-
-    const present =
-        presentPlayers.length;
-
-    if (!sessions[ageGroup]) {
-        sessions[ageGroup] = [];
-    }
-
-    let existingSession =
-        sessions[ageGroup].find(
-            session =>
-                session.dateKey === dateKey
-        );
-
-    if (existingSession) {
-
-        existingSession.date =
-            getDisplayDate(
-                dateKey
-            );
-
-        existingSession.present =
-            present;
-
-        existingSession.total =
-            active.length;
-
-    } else {
-
-        sessions[ageGroup].push({
-
-            date:
-                getDisplayDate(
-                    dateKey
-                ),
-
-            dateKey:
-                dateKey,
-
-            present:
-                present,
-
-            total:
-                active.length
-
-        });
-
-    }
-
-    /*
-        Record that the register has been
-        processed, but do NOT use this as
-        a lock for the coach.
-    */
-
-    register.submitted =
-        automatic;
-
-    register.closedAutomatically =
-        automatic;
-
-    saveData();
-
-}
-
-function getTodayRegister(ageGroup) {
-
-    const todayKey =
-        getTodayKey();
-
-    if (
-        dailyRegisters[todayKey] &&
-        dailyRegisters[todayKey][ageGroup]
-    ) {
-
-        return dailyRegisters[
-            todayKey
-        ][ageGroup];
-
-    }
-
-    return null;
-
-}
-
-function createTodayRegister(ageGroup) {
-
-    const todayKey =
-        getTodayKey();
-
-    if (!dailyRegisters[todayKey]) {
-        dailyRegisters[todayKey] = {};
-    }
-
-    if (
-        !dailyRegisters[todayKey][ageGroup]
-    ) {
-
-        const attendance = {};
-
-        getActivePlayers(
-            ageGroup
-        ).forEach(player => {
-
-            attendance[player.id] =
-                false;
-
-        });
-
-        dailyRegisters[
-            todayKey
-        ][ageGroup] = {
-
-            submitted:
-                false,
-
-            closedAutomatically:
-                false,
-
-            attendance:
-                attendance
-
-        };
-
-        saveData();
-
-    }
-
-    return dailyRegisters[
-        todayKey
-    ][ageGroup];
-
-}
-
-function reopenTodayRegister() {
-
-    selectedAgeGroups.forEach(
-        ageGroup => {
-
-            const register =
-                getTodayRegister(
-                    ageGroup
-                );
-
-            if (!register) {
-                return;
-            }
-
-            /*
-                Today's register is always editable.
-            */
-
-            register.submitted =
-                false;
-
-            register.closedAutomatically =
-                false;
-
-        }
-    );
-
-    saveData();
-
-    showRegister();
 
 }
 
@@ -1367,12 +1102,12 @@ function showRegister() {
                                                                         ? "checked"
                                                                         : ""
                                                                     }
-                                                                    onchange="
-                                                                        setAttendance(
-                                                                            ${player.id},
-                                                                            this.checked
-                                                                        )
-                                                                    ">
+                                                                    onchange='
+    setAttendance(
+        ${JSON.stringify(player.id)},
+        this.checked
+    )
+'>
 
                                                                 <span
                                                                     class="
@@ -1444,123 +1179,6 @@ function showRegister() {
     `);
 
 }
-function openTodayRegister() {
-
-    const groups =
-        selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
-
-    groups.forEach(
-        ageGroup => {
-
-            createTodayRegister(
-                ageGroup
-            );
-
-        }
-    );
-
-    showRegister();
-
-}
-
-function openAgeGroupRegister(
-    ageGroup
-) {
-
-    createTodayRegister(
-        ageGroup
-    );
-
-    showRegister();
-
-}
-
-function setAttendance(
-    playerID,
-    present
-) {
-
-    let foundAgeGroup = null;
-
-    const player =
-        findPlayerByID(
-            playerID
-        );
-
-    if (!player) {
-        return;
-    }
-
-    foundAgeGroup =
-        player.ageGroup;
-
-    const register =
-        getTodayRegister(
-            foundAgeGroup
-        );
-
-    if (
-        !register ||
-        register.submitted
-    ) {
-        return;
-    }
-
-    register.attendance[
-        playerID
-    ] =
-        present;
-
-    if (present) {
-
-        player.lastAttendanceDate =
-            getTodayKey();
-
-    }
-
-    saveData();
-
-    showRegister();
-
-}
-
-function saveSession() {
-
-    const groups =
-        selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
-
-    groups.forEach(
-        ageGroup => {
-
-            const register =
-                getTodayRegister(
-                    ageGroup
-                );
-
-            if (
-                register &&
-                !register.submitted
-            ) {
-
-                submitDailyRegister(
-                    getTodayKey(),
-                    ageGroup,
-                    false
-                );
-
-            }
-
-        }
-    );
-
-    showCoachDashboard();
-
-}
-
 /* =========================================================
    ROSTER
    ========================================================= */
@@ -2172,16 +1790,22 @@ async function coachAddPlayer(
         the Attendance migration.
     */
 
-    register.attendance[
+    const addedToRegister =
+    await addPlayerToTodayAttendance(
+        targetAgeGroup,
         newPlayer.id
-    ] = true;
+    );
 
-    newPlayer.lastAttendanceDate =
-        getTodayKey();
+if (!addedToRegister) {
+    return;
+}
 
-    saveData();
+await setAttendance(
+    newPlayer.id,
+    true
+);
 
-    showRegister();
+showRegister();
 }
    
 function searchArchivedPlayers(
@@ -4496,12 +4120,12 @@ function changePIN(
 
     await loadPlayersFromSupabase();
 
-    closeExpiredRegisters();
+    await autoClosePreviousAttendanceRegisters();
 
     showWelcome();
 
 })();
-
+   
 setInterval(
     () => {
 

@@ -4494,60 +4494,6 @@ async function seniorAddPlayer(
 
 }
 
-function addPlayerToAgeGroup(
-    ageGroup,
-    name,
-    gms
-) {
-
-    if (!players[ageGroup]) {
-        players[ageGroup] = [];
-    }
-
-    const id =
-        Date.now()
-        + Math.floor(
-            Math.random() * 1000
-        );
-
-    const newPlayer = {
-
-        id:
-            id,
-
-        name:
-            name,
-
-        ageGroup:
-            ageGroup,
-
-        gms:
-            gms,
-
-        coachGmsSuggestion:
-            false,
-
-        active:
-            true,
-
-        archived:
-            false,
-
-        lastAttendanceDate:
-            null
-
-    };
-
-    players[ageGroup].push(
-        newPlayer
-    );
-
-    saveData();
-
-    return newPlayer;
-
-}
-
 /* =========================================================
    NEW SEASON
    ========================================================= */

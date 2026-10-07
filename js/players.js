@@ -56,17 +56,18 @@ async function addPlayerToAgeGroup(
 
     if (error) {
 
-        console.error(
-            "Supabase player creation failed:",
-            error
-        );
+    console.error(
+        "Supabase player creation failed:",
+        error
+    );
 
-        alert(
-            "Unable to add the player. Please try again."
-        );
+    alert(
+        "Player could not be saved:\n\n" +
+        error.message
+    );
 
-        return null;
-    }
+    return null;
+}
 
 
     /*

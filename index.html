@@ -5062,6 +5062,8 @@ function changePIN(
 
 (async function () {
 
+    loadSavedData();
+
     await loadPlayersFromSupabase();
 
     closeExpiredRegisters();

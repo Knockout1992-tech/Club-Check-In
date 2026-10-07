@@ -3261,91 +3261,6 @@ function showArchiveList() {
     `);
 
 }
-
-function seniorRestorePlayer(playerID) {
-
-    const player =
-        findPlayerByID(playerID);
-
-    if (!player) {
-        alert("Player could not be found.");
-        return;
-    }
-
-    const select =
-        document.getElementById(
-            "seniorRestoreAgeGroup"
-        );
-
-    if (!select || !select.value) {
-        alert(
-            "Please select an age group."
-        );
-        return;
-    }
-
-    const targetAgeGroup =
-        select.value;
-
-    const confirmed =
-        confirm(
-            "Restore "
-            + player.name
-            + " to "
-            + targetAgeGroup
-            + "?\n\n"
-            + "Their Player ID and historical attendance "
-            + "will be retained.\n\n"
-            + "They will NOT be marked as attending today."
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-    ageGroups.forEach(
-        ageGroup => {
-
-            if (!players[ageGroup]) {
-                return;
-            }
-
-            players[ageGroup] =
-                players[ageGroup].filter(
-                    item =>
-                        item.id !== player.id
-                );
-
-        }
-    );
-
-    player.ageGroup =
-        targetAgeGroup;
-
-    player.active =
-        true;
-
-    player.archived =
-        false;
-
-    player.removed =
-        false;
-
-    if (!players[targetAgeGroup]) {
-        players[targetAgeGroup] = [];
-    }
-
-    players[targetAgeGroup].push(
-        player
-    );
-
-    saveData();
-
-    showPlayerManagement(
-        targetAgeGroup
-    );
-}
-
 function showSeniorRestorePlayer(
     playerID
 ) {
@@ -3477,11 +3392,11 @@ function showSeniorRestorePlayer(
 
             <button
                 class="green-button"
-                onclick="
-                    seniorRestorePlayer(
-                        ${player.id}
-                    )
-                ">
+                onclick='
+    seniorRestorePlayer(
+        ${JSON.stringify(player.id)}
+    )
+'>
 
                 Restore Player
 
@@ -3879,11 +3794,11 @@ function showMovePlayer(
 
             <button
                 class="green-button"
-                onclick="
-                    movePlayer(
-                        ${player.id}
-                    )
-                ">
+                onclick='
+    movePlayer(
+        ${JSON.stringify(player.id)}
+    )
+'>
 
                 Move Player
 
@@ -3894,104 +3809,7 @@ function showMovePlayer(
     `);
 
 }
-
-function movePlayer(
-    playerID
-) {
-
-    const player =
-        findPlayerByID(
-            playerID
-        );
-
-    if (!player) {
-        return;
-    }
-
-    const select =
-        document.getElementById(
-            "moveTargetAgeGroup"
-        );
-
-    if (!select || !select.value) {
-        return;
-    }
-
-    const targetAgeGroup =
-        select.value;
-
-    if (
-        targetAgeGroup ===
-        player.ageGroup
-    ) {
-
-        return;
-
-    }
-
-    const confirmed =
-        confirm(
-            "Move "
-            + player.name
-            + " from "
-            + player.ageGroup
-            + " to "
-            + targetAgeGroup
-            + "?\n\n"
-            + "Their Player ID and attendance history "
-            + "will be retained."
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-    /*
-        Remove the existing player from
-        their current age-group array.
-    */
-
-    if (players[player.ageGroup]) {
-
-        players[player.ageGroup] =
-            players[player.ageGroup].filter(
-                item =>
-                    item.id !== player.id
-            );
-
-    }
-
-    /*
-        Update the player's age group.
-    */
-
-    player.ageGroup =
-        targetAgeGroup;
-
-    /*
-        Add the same player record to
-        the new age-group array.
-    */
-
-    if (!players[targetAgeGroup]) {
-
-        players[targetAgeGroup] =
-            [];
-
-    }
-
-    players[targetAgeGroup].push(
-        player
-    );
-
-    saveData();
-
-    showPlayerManagement(
-        targetAgeGroup
-    );
-
-}
-
+   
 /* =========================================================
    SENIOR ADD PLAYER
    ========================================================= */

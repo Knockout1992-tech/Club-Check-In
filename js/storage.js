@@ -228,9 +228,47 @@ async function loadPlayersFromSupabase() {
         return false;
     }
 
+    players = {};
+
+    data.forEach(player => {
+
+        if (!players[player.age_group]) {
+            players[player.age_group] = [];
+        }
+
+        players[player.age_group].push({
+
+            id:
+                player.player_id,
+
+            name:
+                player.name,
+
+            ageGroup:
+                player.age_group,
+
+            gms:
+                player.gms,
+
+            coachGmsSuggestion:
+                player.coach_gms_suggestion,
+
+            active:
+                player.active,
+
+            archived:
+                player.archived,
+
+            lastAttendanceDate:
+                player.last_attendance_date
+
+        });
+
+    });
+
     console.log(
         "Supabase players loaded:",
-        data
+        players
     );
 
     return true;

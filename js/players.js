@@ -284,4 +284,6 @@ async function setCoachGMSSuggestion(
 
     saveData();
 
+showRoster();
+
 }

@@ -261,10 +261,11 @@ async function setAttendance(
     playerID,
     present
 ) {
+    alert("SET ATTENDANCE: " + playerID + " / " + present);
 
     const player =
         findPlayerByID(playerID);
-
+   
     if (!player) {
 
         return;

@@ -1,6 +1,5 @@
 /* =========================================================
-   PLAYER DATA OPERATIONS
-   Supabase-backed player functions
+   PLAYERS
    ========================================================= */
 
 
@@ -24,59 +23,31 @@ async function addPlayerToAgeGroup(
         await supabaseClient
             .from("players")
             .insert({
-
-                player_id:
-                    playerID,
-
-                name:
-                    name,
-
-                age_group:
-                    ageGroup,
-
-                gms:
-                    gms,
-
-                coach_gms_suggestion:
-                    false,
-
-                active:
-                    true,
-
-                archived:
-                    false,
-
-                last_attendance_date:
-                    null
-
+                player_id: playerID,
+                name: name,
+                age_group: ageGroup,
+                gms: gms,
+                coach_gms_suggestion: false,
+                active: true,
+                archived: false,
+                last_attendance_date: null
             })
             .select()
             .single();
 
-
     if (error) {
 
-    console.error(
-        "Supabase player creation failed:",
-        error
-    );
+        console.error(
+            "Supabase player creation failed:",
+            error
+        );
 
-    alert(
-        "Player could not be saved:\n\n" +
-        error.message
-    );
+        alert(
+            "Unable to add the player. Please try again."
+        );
 
-    return null;
-}
-
-
-    /*
-       Keep the existing FE working while we migrate.
-
-       Supabase is now the source of the player record.
-       The local players object is temporarily kept as
-       a mirror until LocalStorage is removed later.
-    */
+        return null;
+    }
 
     const newPlayer = {
 
@@ -103,35 +74,25 @@ async function addPlayerToAgeGroup(
 
         lastAttendanceDate:
             data.last_attendance_date
-
     };
-
 
     if (!players[data.age_group]) {
 
         players[data.age_group] = [];
-
     }
-
 
     players[data.age_group].push(
         newPlayer
     );
 
-
-    /*
-       Temporary migration support.
-       This will disappear when LocalStorage is removed.
-    */
-
     saveData();
-
 
     return newPlayer;
 }
 
+
 /* =========================================================
-   SET GMS
+   SENIOR GMS
    ========================================================= */
 
 async function setGMS(
@@ -148,7 +109,6 @@ async function setGMS(
         return;
     }
 
-
     const {
         data,
         error
@@ -156,8 +116,7 @@ async function setGMS(
         await supabaseClient
             .from("players")
             .update({
-                gms:
-                    confirmed,
+                gms: confirmed,
 
                 coach_gms_suggestion:
                     confirmed
@@ -170,7 +129,6 @@ async function setGMS(
             )
             .select()
             .single();
-
 
     if (error) {
 
@@ -186,18 +144,11 @@ async function setGMS(
         return;
     }
 
-
-    /*
-       Temporary FE mirror.
-       LocalStorage will be removed later.
-    */
-
     player.gms =
         data.gms;
 
     player.coachGmsSuggestion =
         data.coach_gms_suggestion;
-
 
     saveData();
 
@@ -206,8 +157,9 @@ async function setGMS(
     );
 }
 
+
 /* =========================================================
-   SET COACH GMS SUGGESTION
+   COACH GMS SUGGESTION
    ========================================================= */
 
 async function setCoachGMSSuggestion(
@@ -224,7 +176,6 @@ async function setCoachGMSSuggestion(
         return;
     }
 
-
     const {
         data,
         error
@@ -232,10 +183,8 @@ async function setCoachGMSSuggestion(
         await supabaseClient
             .from("players")
             .update({
-
                 coach_gms_suggestion:
                     suggested
-
             })
             .eq(
                 "player_id",
@@ -243,7 +192,6 @@ async function setCoachGMSSuggestion(
             )
             .select()
             .single();
-
 
     if (error) {
 
@@ -259,34 +207,24 @@ async function setCoachGMSSuggestion(
         return;
     }
 
-
-    /*
-       Temporary FE mirror.
-       LocalStorage will be removed later.
-    */
-
     player.coachGmsSuggestion =
         data.coach_gms_suggestion;
-
-
-    /*
-       If Senior has already confirmed GMS,
-       don't allow the suggestion to override it.
-    */
 
     if (player.gms) {
 
         player.coachGmsSuggestion =
             false;
-
     }
-
 
     saveData();
 
-showRoster();
-
+    showRoster();
 }
+
+
+/* =========================================================
+   ARCHIVE PLAYER
+   ========================================================= */
 
 async function archivePlayer(
     playerID,
@@ -347,11 +285,6 @@ async function archivePlayer(
         return;
     }
 
-    /*
-        Temporary FE mirror.
-        LocalStorage will be removed later.
-    */
-
     player.active =
         data.active;
 
@@ -362,10 +295,6 @@ async function archivePlayer(
         data.coach_gms_suggestion;
 
     saveData();
-
-    /*
-        Return to the screen the user came from.
-    */
 
     if (
         returnTo ===
@@ -379,10 +308,13 @@ async function archivePlayer(
     } else {
 
         showArchiveReview();
-
     }
-
 }
+
+
+/* =========================================================
+   COACH RESTORE PLAYER
+   ========================================================= */
 
 async function restoreArchivedPlayer(
     playerID,
@@ -415,7 +347,6 @@ async function restoreArchivedPlayer(
         );
 
         return;
-
     }
 
     let targetAgeGroup =
@@ -435,18 +366,11 @@ async function restoreArchivedPlayer(
             );
 
             return;
-
         }
 
         targetAgeGroup =
             select.value;
-
     }
-
-    /*
-        REGISTER:
-        Make sure today's register is open.
-    */
 
     let register = null;
 
@@ -469,9 +393,7 @@ async function restoreArchivedPlayer(
             );
 
             return;
-
         }
-
     }
 
     const confirmed =
@@ -494,10 +416,6 @@ async function restoreArchivedPlayer(
         return;
     }
 
-    /*
-        Update the player in Supabase.
-    */
-
     const {
         data,
         error
@@ -505,22 +423,11 @@ async function restoreArchivedPlayer(
         await supabaseClient
             .from("players")
             .update({
-
-                age_group:
-                    targetAgeGroup,
-
-                active:
-                    true,
-
-                archived:
-                    false,
-
-                gms:
-                    false,
-
-                coach_gms_suggestion:
-                    false
-
+                age_group: targetAgeGroup,
+                active: true,
+                archived: false,
+                gms: false,
+                coach_gms_suggestion: false
             })
             .eq(
                 "player_id",
@@ -541,13 +448,7 @@ async function restoreArchivedPlayer(
         );
 
         return;
-
     }
-
-    /*
-        Temporary FE mirror.
-        LocalStorage will be removed later.
-    */
 
     ageGroups.forEach(
         ageGroup => {
@@ -561,7 +462,6 @@ async function restoreArchivedPlayer(
                     item =>
                         item.id !== player.id
                 );
-
         }
     );
 
@@ -583,18 +483,11 @@ async function restoreArchivedPlayer(
     if (!players[targetAgeGroup]) {
 
         players[targetAgeGroup] = [];
-
     }
 
     players[targetAgeGroup].push(
         player
     );
-
-    /*
-        REGISTER:
-        The restored player is marked
-        present today.
-    */
 
     if (!fromRoster) {
 
@@ -604,23 +497,9 @@ async function restoreArchivedPlayer(
 
         player.lastAttendanceDate =
             getTodayKey();
-
-        saveData();
-
-        /*
-            Backend attendance update will be
-            wired in with the attendance migration.
-        */
-
-    } else {
-
-        saveData();
-
     }
 
-    /*
-        Return to the correct screen.
-    */
+    saveData();
 
     if (fromRoster) {
 
@@ -629,7 +508,253 @@ async function restoreArchivedPlayer(
     } else {
 
         showRegister();
+    }
+}
 
+
+/* =========================================================
+   SENIOR RESTORE PLAYER
+   ========================================================= */
+
+async function seniorRestorePlayer(
+    playerID
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+
+        alert(
+            "Player could not be found."
+        );
+
+        return;
     }
 
+    const select =
+        document.getElementById(
+            "seniorRestoreAgeGroup"
+        );
+
+    if (!select || !select.value) {
+
+        alert(
+            "Please select an age group."
+        );
+
+        return;
+    }
+
+    const targetAgeGroup =
+        select.value;
+
+    const confirmed =
+        confirm(
+            "Restore "
+            + player.name
+            + " to "
+            + targetAgeGroup
+            + "?\n\n"
+            + "Their Player ID and historical attendance "
+            + "will be retained.\n\n"
+            + "They will NOT be marked as attending today."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("players")
+            .update({
+                age_group: targetAgeGroup,
+                active: true,
+                archived: false,
+                gms: false,
+                coach_gms_suggestion: false
+            })
+            .eq(
+                "player_id",
+                playerID
+            )
+            .select()
+            .single();
+
+    if (error) {
+
+        console.error(
+            "Supabase senior player restore failed:",
+            error
+        );
+
+        alert(
+            "Unable to restore the player. Please try again."
+        );
+
+        return;
+    }
+
+    ageGroups.forEach(
+        ageGroup => {
+
+            if (!players[ageGroup]) {
+                return;
+            }
+
+            players[ageGroup] =
+                players[ageGroup].filter(
+                    item =>
+                        item.id !== player.id
+                );
+        }
+    );
+
+    player.ageGroup =
+        data.age_group;
+
+    player.active =
+        data.active;
+
+    player.archived =
+        data.archived;
+
+    player.gms =
+        data.gms;
+
+    player.coachGmsSuggestion =
+        data.coach_gms_suggestion;
+
+    if (!players[targetAgeGroup]) {
+
+        players[targetAgeGroup] = [];
+    }
+
+    players[targetAgeGroup].push(
+        player
+    );
+
+    saveData();
+
+    showPlayerManagement(
+        targetAgeGroup
+    );
+}
+
+
+/* =========================================================
+   MOVE PLAYER
+   ========================================================= */
+
+async function movePlayer(
+    playerID
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+    const select =
+        document.getElementById(
+            "moveTargetAgeGroup"
+        );
+
+    if (!select || !select.value) {
+        return;
+    }
+
+    const targetAgeGroup =
+        select.value;
+
+    if (
+        targetAgeGroup ===
+        player.ageGroup
+    ) {
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Move "
+            + player.name
+            + " from "
+            + player.ageGroup
+            + " to "
+            + targetAgeGroup
+            + "?\n\n"
+            + "Their Player ID and attendance history "
+            + "will be retained."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("players")
+            .update({
+                age_group: targetAgeGroup
+            })
+            .eq(
+                "player_id",
+                playerID
+            )
+            .select()
+            .single();
+
+    if (error) {
+
+        console.error(
+            "Supabase player move failed:",
+            error
+        );
+
+        alert(
+            "Unable to move the player. Please try again."
+        );
+
+        return;
+    }
+
+    if (players[player.ageGroup]) {
+
+        players[player.ageGroup] =
+            players[player.ageGroup].filter(
+                item =>
+                    item.id !== player.id
+            );
+    }
+
+    player.ageGroup =
+        data.age_group;
+
+    if (!players[targetAgeGroup]) {
+
+        players[targetAgeGroup] = [];
+    }
+
+    players[targetAgeGroup].push(
+        player
+    );
+
+    saveData();
+
+    showPlayerManagement(
+        targetAgeGroup
+    );
 }

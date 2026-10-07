@@ -41,73 +41,16 @@ async function autoClosePreviousAttendanceRegisters() {
 
 async function loadTodayAttendanceRegister(ageGroup) {
 
-    alert(
-        "1. OPEN REGISTER\n\n" +
-        "Age Group: " + ageGroup
-    );
-
     const todayKey = getTodayKey();
 
-    alert(
-        "2. DATE\n\n" +
-        "Today Key: " + todayKey +
-        "\nAge Group: " + ageGroup
-    );
-
-    /*
-     * OPEN / CREATE REGISTER
-     */
-
-    let registerID;
-    let registerError;
-
-    try {
-
-        const result =
-            await supabaseClient.rpc(
-                "open_attendance_register",
-                {
-                    requested_date:
-                        todayKey,
-
-                    requested_age_group:
-                        ageGroup
-                }
-            );
-
-        registerID = result.data;
-        registerError = result.error;
-
-    } catch (err) {
-
-        alert(
-            "3. REGISTER RPC EXCEPTION\n\n" +
-            err.message
+    const { data: registerID, error: registerError } =
+        await supabaseClient.rpc(
+            "open_attendance_register",
+            {
+                requested_date: todayKey,
+                requested_age_group: ageGroup
+            }
         );
-
-        console.error(
-            "open_attendance_register exception:",
-            err
-        );
-
-        return null;
-    }
-
-    alert(
-        "3. REGISTER RPC RESPONSE\n\n" +
-        "Register ID: " +
-        JSON.stringify(registerID) +
-        "\n\nError:\n" +
-        (
-            registerError
-                ? JSON.stringify(
-                    registerError,
-                    null,
-                    2
-                )
-                : "NONE"
-        )
-    );
 
     if (registerError) {
 
@@ -116,86 +59,44 @@ async function loadTodayAttendanceRegister(ageGroup) {
             registerError
         );
 
+        alert(
+            "Unable to open today's register. Please try again."
+        );
+
         return null;
     }
-
-    /*
-     * CHECK THAT RPC ACTUALLY RETURNED A REGISTER ID
-     */
 
     if (
         registerID === null ||
         registerID === undefined
     ) {
 
+        console.warn(
+            "No attendance register available for:",
+            ageGroup
+        );
+
         alert(
-            "4. REGISTER ID IS EMPTY\n\n" +
-            "The RPC completed without an error " +
-            "but did not return a register ID."
+            ageGroup +
+           " is not active."
+            "."
         );
 
         return null;
     }
 
-    /*
-     * LOAD REGISTER
-     */
-
-    let registerData;
-    let loadError;
-
-    try {
-
-        const result =
-            await supabaseClient
-                .from("attendance_registers")
-                .select(`
-                    id,
-                    register_date,
-                    age_group,
-                    submitted,
-                    closed_automatically
-                `)
-                .eq("id", registerID)
-                .single();
-
-        registerData = result.data;
-        loadError = result.error;
-
-    } catch (err) {
-
-        alert(
-            "5. REGISTER LOAD EXCEPTION\n\n" +
-            err.message
-        );
-
-        console.error(
-            "Register load exception:",
-            err
-        );
-
-        return null;
-    }
-
-    alert(
-        "5. REGISTER LOAD RESPONSE\n\n" +
-        "Data:\n" +
-        JSON.stringify(
-            registerData,
-            null,
-            2
-        ) +
-        "\n\nError:\n" +
-        (
-            loadError
-                ? JSON.stringify(
-                    loadError,
-                    null,
-                    2
-                )
-                : "NONE"
-        )
-    );
+    const { data: registerData, error: loadError } =
+        await supabaseClient
+            .from("attendance_registers")
+            .select(`
+                id,
+                register_date,
+                age_group,
+                submitted,
+                closed_automatically
+            `)
+            .eq("id", registerID)
+            .single();
 
     if (loadError) {
 
@@ -204,70 +105,24 @@ async function loadTodayAttendanceRegister(ageGroup) {
             loadError
         );
 
-        return null;
-    }
-
-    /*
-     * LOAD ATTENDANCE RECORDS
-     */
-
-    let attendanceRecords;
-    let recordsError;
-
-    try {
-
-        const result =
-            await supabaseClient
-                .from("attendance_records")
-                .select(`
-                    player_id,
-                    present
-                `)
-                .eq(
-                    "register_id",
-                    registerID
-                );
-
-        attendanceRecords =
-            result.data;
-
-        recordsError =
-            result.error;
-
-    } catch (err) {
-
         alert(
-            "6. ATTENDANCE LOAD EXCEPTION\n\n" +
-            err.message
-        );
-
-        console.error(
-            "Attendance records exception:",
-            err
+            "Unable to load today's register. Please try again."
         );
 
         return null;
     }
 
-    alert(
-        "6. ATTENDANCE RECORDS RESPONSE\n\n" +
-        "Records: " +
-        (
-            attendanceRecords
-                ? attendanceRecords.length
-                : "NULL"
-        ) +
-        "\n\nError:\n" +
-        (
-            recordsError
-                ? JSON.stringify(
-                    recordsError,
-                    null,
-                    2
-                )
-                : "NONE"
-        )
-    );
+    const {
+        data: attendanceRecords,
+        error: recordsError
+    } =
+        await supabaseClient
+            .from("attendance_records")
+            .select(`
+                player_id,
+                present
+            `)
+            .eq("register_id", registerID);
 
     if (recordsError) {
 
@@ -276,50 +131,25 @@ async function loadTodayAttendanceRegister(ageGroup) {
             recordsError
         );
 
-        return null;
-    }
-
-    /*
-     * BUILD FRONT-END ATTENDANCE MIRROR
-     */
-
-    const attendance = {};
-
-    if (
-        !Array.isArray(
-            attendanceRecords
-        )
-    ) {
-
         alert(
-            "7. INVALID ATTENDANCE DATA\n\n" +
-            JSON.stringify(
-                attendanceRecords
-            )
+            "Unable to load attendance. Please try again."
         );
 
         return null;
     }
 
-    attendanceRecords.forEach(
-        record => {
+    const attendance = {};
 
-            attendance[
-                record.player_id
-            ] =
-                record.present === true;
+    attendanceRecords.forEach(record => {
 
-        }
-    );
+        attendance[record.player_id] =
+            record.present === true;
 
-    /*
-     * BUILD REGISTER OBJECT
-     */
+    });
 
     const register = {
 
-        id:
-            registerData.id,
+        id: registerData.id,
 
         submitted:
             registerData.submitted,
@@ -331,48 +161,17 @@ async function loadTodayAttendanceRegister(ageGroup) {
             attendance
     };
 
-    alert(
-        "8. REGISTER BUILT\n\n" +
-        "ID: " + register.id +
-        "\nSubmitted: " +
-        register.submitted +
-        "\nClosed Automatically: " +
-        register.closedAutomatically +
-        "\nAttendance Records: " +
-        Object.keys(
-            register.attendance
-        ).length
-    );
+    if (!attendanceRegisters[todayKey]) {
 
-    /*
-     * STORE IN FRONT-END CACHE
-     */
-
-    if (
-        !attendanceRegisters[todayKey]
-    ) {
-
-        attendanceRegisters[todayKey] =
-            {};
+        attendanceRegisters[todayKey] = {};
 
     }
 
-    attendanceRegisters[todayKey][
-        ageGroup
-    ] =
+    attendanceRegisters[todayKey][ageGroup] =
         register;
-
-    alert(
-        "9. REGISTER STORED\n\n" +
-        "Cache Date: " +
-        todayKey +
-        "\nCache Age Group: " +
-        ageGroup
-    );
 
     return register;
 }
-
 /* =========================================================
    GET TODAY'S REGISTER
    ========================================================= */
@@ -455,122 +254,44 @@ async function setAttendance(
     playerID,
     present
 ) {
-    alert(
-        "1. SET ATTENDANCE\n" +
-        "Player: " + playerID +
-        "\nPresent: " + present
-    );
 
-    /* FIND PLAYER */
     const player =
         findPlayerByID(playerID);
 
-    alert(
-        "2. PLAYER LOOKUP\n" +
-        "Found: " + !!player +
-        "\nAge Group: " +
-        (player ? player.ageGroup : "NONE")
-    );
-
     if (!player) {
-        alert("STOP: PLAYER NOT FOUND");
         return;
     }
 
-    /* FIND REGISTER */
     const register =
         getTodayRegister(
             player.ageGroup
         );
 
-    alert(
-        "3. REGISTER LOOKUP\n" +
-        "Found: " + !!register +
-        "\nRegister ID: " +
-        (register ? register.id : "NONE")
-    );
-
     if (!register) {
-        alert(
-            "STOP: TODAY'S REGISTER NOT FOUND"
-        );
         return;
     }
-
-    /* CHECK REGISTER STATUS */
-    alert(
-        "4. REGISTER STATUS\n" +
-        "Submitted: " +
-        register.submitted +
-        "\nClosed Automatically: " +
-        register.closedAutomatically
-    );
 
     if (
         register.submitted ||
         register.closedAutomatically
     ) {
-        alert(
-            "STOP: REGISTER IS CLOSED"
-        );
         return;
     }
 
-    /* SUPABASE CALL */
-    alert(
-        "5. CALLING SUPABASE\n" +
-        "Register: " + register.id +
-        "\nPlayer: " + playerID +
-        "\nPresent: " + present
-    );
+    const { data, error } =
+        await supabaseClient.rpc(
+            "update_attendance",
+            {
+                requested_register_id:
+                    register.id,
 
-    let data;
-    let error;
+                requested_player_id:
+                    playerID,
 
-    try {
-
-        const result =
-            await supabaseClient.rpc(
-                "update_attendance",
-                {
-                    requested_register_id:
-                        register.id,
-
-                    requested_player_id:
-                        playerID,
-
-                    requested_present:
-                        present
-                }
-            );
-
-        data = result.data;
-        error = result.error;
-
-    } catch (err) {
-
-        alert(
-            "6. SUPABASE EXCEPTION\n" +
-            err.message
+                requested_present:
+                    present
+            }
         );
-
-        console.error(
-            "Supabase exception:",
-            err
-        );
-
-        return;
-    }
-
-    /* SUPABASE RESPONSE */
-    alert(
-        "6. SUPABASE RESPONSE\n" +
-        "Data: " + JSON.stringify(data) +
-        "\nError: " +
-        (error
-            ? JSON.stringify(error)
-            : "NONE")
-    );
 
     if (error) {
 
@@ -580,29 +301,20 @@ async function setAttendance(
         );
 
         alert(
-            "STOP: SUPABASE ERROR\n\n" +
-            error.message
+            "Unable to save attendance. Please try again."
         );
 
         return;
     }
 
-    /* RPC RESULT */
     if (data !== true) {
 
         alert(
-            "STOP: RPC RETURNED\n" +
-            JSON.stringify(data)
+            "Attendance could not be updated."
         );
 
         return;
     }
-
-    /* LOCAL UPDATE */
-    alert(
-        "7. SUPABASE SUCCESS\n" +
-        "Updating local register..."
-    );
 
     register.attendance[playerID] =
         present;
@@ -614,18 +326,8 @@ async function setAttendance(
 
     }
 
-    /* RENDER */
-    alert(
-        "8. RENDERING REGISTER"
-    );
-
     showRegister();
-
-    alert(
-        "9. COMPLETE"
-    );
 }
-
 /* =========================================================
    ADD PLAYER TO TODAY'S REGISTER
    ========================================================= */

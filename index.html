@@ -4453,7 +4453,7 @@ function updateNewGMSToggle() {
 
 }
 
-function seniorAddPlayer(
+async function seniorAddPlayer(
     ageGroup
 ) {
 
@@ -4476,11 +4476,17 @@ function seniorAddPlayer(
         return;
     }
 
-    addPlayerToAgeGroup(
-        ageGroup,
-        name,
-        gms
-    );
+    const newPlayer =
+        await addPlayerToAgeGroup(
+            ageGroup,
+            name,
+            gms
+        );
+
+    if (!newPlayer) {
+
+        return;
+    }
 
     showPlayerManagement(
         ageGroup

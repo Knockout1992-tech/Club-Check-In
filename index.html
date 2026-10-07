@@ -3994,12 +3994,12 @@ function renderPlayerManagementList(
                                         ? "checked"
                                         : ""
                                     }
-                                    onchange="
+                                    onchange='
                                         setGMS(
                                             ${JSON.stringify(player.id)},
                                             this.checked
                                         )
-                                    ">
+                                    '>
 
                                 <span
                                     class="toggle-knob">
@@ -4016,11 +4016,11 @@ function renderPlayerManagementList(
                                     secondary-button
                                     small-button
                                 "
-                                onclick="
+                                onclick='
                                     showMovePlayer(
                                         ${JSON.stringify(player.id)}
                                     )
-                                ">
+                                '>
 
                                 Move
 
@@ -4031,12 +4031,12 @@ function renderPlayerManagementList(
                                     red-button
                                     small-button
                                 "
-                                onclick="
+                                onclick='
                                     archivePlayer(
                                         ${JSON.stringify(player.id)},
-                                        'playerManagement'
+                                        "playerManagement"
                                     )
-                                ">
+                                '>
 
                                 Archive
 

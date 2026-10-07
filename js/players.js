@@ -287,3 +287,99 @@ async function setCoachGMSSuggestion(
 showRoster();
 
 }
+
+async function archivePlayer(
+    playerID,
+    returnTo
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Archive "
+            + player.name
+            + "?\n\n"
+            + "Their historical attendance will be retained.\n"
+            + "They will disappear from active registers."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("players")
+            .update({
+                active: false,
+                archived: true,
+                coach_gms_suggestion: false
+            })
+            .eq(
+                "player_id",
+                playerID
+            )
+            .select()
+            .single();
+
+    if (error) {
+
+        console.error(
+            "Supabase player archive failed:",
+            error
+        );
+
+        alert(
+            "Unable to archive the player. Please try again."
+        );
+
+        return;
+    }
+
+    /*
+        Temporary FE mirror.
+        LocalStorage will be removed later.
+    */
+
+    player.active =
+        data.active;
+
+    player.archived =
+        data.archived;
+
+    player.coachGmsSuggestion =
+        data.coach_gms_suggestion;
+
+    saveData();
+
+    /*
+        Return to the screen the user came from.
+    */
+
+    if (
+        returnTo ===
+        "playerManagement"
+    ) {
+
+        showPlayerManagement(
+            player.ageGroup
+        );
+
+    } else {
+
+        showArchiveReview();
+
+    }
+
+}

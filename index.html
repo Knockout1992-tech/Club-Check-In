@@ -3260,61 +3260,6 @@ function showArchiveReview() {
 
 }
 
-function archivePlayer(
-    playerID,
-    returnTo
-) {
-
-    const player =
-        findPlayerByID(
-            playerID
-        );
-
-    if (!player) {
-        return;
-    }
-
-    const confirmed =
-        confirm(
-            "Archive "
-            + player.name
-            + "?\n\n"
-            + "Their historical attendance will be retained.\n"
-            + "They will disappear from active registers."
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-    player.active =
-        false;
-
-    player.archived =
-        true;
-
-    player.coachGmsSuggestion =
-        false;
-
-    saveData();
-
-    if (
-        returnTo ===
-        "playerManagement"
-    ) {
-
-        showPlayerManagement(
-            player.ageGroup
-        );
-
-    } else {
-
-        showArchiveReview();
-
-    }
-
-}
-
 /* =========================================================
    ARCHIVED PLAYER LIST
    ========================================================= */

@@ -79,7 +79,6 @@ async function loadTodayAttendanceRegister(ageGroup) {
         alert(
             ageGroup +
            " is not active."
-            "."
         );
 
         return null;

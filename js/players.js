@@ -129,3 +129,79 @@ async function addPlayerToAgeGroup(
 
     return newPlayer;
 }
+
+/* =========================================================
+   SET GMS
+   ========================================================= */
+
+async function setGMS(
+    playerID,
+    confirmed
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("players")
+            .update({
+                gms:
+                    confirmed,
+
+                coach_gms_suggestion:
+                    confirmed
+                        ? false
+                        : player.coachGmsSuggestion
+            })
+            .eq(
+                "player_id",
+                playerID
+            )
+            .select()
+            .single();
+
+
+    if (error) {
+
+        console.error(
+            "Supabase GMS update failed:",
+            error
+        );
+
+        alert(
+            "Unable to update GMS. Please try again."
+        );
+
+        return;
+    }
+
+
+    /*
+       Temporary FE mirror.
+       LocalStorage will be removed later.
+    */
+
+    player.gms =
+        data.gms;
+
+    player.coachGmsSuggestion =
+        data.coach_gms_suggestion;
+
+
+    saveData();
+
+    showPlayerManagement(
+        player.ageGroup
+    );
+}

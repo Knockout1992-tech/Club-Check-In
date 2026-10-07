@@ -1779,33 +1779,6 @@ function showRoster() {
 
 }
 
-function setCoachGMSSuggestion(
-    playerID,
-    suggested
-) {
-
-    const player =
-        findPlayerByID(
-            playerID
-        );
-
-    if (!player) {
-        return;
-    }
-
-    if (player.gms === true) {
-        return;
-    }
-
-    player.coachGmsSuggestion =
-        suggested;
-
-    saveData();
-
-    showRoster();
-
-}
-
 /* =========================================================
    COACH ADD / RESTORE PLAYER
    ========================================================= */

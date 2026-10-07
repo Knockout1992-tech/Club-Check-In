@@ -4280,38 +4280,6 @@ function movePlayer(
     );
 
 }
-   
-function setGMS(
-    playerID,
-    confirmed
-) {
-
-    const player =
-        findPlayerByID(
-            playerID
-        );
-
-    if (!player) {
-        return;
-    }
-
-    player.gms =
-        confirmed;
-
-    if (confirmed) {
-
-        player.coachGmsSuggestion =
-            false;
-
-    }
-
-    saveData();
-
-    showPlayerManagement(
-        currentAgeGroup
-    );
-
-}
 
 /* =========================================================
    SENIOR ADD PLAYER

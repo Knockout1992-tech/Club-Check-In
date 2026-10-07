@@ -2386,11 +2386,11 @@ function searchArchivedPlayers(
                             : `
                                 <button
     class="blue-button"
-    onclick="
+    onclick='
         restoreArchivedPlayer(
-            ${match.player.id}
+            ${JSON.stringify(match.player.id)}
         )
-    ">
+    '>
 
     Restore Player
 

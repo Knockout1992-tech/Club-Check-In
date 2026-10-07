@@ -205,3 +205,83 @@ async function setGMS(
         player.ageGroup
     );
 }
+
+/* =========================================================
+   SET COACH GMS SUGGESTION
+   ========================================================= */
+
+async function setCoachGMSSuggestion(
+    playerID,
+    suggested
+) {
+
+    const player =
+        findPlayerByID(
+            playerID
+        );
+
+    if (!player) {
+        return;
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("players")
+            .update({
+
+                coach_gms_suggestion:
+                    suggested
+
+            })
+            .eq(
+                "player_id",
+                playerID
+            )
+            .select()
+            .single();
+
+
+    if (error) {
+
+        console.error(
+            "Supabase coach GMS suggestion update failed:",
+            error
+        );
+
+        alert(
+            "Unable to update the GMS suggestion. Please try again."
+        );
+
+        return;
+    }
+
+
+    /*
+       Temporary FE mirror.
+       LocalStorage will be removed later.
+    */
+
+    player.coachGmsSuggestion =
+        data.coach_gms_suggestion;
+
+
+    /*
+       If Senior has already confirmed GMS,
+       don't allow the suggestion to override it.
+    */
+
+    if (player.gms) {
+
+        player.coachGmsSuggestion =
+            false;
+
+    }
+
+
+    saveData();
+
+}

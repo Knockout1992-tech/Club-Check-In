@@ -1102,7 +1102,7 @@ function showRegister() {
         ? "checked"
         : ""
     }
-    onchange="setAttendance(${JSON.stringify(player.id)}, this.checked)"
+    onchange='setAttendance(${JSON.stringify(player.id)}, this.checked)'
 >
 
                                                                 <span
@@ -4123,14 +4123,14 @@ function changePIN(
 })();
    
 setInterval(
-    () => {
+    async () => {
 
-        closeExpiredRegisters();
+        await autoClosePreviousAttendanceRegisters();
 
     },
     60000
 );
-
+   
 </script>
 
 </body>

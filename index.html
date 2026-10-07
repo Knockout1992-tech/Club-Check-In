@@ -3179,13 +3179,19 @@ function showArchiveReview() {
                                     return `
 
                                         <div
-                                            class="player-row">
+                                            class="
+                                                player-row
+                                            ">
 
                                             <div
-                                                class="player-info">
+                                                class="
+                                                    player-info
+                                                ">
 
                                                 <div
-                                                    class="player-name">
+                                                    class="
+                                                        player-name
+                                                    ">
 
                                                     ${escapeHTML(
                                                         player.name
@@ -3194,7 +3200,9 @@ function showArchiveReview() {
                                                 </div>
 
                                                 <div
-                                                    class="player-small">
+                                                    class="
+                                                        player-small
+                                                    ">
 
                                                     Last attended:
                                                     ${
@@ -3228,13 +3236,12 @@ function showArchiveReview() {
                                                     red-button
                                                     small-button
                                                 "
-                                               onclick="
-                                                archivePlayer(
-                                                    ${player.id},
-                                                    'archiveReview'
-                                                )
-"
-                                                ">
+                                                onclick='
+                                                    archivePlayer(
+                                                        ${JSON.stringify(player.id)},
+                                                        "archiveReview"
+                                                    )
+                                                '>
 
                                                 Archive
 
@@ -3259,7 +3266,6 @@ function showArchiveReview() {
     `);
 
 }
-
 /* =========================================================
    ARCHIVED PLAYER LIST
    ========================================================= */

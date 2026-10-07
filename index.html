@@ -1096,18 +1096,14 @@ function showRegister() {
                                                                 ">
 
                                                                 <input
-                                                                    type="checkbox"
-                                                                    ${
-                                                                        present
-                                                                        ? "checked"
-                                                                        : ""
-                                                                    }
-                                                                    onchange='
-    setAttendance(
-        ${JSON.stringify(player.id)},
-        this.checked
-    )
-'>
+    type="checkbox"
+    ${
+        present
+        ? "checked"
+        : ""
+    }
+    onchange="setAttendance(${JSON.stringify(player.id)}, this.checked)"
+>
 
                                                                 <span
                                                                     class="

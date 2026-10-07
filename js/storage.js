@@ -271,12 +271,5 @@ async function loadPlayersFromSupabase() {
         players
     );
 
-alert(
-    "Supabase players loaded:\n\n" +
-    JSON.stringify(players)
-);
-
     return true;
 }
-
-loadPlayersFromSupabase();

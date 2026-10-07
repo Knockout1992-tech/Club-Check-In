@@ -2381,11 +2381,11 @@ ${
     ? `
         <button
             class="red-button"
-            onclick="
-                permanentlyRemovePlayer(
-                    ${match.player.id}
-                )
-            ">
+            onclick='
+        permanentlyRemovePlayer(
+            ${JSON.stringify(player.id)}
+        )
+    '>
 
             Permanently Remove
 
@@ -3199,11 +3199,11 @@ function showArchiveList() {
         red-button
         small-button
     "
-    onclick="
+    onclick='
         permanentlyRemovePlayer(
-            ${player.id}
+            ${JSON.stringify(player.id)}
         )
-    ">
+    '>
 
     Permanently Remove
 

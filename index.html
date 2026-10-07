@@ -3204,11 +3204,11 @@ function showArchiveList() {
         green-button
         small-button
     "
-    onclick="
-        showSeniorRestorePlayer(
-            ${player.id}
-        )
-    ">
+    onclick='
+    showSeniorRestorePlayer(
+        ${JSON.stringify(player.id)}
+    )
+'>
 
     Restore
 

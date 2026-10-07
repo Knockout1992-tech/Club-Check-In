@@ -1095,14 +1095,15 @@ function showRegister() {
                                                                     }
                                                                 ">
 
-                                                                <input
+                                                               <input
     type="checkbox"
+    data-player-id="${escapeHTML(player.id)}"
     ${
         present
         ? "checked"
         : ""
     }
-    onchange='setAttendance(${JSON.stringify(player.id)}, this.checked)'
+    onchange="setAttendance(this.dataset.playerId, this.checked)"
 >
 
                                                                 <span

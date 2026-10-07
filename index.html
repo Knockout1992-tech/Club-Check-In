@@ -3996,7 +3996,7 @@ function renderPlayerManagementList(
                                     }
                                     onchange="
                                         setGMS(
-                                            ${player.id},
+                                            ${JSON.stringify(player.id)},
                                             this.checked
                                         )
                                     ">
@@ -4018,7 +4018,7 @@ function renderPlayerManagementList(
                                 "
                                 onclick="
                                     showMovePlayer(
-                                        ${player.id}
+                                        ${JSON.stringify(player.id)}
                                     )
                                 ">
 
@@ -4033,7 +4033,7 @@ function renderPlayerManagementList(
                                 "
                                 onclick="
                                     archivePlayer(
-                                        ${player.id},
+                                        ${JSON.stringify(player.id)},
                                         'playerManagement'
                                     )
                                 ">

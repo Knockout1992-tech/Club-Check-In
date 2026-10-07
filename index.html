@@ -1667,17 +1667,18 @@ function showRoster() {
                                                 </div>
 
                                                 ${
-    !seniorConfirmed && coachSuggested
-    ? `
-        <div
-            class="player-small">
+                                                    !seniorConfirmed &&
+                                                    coachSuggested
+                                                    ? `
+                                                        <div
+                                                            class="player-small">
 
-            Coach has suggested GMS
+                                                            Coach has suggested GMS
 
-        </div>
-    `
-    : ""
-}
+                                                        </div>
+                                                    `
+                                                    : ""
+                                                }
 
                                             </div>
 
@@ -1711,12 +1712,12 @@ function showRoster() {
                                                             seniorConfirmed
                                                             ? "disabled"
                                                             : `
-                                                                onchange="
+                                                                onchange='
                                                                     setCoachGMSSuggestion(
-                                                                        ${player.id},
+                                                                        ${JSON.stringify(player.id)},
                                                                         this.checked
                                                                     )
-                                                                "
+                                                                '
                                                             `
                                                         }>
 
@@ -1744,11 +1745,11 @@ function showRoster() {
                             <button
                                 class="green-button"
                                 onclick="
-    showCoachAddPlayer(
-        true,
-        '${ageGroup}'
-    )
-">
+                                    showCoachAddPlayer(
+                                        true,
+                                        '${ageGroup}'
+                                    )
+                                ">
 
                                 + ADD PLAYER
 

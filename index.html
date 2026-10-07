@@ -5060,11 +5060,15 @@ function changePIN(
    START
    ========================================================= */
 
-loadSavedData();
+(async function () {
 
-closeExpiredRegisters();
+    await loadPlayersFromSupabase();
 
-showWelcome();
+    closeExpiredRegisters();
+
+    showWelcome();
+
+})();
 
 setInterval(
     () => {

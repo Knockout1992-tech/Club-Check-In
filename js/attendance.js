@@ -41,23 +41,73 @@ async function autoClosePreviousAttendanceRegisters() {
 
 async function loadTodayAttendanceRegister(ageGroup) {
 
+    alert(
+        "1. OPEN REGISTER\n\n" +
+        "Age Group: " + ageGroup
+    );
+
     const todayKey = getTodayKey();
 
+    alert(
+        "2. DATE\n\n" +
+        "Today Key: " + todayKey +
+        "\nAge Group: " + ageGroup
+    );
+
     /*
-     * Ask the backend to create the register if it does
-     * not already exist and populate it with active players.
-     *
-     * The function returns the numeric register ID.
+     * OPEN / CREATE REGISTER
      */
 
-    const { data: registerID, error: registerError } =
-        await supabaseClient.rpc(
-            "open_attendance_register",
-            {
-                requested_date: todayKey,
-                requested_age_group: ageGroup
-            }
+    let registerID;
+    let registerError;
+
+    try {
+
+        const result =
+            await supabaseClient.rpc(
+                "open_attendance_register",
+                {
+                    requested_date:
+                        todayKey,
+
+                    requested_age_group:
+                        ageGroup
+                }
+            );
+
+        registerID = result.data;
+        registerError = result.error;
+
+    } catch (err) {
+
+        alert(
+            "3. REGISTER RPC EXCEPTION\n\n" +
+            err.message
         );
+
+        console.error(
+            "open_attendance_register exception:",
+            err
+        );
+
+        return null;
+    }
+
+    alert(
+        "3. REGISTER RPC RESPONSE\n\n" +
+        "Register ID: " +
+        JSON.stringify(registerID) +
+        "\n\nError:\n" +
+        (
+            registerError
+                ? JSON.stringify(
+                    registerError,
+                    null,
+                    2
+                )
+                : "NONE"
+        )
+    );
 
     if (registerError) {
 
@@ -66,30 +116,86 @@ async function loadTodayAttendanceRegister(ageGroup) {
             registerError
         );
 
+        return null;
+    }
+
+    /*
+     * CHECK THAT RPC ACTUALLY RETURNED A REGISTER ID
+     */
+
+    if (
+        registerID === null ||
+        registerID === undefined
+    ) {
+
         alert(
-    "REGISTER OPEN ERROR\n\n" +
-    JSON.stringify(registerError, null, 2)
-);
+            "4. REGISTER ID IS EMPTY\n\n" +
+            "The RPC completed without an error " +
+            "but did not return a register ID."
+        );
 
         return null;
     }
 
     /*
-     * Load the register itself.
+     * LOAD REGISTER
      */
 
-    const { data: registerData, error: loadError } =
-        await supabaseClient
-            .from("attendance_registers")
-            .select(`
-                id,
-                register_date,
-                age_group,
-                submitted,
-                closed_automatically
-            `)
-            .eq("id", registerID)
-            .single();
+    let registerData;
+    let loadError;
+
+    try {
+
+        const result =
+            await supabaseClient
+                .from("attendance_registers")
+                .select(`
+                    id,
+                    register_date,
+                    age_group,
+                    submitted,
+                    closed_automatically
+                `)
+                .eq("id", registerID)
+                .single();
+
+        registerData = result.data;
+        loadError = result.error;
+
+    } catch (err) {
+
+        alert(
+            "5. REGISTER LOAD EXCEPTION\n\n" +
+            err.message
+        );
+
+        console.error(
+            "Register load exception:",
+            err
+        );
+
+        return null;
+    }
+
+    alert(
+        "5. REGISTER LOAD RESPONSE\n\n" +
+        "Data:\n" +
+        JSON.stringify(
+            registerData,
+            null,
+            2
+        ) +
+        "\n\nError:\n" +
+        (
+            loadError
+                ? JSON.stringify(
+                    loadError,
+                    null,
+                    2
+                )
+                : "NONE"
+        )
+    );
 
     if (loadError) {
 
@@ -98,28 +204,70 @@ async function loadTodayAttendanceRegister(ageGroup) {
             loadError
         );
 
+        return null;
+    }
+
+    /*
+     * LOAD ATTENDANCE RECORDS
+     */
+
+    let attendanceRecords;
+    let recordsError;
+
+    try {
+
+        const result =
+            await supabaseClient
+                .from("attendance_records")
+                .select(`
+                    player_id,
+                    present
+                `)
+                .eq(
+                    "register_id",
+                    registerID
+                );
+
+        attendanceRecords =
+            result.data;
+
+        recordsError =
+            result.error;
+
+    } catch (err) {
+
         alert(
-            "Unable to load today's register. Please try again."
+            "6. ATTENDANCE LOAD EXCEPTION\n\n" +
+            err.message
+        );
+
+        console.error(
+            "Attendance records exception:",
+            err
         );
 
         return null;
     }
 
-    /*
-     * Load the attendance records belonging to this register.
-     */
-
-    const {
-        data: attendanceRecords,
-        error: recordsError
-    } =
-        await supabaseClient
-            .from("attendance_records")
-            .select(`
-                player_id,
-                present
-            `)
-            .eq("register_id", registerID);
+    alert(
+        "6. ATTENDANCE RECORDS RESPONSE\n\n" +
+        "Records: " +
+        (
+            attendanceRecords
+                ? attendanceRecords.length
+                : "NULL"
+        ) +
+        "\n\nError:\n" +
+        (
+            recordsError
+                ? JSON.stringify(
+                    recordsError,
+                    null,
+                    2
+                )
+                : "NONE"
+        )
+    );
 
     if (recordsError) {
 
@@ -128,34 +276,50 @@ async function loadTodayAttendanceRegister(ageGroup) {
             recordsError
         );
 
+        return null;
+    }
+
+    /*
+     * BUILD FRONT-END ATTENDANCE MIRROR
+     */
+
+    const attendance = {};
+
+    if (
+        !Array.isArray(
+            attendanceRecords
+        )
+    ) {
+
         alert(
-            "Unable to load attendance. Please try again."
+            "7. INVALID ATTENDANCE DATA\n\n" +
+            JSON.stringify(
+                attendanceRecords
+            )
         );
 
         return null;
     }
 
+    attendanceRecords.forEach(
+        record => {
+
+            attendance[
+                record.player_id
+            ] =
+                record.present === true;
+
+        }
+    );
+
     /*
-     * Convert the backend data into the same shape the
-     * existing FE expects.
-     *
-     * This is temporary.
-     * It lets us migrate the backend without redesigning
-     * the existing register screens.
+     * BUILD REGISTER OBJECT
      */
-
-    const attendance = {};
-
-    attendanceRecords.forEach(record => {
-
-        attendance[record.player_id] =
-            record.present === true;
-
-    });
 
     const register = {
 
-        id: registerData.id,
+        id:
+            registerData.id,
 
         submitted:
             registerData.submitted,
@@ -167,18 +331,47 @@ async function loadTodayAttendanceRegister(ageGroup) {
             attendance
     };
 
-    if (!attendanceRegisters[todayKey]) {
+    alert(
+        "8. REGISTER BUILT\n\n" +
+        "ID: " + register.id +
+        "\nSubmitted: " +
+        register.submitted +
+        "\nClosed Automatically: " +
+        register.closedAutomatically +
+        "\nAttendance Records: " +
+        Object.keys(
+            register.attendance
+        ).length
+    );
 
-        attendanceRegisters[todayKey] = {};
+    /*
+     * STORE IN FRONT-END CACHE
+     */
+
+    if (
+        !attendanceRegisters[todayKey]
+    ) {
+
+        attendanceRegisters[todayKey] =
+            {};
 
     }
 
-    attendanceRegisters[todayKey][ageGroup] =
+    attendanceRegisters[todayKey][
+        ageGroup
+    ] =
         register;
+
+    alert(
+        "9. REGISTER STORED\n\n" +
+        "Cache Date: " +
+        todayKey +
+        "\nCache Age Group: " +
+        ageGroup
+    );
 
     return register;
 }
-
 
 /* =========================================================
    GET TODAY'S REGISTER

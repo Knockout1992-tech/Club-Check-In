@@ -2,9 +2,6 @@
    STORAGE / PERSISTENCE
    ========================================================= */
 
-/* =========================================================
-   LOAD SAVED DATA
-   ========================================================= */
 
 function loadSavedData() {
 
@@ -212,4 +209,29 @@ function saveData() {
         })
     );
 
+}
+
+async function loadPlayersFromSupabase() {
+
+    const { data, error } =
+        await supabaseClient
+            .from("players")
+            .select("*");
+
+    if (error) {
+
+        console.error(
+            "Supabase player load failed:",
+            error
+        );
+
+        return false;
+    }
+
+    console.log(
+        "Supabase players loaded:",
+        data
+    );
+
+    return true;
 }

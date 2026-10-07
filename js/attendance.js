@@ -261,51 +261,122 @@ async function setAttendance(
     playerID,
     present
 ) {
-    alert("SET ATTENDANCE: " + playerID + " / " + present);
+    alert(
+        "1. SET ATTENDANCE\n" +
+        "Player: " + playerID +
+        "\nPresent: " + present
+    );
 
+    /* FIND PLAYER */
     const player =
         findPlayerByID(playerID);
-   
+
+    alert(
+        "2. PLAYER LOOKUP\n" +
+        "Found: " + !!player +
+        "\nAge Group: " +
+        (player ? player.ageGroup : "NONE")
+    );
+
     if (!player) {
-
+        alert("STOP: PLAYER NOT FOUND");
         return;
-
     }
 
+    /* FIND REGISTER */
     const register =
         getTodayRegister(
             player.ageGroup
         );
 
+    alert(
+        "3. REGISTER LOOKUP\n" +
+        "Found: " + !!register +
+        "\nRegister ID: " +
+        (register ? register.id : "NONE")
+    );
+
     if (!register) {
-
+        alert(
+            "STOP: TODAY'S REGISTER NOT FOUND"
+        );
         return;
-
     }
+
+    /* CHECK REGISTER STATUS */
+    alert(
+        "4. REGISTER STATUS\n" +
+        "Submitted: " +
+        register.submitted +
+        "\nClosed Automatically: " +
+        register.closedAutomatically
+    );
 
     if (
         register.submitted ||
         register.closedAutomatically
     ) {
-
+        alert(
+            "STOP: REGISTER IS CLOSED"
+        );
         return;
-
     }
 
-    const { data, error } =
-        await supabaseClient.rpc(
-            "update_attendance",
-            {
-                requested_register_id:
-                    register.id,
+    /* SUPABASE CALL */
+    alert(
+        "5. CALLING SUPABASE\n" +
+        "Register: " + register.id +
+        "\nPlayer: " + playerID +
+        "\nPresent: " + present
+    );
 
-                requested_player_id:
-                    playerID,
+    let data;
+    let error;
 
-                requested_present:
-                    present
-            }
+    try {
+
+        const result =
+            await supabaseClient.rpc(
+                "update_attendance",
+                {
+                    requested_register_id:
+                        register.id,
+
+                    requested_player_id:
+                        playerID,
+
+                    requested_present:
+                        present
+                }
+            );
+
+        data = result.data;
+        error = result.error;
+
+    } catch (err) {
+
+        alert(
+            "6. SUPABASE EXCEPTION\n" +
+            err.message
         );
+
+        console.error(
+            "Supabase exception:",
+            err
+        );
+
+        return;
+    }
+
+    /* SUPABASE RESPONSE */
+    alert(
+        "6. SUPABASE RESPONSE\n" +
+        "Data: " + JSON.stringify(data) +
+        "\nError: " +
+        (error
+            ? JSON.stringify(error)
+            : "NONE")
+    );
 
     if (error) {
 
@@ -315,36 +386,32 @@ async function setAttendance(
         );
 
         alert(
-            "Unable to save attendance. Please try again."
+            "STOP: SUPABASE ERROR\n\n" +
+            error.message
         );
 
         return;
-
     }
 
+    /* RPC RESULT */
     if (data !== true) {
 
         alert(
-            "Attendance could not be updated."
+            "STOP: RPC RETURNED\n" +
+            JSON.stringify(data)
         );
 
         return;
-
     }
 
-    /*
-     * Update the temporary in-memory FE mirror.
-     */
+    /* LOCAL UPDATE */
+    alert(
+        "7. SUPABASE SUCCESS\n" +
+        "Updating local register..."
+    );
 
     register.attendance[playerID] =
         present;
-
-    /*
-     * Backend has already updated
-     * players.last_attendance_date.
-     *
-     * Keep the FE player mirror in sync.
-     */
 
     if (present) {
 
@@ -353,10 +420,17 @@ async function setAttendance(
 
     }
 
+    /* RENDER */
+    alert(
+        "8. RENDERING REGISTER"
+    );
+
     showRegister();
 
+    alert(
+        "9. COMPLETE"
+    );
 }
-
 
 /* =========================================================
    ADD PLAYER TO TODAY'S REGISTER

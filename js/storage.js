@@ -273,3 +273,5 @@ async function loadPlayersFromSupabase() {
 
     return true;
 }
+
+loadPlayersFromSupabase();

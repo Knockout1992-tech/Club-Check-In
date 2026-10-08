@@ -2652,9 +2652,14 @@ async function showUserManagement() {
                 User Management
             </h2>
 
-            <div class="subtitle">
-                Coaches and approved users
-            </div>
+            <button
+                class="menu-button blue"
+                onclick="showAddCoach()">
+
+                Add<br>
+                Coach
+
+            </button>
 
             ${
                 users.length === 0
@@ -2701,6 +2706,56 @@ async function showUserManagement() {
 
 }
 
+function showAddCoach() {
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showUserManagement()">
+
+                ← User Management
+
+            </button>
+
+            <h2>
+                Add Coach
+            </h2>
+
+            <input
+                type="text"
+                id="newCoachPersonID"
+                placeholder="Person ID"
+                autocomplete="off"
+            >
+
+            <input
+                type="text"
+                id="newCoachName"
+                placeholder="Coach Name"
+                autocomplete="off"
+            >
+
+            <button
+                class="menu-button blue"
+                onclick="addCoach()">
+
+                Add Coach
+
+            </button>
+
+            <div
+                id="addCoachMessage"
+                class="info-box">
+            </div>
+
+        </div>
+
+    `);
+
+}
 /* =========================================================
    SENIOR ALL AGE GROUPS
    ========================================================= */

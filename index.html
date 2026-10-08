@@ -855,12 +855,24 @@ function showCoachDashboard() {
    MULTI-AGE REGISTER
    ========================================================= */
 
-function showRegister() {
+async function showRegister() {
 
     const groups =
         selectedAgeGroups.length
         ? selectedAgeGroups
         : [currentAgeGroup];
+
+    for (const ageGroup of groups) {
+
+        if (!getTodayRegister(ageGroup)) {
+
+            await ensureTodayAttendanceRegister(
+                ageGroup
+            );
+
+        }
+
+    }
 
     const registerExists =
         groups.some(
@@ -1081,7 +1093,7 @@ function showRegister() {
         ? "checked"
         : ""
     }
-    onchange="alert('TICKED: ' + this.checked); setAttendance(this.dataset.playerId, this.checked)"
+    onchange="setAttendance(this.dataset.playerId, this.checked)"
 >
 
                                                                 <span
@@ -2009,12 +2021,100 @@ ${
    SESSION HISTORY
    ========================================================= */
 
-function showSessionHistory() {
+async function showSessionHistory() {
 
     const groups =
         selectedAgeGroups.length
         ? selectedAgeGroups
         : [currentAgeGroup];
+
+    const { data: registers, error } =
+        await supabaseClient
+            .from("attendance_registers")
+            .select(`
+                id,
+                register_date,
+                age_group,
+                submitted,
+                closed_automatically
+            `)
+            .in(
+                "age_group",
+                groups
+            )
+            .order(
+                "register_date",
+                {
+                    ascending: false
+                }
+            );
+
+    if (error) {
+
+        console.error(
+            "Supabase session history load failed:",
+            error
+        );
+
+        alert(
+            "Unable to load session history. Please try again."
+        );
+
+        return;
+    }
+
+
+    /* -----------------------------------------------------
+       LOAD ATTENDANCE RECORDS
+       ----------------------------------------------------- */
+
+    let attendanceRecords = [];
+
+    if (registers.length) {
+
+        const registerIDs =
+            registers.map(
+                register => register.id
+            );
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("attendance_records")
+                .select(`
+                    register_id,
+                    player_id,
+                    present
+                `)
+                .in(
+                    "register_id",
+                    registerIDs
+                );
+
+        if (error) {
+
+            console.error(
+                "Supabase session attendance load failed:",
+                error
+            );
+
+            alert(
+                "Unable to load session attendance. Please try again."
+            );
+
+            return;
+        }
+
+        attendanceRecords =
+            data || [];
+    }
+
+
+    /* -----------------------------------------------------
+       RENDER
+       ----------------------------------------------------- */
 
     renderShell(`
 
@@ -2042,67 +2142,114 @@ function showSessionHistory() {
                 groups.map(
                     ageGroup => {
 
-                    const history =
-                        sessions[ageGroup] || [];
+                    const groupRegisters =
+                        registers.filter(
+                            register =>
+                                register.age_group ===
+                                ageGroup
+                        );
 
-                    return `
+                    if (
+                        groupRegisters.length === 0
+                    ) {
 
-                        <div class="age-section">
+                        return `
 
-                            <div class="
-                                age-section-title
-                            ">
+                            <div class="info-box">
 
-                                <span>
-                                    ${ageGroup}
-                                </span>
+                                No session history
+                                available.
 
                             </div>
 
-                            ${
-                                history.length === 0
+                        `;
 
-                                ? `
+                    }
 
-                                    <div class="empty">
-                                        No sessions recorded yet.
+                    return `
+
+                        <h3>
+                            ${ageGroup}
+                        </h3>
+
+                        ${
+                            groupRegisters.map(
+                                register => {
+
+                                const records =
+                                    attendanceRecords.filter(
+                                        record =>
+                                            record.register_id ===
+                                            register.id
+                                    );
+
+                                const presentCount =
+                                    records.filter(
+                                        record =>
+                                            record.present === true
+                                    ).length;
+
+                                const totalCount =
+                                    records.length;
+
+                                let status =
+                                    "In Progress";
+
+                                if (
+                                    register.closed_automatically
+                                ) {
+
+                                    status =
+                                        "Automatically Closed";
+
+                                } else if (
+                                    register.submitted
+                                ) {
+
+                                    status =
+                                        "Submitted";
+
+                                }
+
+                                const date =
+                                    new Date(
+                                        register.register_date
+                                    ).toLocaleDateString(
+                                        "en-GB"
+                                    );
+
+                                return `
+
+                                    <div
+                                        class="
+                                            promotion-row
+                                        ">
+
+                                        <span>
+
+                                            ${date}
+
+                                            <br>
+
+                                            ${presentCount}
+                                            of
+                                            ${totalCount}
+                                            present
+
+                                        </span>
+
+                                        <strong>
+
+                                            ${status}
+
+                                        </strong>
+
                                     </div>
 
-                                `
+                                `;
 
-                                : history
-                                    .slice()
-                                    .reverse()
-                                    .map(
-                                        session => `
-
-                                            <div
-                                                class="list-row">
-
-                                                <div
-                                                    class="list-title">
-
-                                                    ${session.date}
-
-                                                </div>
-
-                                                <div
-                                                    class="list-sub">
-
-                                                    ${session.present}
-                                                    of
-                                                    ${session.total}
-                                                    present
-
-                                                </div>
-
-                                            </div>
-
-                                        `
-                                    ).join("")
-                            }
-
-                        </div>
+                            }).join("")
+                        }
 
                     `;
 

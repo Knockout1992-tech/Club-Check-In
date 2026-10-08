@@ -4385,6 +4385,115 @@ async function changePIN(
     showPINManagement();
 
 }
+
+/* =========================================================
+   PWA INSTALLATION ID
+   ========================================================= */
+
+function getInstallationID() {
+
+    let installationID =
+        localStorage.getItem(
+            "installationID"
+        );
+
+    if (!installationID) {
+
+        installationID =
+            "INSTALL-" +
+            crypto.randomUUID();
+
+        localStorage.setItem(
+            "installationID",
+            installationID
+        );
+
+    }
+
+    return installationID;
+
+}
+
+/* =========================================================
+   CHECK PWA ACCESS
+   ========================================================= */
+
+async function checkInstallationAccess() {
+
+    const installationID =
+        getInstallationID();
+
+    const { data, error } =
+        await supabaseClient.rpc(
+            "verify_installation_access",
+            {
+                requested_installation_id:
+                    installationID
+            }
+        );
+
+    if (error) {
+
+        console.error(
+            "Installation access check failed:",
+            error
+        );
+
+        return false;
+    }
+
+    if (!data) {
+        return false;
+    }
+
+    return true;
+}
+
+/* =========================================================
+   INITIAL ACCESS
+   ========================================================= */
+
+function showInitialAccess() {
+
+    document.getElementById("app").innerHTML = `
+
+        <div class="screen">
+
+            <h1>Club Check-In</h1>
+
+            <h2>Initial Access</h2>
+
+            <p>
+                Enter the Initial Access Code and your
+                approved name to activate this device.
+            </p>
+
+            <input
+                type="password"
+                id="initialAccessCode"
+                placeholder="Initial Access Code"
+                autocomplete="off"
+            >
+
+            <input
+                type="text"
+                id="initialAccessName"
+                placeholder="Approved Name"
+                autocomplete="off"
+            >
+
+            <button
+                onclick="initialisePWA()">
+                Activate Device
+            </button>
+
+            <p id="initialAccessMessage"></p>
+
+        </div>
+
+    `;
+}
+
 /* =========================================================
    START
    ========================================================= */
@@ -4399,9 +4508,21 @@ async function changePIN(
 
     await autoClosePreviousAttendanceRegisters();
 
-    showWelcome();
+    const installationAuthorised =
+        await checkInstallationAccess();
+
+    if (installationAuthorised) {
+
+        showWelcome();
+
+    } else {
+
+        showInitialAccess();
+
+    }
+
 })();
-   
+
 setInterval(
     async () => {
 

@@ -535,15 +535,18 @@ async function checkPIN() {
 
         }
 
-        if (
-            currentRole === "senior"
-        ) {
+if (
+    currentRole === "senior"
+) {
 
-            showSeniorDashboard();
+    currentSeniorPIN =
+        entered;
 
-            return;
+    showSeniorDashboard();
 
-        }
+    return;
+
+}
 
     }
 
@@ -2589,18 +2592,13 @@ async function showUserManagement() {
     const {
         data: users,
         error
-    } = await supabaseClient
-        .from("approved_users")
-        .select(
-            "id, person_id, name, active, protected_user"
-        )
-        .eq(
-            "protected_user",
-            false
-        )
-        .order(
-            "name"
-        );
+    } = await supabaseClient.rpc(
+        "get_manageable_users",
+        {
+            current_senior_code:
+                currentSeniorPIN
+        }
+    );
 
     if (error) {
 

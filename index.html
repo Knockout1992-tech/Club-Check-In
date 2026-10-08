@@ -2563,7 +2563,139 @@ function showSeniorDashboard() {
 
                 </button>
 
+<button
+    class="menu-button"
+    onclick="showUserManagement()">
+
+    User<br>
+    Management
+
+</button>
+
             </div>
+
+        </div>
+
+    `);
+
+}
+
+/* =========================================================
+   USER MANAGEMENT
+   ========================================================= */
+
+async function showUserManagement() {
+
+    const {
+        data: users,
+        error
+    } = await supabaseClient
+        .from("approved_users")
+        .select(
+            "id, person_id, name, active, protected_user"
+        )
+        .eq(
+            "protected_user",
+            false
+        )
+        .order(
+            "name"
+        );
+
+    if (error) {
+
+        console.error(
+            "User management load failed:",
+            error
+        );
+
+        renderShell(`
+
+            <div class="card">
+
+                <button
+                    class="back-button"
+                    onclick="showSeniorDashboard()">
+
+                    ← Senior Dashboard
+
+                </button>
+
+                <h2>
+                    User Management
+                </h2>
+
+                <div class="info-box">
+
+                    Unable to load users.
+
+                </div>
+
+            </div>
+
+        `);
+
+        return;
+    }
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showSeniorDashboard()">
+
+                ← Senior Dashboard
+
+            </button>
+
+            <h2>
+                User Management
+            </h2>
+
+            <div class="subtitle">
+                Coaches and approved users
+            </div>
+
+            ${
+                users.length === 0
+
+                ? `
+
+                    <div class="info-box">
+
+                        No users have been added yet.
+
+                    </div>
+
+                `
+
+                : users.map(user => `
+
+                    <div class="info-box">
+
+                        <strong>
+                            ${user.name}
+                        </strong>
+
+                        <br>
+
+                        ${user.person_id}
+
+                        <br>
+
+                        ${
+                            user.active
+                            ? "Active"
+                            : "Inactive"
+                        }
+
+                    </div>
+
+                `).join("")
+
+            }
 
         </div>
 

@@ -49,9 +49,27 @@ async function loadAgeGroupsFromSupabase() {
     ageGroupData =
         data || [];
 
+
+    /* -----------------------------------------------------
+       BUILD AGE GROUP LIST
+       ----------------------------------------------------- */
+
+    ageGroups =
+        ageGroupData.map(
+            group => group.age_group
+        );
+
+
     console.log(
         "Age groups loaded:",
         ageGroupData
+    );
+
+    console.log(
+        "Active age groups:",
+        ageGroupData
+            .filter(group => group.active)
+            .map(group => group.age_group)
     );
 
     return true;

@@ -187,36 +187,31 @@ function escapeHTML(value) {
 
 function getNextAgeGroup(ageGroup) {
 
-    const index =
-        ageGroups.indexOf(ageGroup);
+    const currentGroup =
+        ageGroupData.find(
+            group => group.age_group === ageGroup
+        );
 
-    if (index < 0) {
+    if (!currentGroup) {
         return null;
     }
 
-    if (
-        index >= ageGroups.length - 1
-    ) {
+    if (!currentGroup.next_age_group_id) {
         return null;
     }
 
-    return ageGroups[
-        index + 1
-    ];
+    const nextGroup =
+        ageGroupData.find(
+            group =>
+                group.id ===
+                currentGroup.next_age_group_id
+        );
 
-}
+    if (!nextGroup) {
+        return null;
+    }
 
-function ageGroupNeedsGMSConfirmation(
-    ageGroup
-) {
-
-    return getActivePlayers(
-        ageGroup
-    ).some(
-        player =>
-            !player.gms
-    );
-
+    return nextGroup.age_group;
 }
 
 /* =========================================================
@@ -3604,7 +3599,8 @@ function showNewSeason() {
 
             <div class="subtitle">
 
-                Move active players up one age group.
+                Review player progression before
+                starting the new season.
 
             </div>
 
@@ -3630,35 +3626,88 @@ function showNewSeason() {
             </div>
 
             <h3>
-                Promotion Preview
+                Player Progression
             </h3>
 
             ${
                 ageGroups
-                    .slice(0, -1)
                     .map(
                         ageGroup => {
-
-                        const next =
-                            getNextAgeGroup(
-                                ageGroup
-                            );
 
                         const count =
                             getActivePlayers(
                                 ageGroup
                             ).length;
 
+                        if (count === 0) {
+                            return "";
+                        }
+
+                        const next =
+                            getNextAgeGroup(
+                                ageGroup
+                            );
+
+                        if (!next) {
+
+                            return `
+
+                                <div
+                                    class="
+                                        promotion-row
+                                    ">
+
+                                    <span>
+
+                                        ${ageGroup}
+                                        →
+                                        Leaving Active Register
+
+                                    </span>
+
+                                    <strong>
+                                        ${count}
+                                    </strong>
+
+                                </div>
+
+                            `;
+
+                        }
+
+                        const nextGroup =
+                            ageGroupData.find(
+                                group =>
+                                    group.age_group ===
+                                    next
+                            );
+
+                        const nextActive =
+                            nextGroup &&
+                            nextGroup.active;
+
                         return `
 
                             <div
-                                class="promotion-row">
+                                class="
+                                    promotion-row
+                                    ${
+                                        !nextActive
+                                        ? "warning-box"
+                                        : ""
+                                    }
+                                ">
 
                                 <span>
 
                                     ${ageGroup}
                                     →
-                                    ${next}
+                                    ${
+                                        nextActive
+                                        ? next
+                                        : next +
+                                          " — Leaving Active Register"
+                                    }
 
                                 </span>
 
@@ -3673,24 +3722,6 @@ function showNewSeason() {
                     }).join("")
             }
 
-            <div class="promotion-row">
-
-                <span>
-                    U18 → Leaving Active Register
-                </span>
-
-                <strong>
-
-                    ${
-                        getActivePlayers(
-                            "U18"
-                        ).length
-                    }
-
-                </strong>
-
-            </div>
-
             <br>
 
             <div class="
@@ -3699,13 +3730,24 @@ function showNewSeason() {
             ">
 
                 <strong>
-                    Check the numbers before confirming.
+                    Important
                 </strong>
 
                 <br><br>
 
-                This moves every active player up
-                one age group.
+                Players will move to their configured
+                next age group only where that age group
+                is currently active.
+
+                <br><br>
+
+                If the next age group is inactive, the
+                player will leave the active register.
+
+                <br><br>
+
+                Players are not deleted. Their player
+                record and history are retained.
 
             </div>
 
@@ -3725,6 +3767,7 @@ function showNewSeason() {
 
 }
 
+
 function confirmNewSeason() {
 
     const nextSeason =
@@ -3737,9 +3780,10 @@ function confirmNewSeason() {
             "Start season "
             + nextSeason
             + "?\n\n"
-            + "All active players will move up one age group.\n\n"
-            + "U18 players will leave the active register."
-        );
+            + "Players will move to the next active age group.\n"
+            + "Those without one will leave the active register.\n\n"
+            + "Player records and history will be retained."
+                    );
 
     if (!confirmed) {
         return;

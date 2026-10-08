@@ -2448,6 +2448,9 @@ function showSeniorDashboard() {
 
 function showSeniorAgeGroups() {
 
+    const activeAgeGroups =
+        getActiveAgeGroups();
+
     renderShell(`
 
         <div class="card">
@@ -2471,7 +2474,7 @@ function showSeniorAgeGroups() {
             </div>
 
             ${
-                ageGroups.map(
+                activeAgeGroups.map(
                     ageGroup => {
 
                     const active =
@@ -3179,7 +3182,7 @@ function showPlayerManagement(
             <div class="age-grid">
 
                 ${
-                    ageGroups.map(
+                    getActiveAgeGroups().map(
                         age => {
 
                         const needsGMS =

@@ -547,7 +547,7 @@ function showCoachAgeGroups() {
             <div class="age-grid">
 
                 ${
-                    ageGroups.map(age => {
+                    getActiveAgeGroups().map(age => {
 
                         const selected =
                             selectedAgeGroups
@@ -589,7 +589,7 @@ function showCoachAgeGroups() {
                     class="secondary-button"
                     onclick="
                         selectCoachAgeGroups(
-                            ageGroups
+                         getActiveAgeGroups()
                         )
                     ">
 

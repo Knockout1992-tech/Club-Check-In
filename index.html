@@ -469,38 +469,85 @@ function showPIN(role) {
 
 }
 
-function checkPIN() {
+async function checkPIN() {
 
     const entered =
         document.getElementById(
             "pinInput"
         ).value;
 
-    if (
-        currentRole === "coach" &&
-        entered === coachPIN
-    ) {
+    const error =
+        document.getElementById(
+            "pinError"
+        );
 
-        showCoachAgeGroups();
+    error.textContent = "";
 
-        return;
+    if (!entered) {
 
-    }
-
-    if (
-        currentRole === "senior" &&
-        entered === seniorPIN
-    ) {
-
-        showSeniorDashboard();
+        error.textContent =
+            "Please enter your PIN.";
 
         return;
 
     }
 
-    document.getElementById(
-        "pinError"
-    ).textContent =
+    const {
+        data,
+        error: supabaseError
+    } =
+        await supabaseClient.rpc(
+            "verify_access_code",
+            {
+                supplied_code:
+                    entered,
+
+                code_type:
+                    currentRole
+            }
+        );
+
+    if (
+        supabaseError
+    ) {
+
+        console.error(
+            "PIN verification error:",
+            supabaseError
+        );
+
+        error.textContent =
+            "Unable to verify PIN. Please try again.";
+
+        return;
+
+    }
+
+    if (data === true) {
+
+        if (
+            currentRole === "coach"
+        ) {
+
+            showCoachAgeGroups();
+
+            return;
+
+        }
+
+        if (
+            currentRole === "senior"
+        ) {
+
+            showSeniorDashboard();
+
+            return;
+
+        }
+
+    }
+
+    error.textContent =
         "Incorrect PIN.";
 
 }

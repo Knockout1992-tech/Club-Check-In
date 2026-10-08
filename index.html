@@ -170,6 +170,19 @@ function getAllActivePlayers() {
 
 }
 
+function ageGroupNeedsGMSConfirmation(
+    ageGroup
+) {
+
+    return getActivePlayers(
+        ageGroup
+    ).some(
+        player =>
+            !player.gms
+    );
+
+}
+
 /* =========================================================
    GENERAL HELPERS
    ========================================================= */

@@ -4195,9 +4195,20 @@ function showChangePIN(
 
 }
 
-function changePIN(
+async function changePIN(
     type
 ) {
+
+    const currentSeniorPIN =
+        prompt(
+            "Enter the current Senior Member PIN:"
+        );
+
+    if (
+        currentSeniorPIN === null
+    ) {
+        return;
+    }
 
     const newPIN =
         document.getElementById(
@@ -4251,34 +4262,65 @@ function changePIN(
     }
 
     if (
-        newPIN.length < 4
+        newPIN.length < 4 ||
+        newPIN.length > 8
     ) {
 
         error.textContent =
-            "PIN must be at least 4 digits.";
+            "PIN must be between 4 and 8 digits.";
 
         return;
 
     }
 
-    if (type === "coach") {
+    const {
+        data,
+        error: supabaseError
+    } =
+        await supabaseClient.rpc(
+            "change_access_code",
+            {
+                current_senior_code:
+                    currentSeniorPIN,
 
-        coachPIN =
-            newPIN;
+                code_type:
+                    type,
 
-    } else {
+                new_code:
+                    newPIN
+            }
+        );
 
-        seniorPIN =
-            newPIN;
+    if (
+        supabaseError
+    ) {
+
+        console.error(
+            "PIN change error:",
+            supabaseError
+        );
+
+        error.textContent =
+            "Unable to change the PIN.";
+
+        return;
 
     }
 
-    saveData();
+    if (
+        data !== true
+    ) {
+
+        error.textContent =
+            "The current Senior Member PIN is incorrect.";
+
+        return;
+
+    }
 
     showPINManagement();
 
 }
-
 /* =========================================================
    START
    ========================================================= */

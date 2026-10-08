@@ -74,3 +74,19 @@ async function loadAgeGroupsFromSupabase() {
 
     return true;
 }
+
+
+/* =========================================================
+   GET ACTIVE AGE GROUPS
+   ========================================================= */
+
+function getActiveAgeGroups() {
+
+    return ageGroupData
+        .filter(
+            group => group.active
+        )
+        .map(
+            group => group.age_group
+        );
+}

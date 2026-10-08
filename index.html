@@ -4011,12 +4011,13 @@ function changePIN(
 
     loadSavedData();
 
+    await loadAgeGroupsFromSupabase();
+
     await loadPlayersFromSupabase();
 
     await autoClosePreviousAttendanceRegisters();
 
     showWelcome();
-
 })();
    
 setInterval(

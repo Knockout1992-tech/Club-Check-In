@@ -4145,6 +4145,21 @@ function showChangePIN(
             <div class="form-group">
 
                 <label class="title">
+                    Current Senior Member PIN
+                </label>
+
+                <input
+                    id="currentSeniorPIN"
+                    class="pin-input"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="8">
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="title">
                     New PIN
                 </label>
 
@@ -4200,15 +4215,9 @@ async function changePIN(
 ) {
 
     const currentSeniorPIN =
-        prompt(
-            "Enter the current Senior Member PIN:"
-        );
-
-    if (
-        currentSeniorPIN === null
-    ) {
-        return;
-    }
+        document.getElementById(
+            "currentSeniorPIN"
+        ).value;
 
     const newPIN =
         document.getElementById(
@@ -4228,12 +4237,13 @@ async function changePIN(
     error.textContent = "";
 
     if (
+        !currentSeniorPIN ||
         !newPIN ||
         !confirmPIN
     ) {
 
         error.textContent =
-            "Please enter and confirm the new PIN.";
+            "Please complete all PIN fields.";
 
         return;
 
@@ -4251,11 +4261,12 @@ async function changePIN(
     }
 
     if (
+        !/^\d+$/.test(currentSeniorPIN) ||
         !/^\d+$/.test(newPIN)
     ) {
 
         error.textContent =
-            "PIN must contain numbers only.";
+            "PINs must contain numbers only.";
 
         return;
 
@@ -4317,6 +4328,12 @@ async function changePIN(
         return;
 
     }
+
+    alert(
+        type === "coach"
+            ? "Coach PIN changed successfully."
+            : "Senior Member PIN changed successfully."
+    );
 
     showPINManagement();
 

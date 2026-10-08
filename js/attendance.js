@@ -171,6 +171,7 @@ async function loadTodayAttendanceRegister(ageGroup) {
 
     return register;
 }
+
 /* =========================================================
    GET TODAY'S REGISTER
    ========================================================= */
@@ -192,6 +193,31 @@ function getTodayRegister(ageGroup) {
     return null;
 }
 
+
+/* =========================================================
+   ENSURE TODAY'S REGISTER IS LOADED
+   ========================================================= */
+
+async function ensureTodayAttendanceRegister(
+    ageGroup
+) {
+
+    const existing =
+        getTodayRegister(
+            ageGroup
+        );
+
+    if (existing) {
+
+        return existing;
+
+    }
+
+    return await loadTodayAttendanceRegister(
+        ageGroup
+    );
+
+}
 
 /* =========================================================
    OPEN TODAY'S REGISTER

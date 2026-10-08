@@ -205,25 +205,6 @@ function getNextAgeGroup(ageGroup) {
 
 }
 
-function getNextSeason(season) {
-
-    const parts =
-        season.split("/");
-
-    const start =
-        parseInt(parts[0], 10);
-
-    const end =
-        parseInt(parts[1], 10);
-
-    return (
-        start + 1
-    ) + "/" + (
-        String(end + 1).slice(-2)
-    );
-
-}
-
 function ageGroupNeedsGMSConfirmation(
     ageGroup
 ) {
@@ -3766,93 +3747,6 @@ function confirmNewSeason() {
     performNewSeason(
         nextSeason
     );
-
-}
-
-function performNewSeason(
-    nextSeason
-) {
-
-    const newPlayers = {};
-
-    ageGroups.forEach(
-        ageGroup => {
-
-            newPlayers[ageGroup] =
-                [];
-
-        }
-    );
-
-    ageGroups.forEach(
-        ageGroup => {
-
-        if (!players[ageGroup]) {
-            players[ageGroup] = [];
-        }
-
-        const inactive =
-            players[ageGroup]
-                .filter(
-                    player =>
-                        !player.active
-                );
-
-        inactive.forEach(
-            player => {
-
-                newPlayers[ageGroup]
-                    .push(player);
-
-            }
-        );
-
-        const active =
-            players[ageGroup]
-                .filter(
-                    player =>
-                        player.active
-                );
-
-        active.forEach(
-            player => {
-
-            const next =
-                getNextAgeGroup(
-                    ageGroup
-                );
-
-            if (next) {
-
-                player.ageGroup =
-                    next;
-
-                newPlayers[next]
-                    .push(player);
-
-            } else {
-
-                player.active =
-                    false;
-
-                newPlayers[ageGroup]
-                    .push(player);
-
-            }
-
-        });
-
-    });
-
-    players =
-        newPlayers;
-
-    currentSeason =
-        nextSeason;
-
-    saveData();
-
-    showSeniorDashboard();
 
 }
 

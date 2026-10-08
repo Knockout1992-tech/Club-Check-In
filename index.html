@@ -2041,6 +2041,11 @@ async function showSessionHistory() {
         ? selectedAgeGroups
         : [currentAgeGroup];
 
+
+    /* -----------------------------------------------------
+       LOAD REGISTERS
+       ----------------------------------------------------- */
+
     const { data: registers, error } =
         await supabaseClient
             .from("attendance_registers")
@@ -2189,6 +2194,20 @@ async function showSessionHistory() {
                             groupRegisters.map(
                                 register => {
 
+                                /* -------------------------------------------------
+                                   CURRENT ACTIVE ROSTER
+                                   ------------------------------------------------- */
+
+                                const activePlayers =
+                                    getActivePlayers(
+                                        register.age_group
+                                    );
+
+
+                                /* -------------------------------------------------
+                                   ATTENDANCE RECORDS FOR THIS REGISTER
+                                   ------------------------------------------------- */
+
                                 const records =
                                     attendanceRecords.filter(
                                         record =>
@@ -2196,14 +2215,59 @@ async function showSessionHistory() {
                                             register.id
                                     );
 
-                                const presentCount =
+
+                                /* -------------------------------------------------
+                                   BUILD ACTIVE PLAYER ID SET
+                                   ------------------------------------------------- */
+
+                                const activePlayerIDs =
+                                    new Set(
+                                        activePlayers.map(
+                                            player =>
+                                                String(
+                                                    player.id
+                                                )
+                                        )
+                                    );
+
+
+                                /* -------------------------------------------------
+                                   ONLY RECORDS BELONGING TO ACTIVE PLAYERS
+                                   ------------------------------------------------- */
+
+                                const activeRecords =
                                     records.filter(
+                                        record =>
+                                            activePlayerIDs.has(
+                                                String(
+                                                    record.player_id
+                                                )
+                                            )
+                                    );
+
+
+                                /* -------------------------------------------------
+                                   PRESENT COUNT
+                                   ------------------------------------------------- */
+
+                                const presentCount =
+                                    activeRecords.filter(
                                         record =>
                                             record.present === true
                                     ).length;
 
+
+                                /* -------------------------------------------------
+                                   TOTAL = CURRENT ACTIVE ROSTER
+                                   ------------------------------------------------- */
+
                                 const totalCount =
-                                    records.length;
+                                    activePlayers.length;
+
+
+                                /* -------------------------------------------------
+                                   STATUS
+                                   ------------------------------------------------- */
 
                                 let status =
                                     "In Progress";
@@ -2224,12 +2288,18 @@ async function showSessionHistory() {
 
                                 }
 
+
+                                /* -------------------------------------------------
+                                   DATE
+                                   ------------------------------------------------- */
+
                                 const date =
                                     new Date(
                                         register.register_date
                                     ).toLocaleDateString(
                                         "en-GB"
                                     );
+
 
                                 return `
 
@@ -2274,7 +2344,6 @@ async function showSessionHistory() {
     `);
 
 }
-
 /* =========================================================
    SENIOR DASHBOARD
    ========================================================= */

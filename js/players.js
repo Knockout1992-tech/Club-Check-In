@@ -162,38 +162,49 @@ async function setGMS(
    COACH GMS SUGGESTION
    ========================================================= */
 
+
 async function setCoachGMSSuggestion(
     playerID,
     suggested
 ) {
 
-    const player =
-        findPlayerByID(
-            playerID
-        );
+    const player = findPlayerByID(playerID);
 
     if (!player) {
+        console.error(
+            "Coach GMS suggestion failed: player not found",
+            playerID
+        );
         return;
     }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
+    try {
+
+        const { data, error } = await supabaseClient
             .from("players")
             .update({
-                coach_gms_suggestion:
-                    suggested
+                coach_gms_suggestion: suggested
             })
-            .eq(
-                "player_id",
-                playerID
-            )
-            .select()
+            .eq("player_id", playerID)
+            .select("player_id, coach_gms_suggestion")
             .single();
 
-    if (error) {
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+            throw new Error("No updated player was returned.");
+        }
+
+        player.coachGmsSuggestion =
+            data.coach_gms_suggestion;
+
+        saveData();
+
+        showRoster();
+
+    } catch (error) {
 
         console.error(
             "Supabase coach GMS suggestion update failed:",
@@ -201,24 +212,12 @@ async function setCoachGMSSuggestion(
         );
 
         alert(
-            "Unable to update the GMS suggestion. Please try again."
+            "Unable to save the GMS suggestion. Please try again."
         );
 
-        return;
+        // Restore the roster to its current in-memory state.
+        showRoster();
     }
-
-    player.coachGmsSuggestion =
-        data.coach_gms_suggestion;
-
-    if (player.gms) {
-
-        player.coachGmsSuggestion =
-            false;
-    }
-
-    saveData();
-
-    showRoster();
 }
 
 

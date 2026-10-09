@@ -2587,6 +2587,7 @@ function showSeniorDashboard() {
    USER MANAGEMENT
    ========================================================= */
 
+
 async function showUserManagement() {
 
     const {
@@ -2647,12 +2648,14 @@ async function showUserManagement() {
             <h2>User Management</h2>
 
             <button
-                class="menu-button blue"
+                class="primary-button"
                 onclick="showAddCoach()">
 
-                Add<br>Coach
+                + Add Coach
 
             </button>
+
+            <br><br>
 
             ${
                 users.length === 0
@@ -2667,46 +2670,74 @@ async function showUserManagement() {
 
                 : users.map(user => `
 
-                    <div class="info-box">
+                    <div class="info-box user-management-card">
 
-                        <strong>
-                            ${user.name}
-                        </strong>
+                        <div class="user-management-header">
 
-                        <br>
+                            <strong>
+                                ${user.name}
+                            </strong>
 
-                        ${
-                            user.active
-                            ? "Active"
-                            : "Inactive"
-                        }
+                            <br>
 
-                        <br><br>
-
-                        <button
-                            class="menu-button blue"
-                            onclick="setUserActive(
-                                '${user.person_id}',
-                                ${!user.active}
-                            )">
-
-                            ${
+                            <span class="user-status ${
                                 user.active
-                                ? "Deactivate"
-                                : "Activate"
-                            }
+                                ? "user-status-active"
+                                : "user-status-inactive"
+                            }">
 
-                        </button>
+                                ${
+                                    user.active
+                                    ? "Active"
+                                    : "Inactive"
+                                }
 
-                        <button
-                            class="menu-button"
-                            onclick="resetUserInstallation(
-                                '${user.person_id}'
-                            )">
+                            </span>
 
-                            Reset Installation
+                        </div>
 
-                        </button>
+                        <div class="user-management-actions">
+
+                            <button
+                                class="user-action-button ${
+                                    user.active
+                                    ? "user-action-danger"
+                                    : "user-action-primary"
+                                }"
+                                onclick="setUserActive(
+                                    '${user.person_id}',
+                                    ${!user.active}
+                                )">
+
+                                ${
+                                    user.active
+                                    ? "Deactivate"
+                                    : "Activate"
+                                }
+
+                            </button>
+
+                            <button
+                                class="user-action-button user-action-neutral"
+                                onclick="resetUserInstallation(
+                                    '${user.person_id}'
+                                )">
+
+                                Reset Installation
+
+                            </button>
+
+                            <button
+                                class="user-action-button user-action-neutral"
+                                onclick="showChangeUserName(
+                                    '${user.person_id}'
+                                )">
+
+                                Change Name
+
+                            </button>
+
+                        </div>
 
                     </div>
 
@@ -2719,6 +2750,7 @@ async function showUserManagement() {
     `);
 
 }
+
 
 function showAddCoach() {
 

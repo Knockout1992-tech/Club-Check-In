@@ -14,6 +14,11 @@
 
 async function permanentlyRemovePlayer(playerID) {
 
+window.clubCheckInDiagnostics?.log(
+    "TEST: permanentlyRemovePlayer started",
+    playerID
+);
+
     if (currentRole !== "senior") {
 
         alert(

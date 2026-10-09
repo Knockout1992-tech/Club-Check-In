@@ -167,8 +167,6 @@ async function setCoachGMSSuggestion(
     suggested
 ) {
 
-alert("Coach GMS switch was triggered");
-
     const player =
         findPlayerByID(
             playerID

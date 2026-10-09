@@ -3134,31 +3134,32 @@ function showArchiveReview() {
 /* =========================================================
    ARCHIVED PLAYER LIST
    ========================================================= */
-
+    
 function getAllArchivedPlayers() {
 
     let result = [];
 
-    ageGroups.forEach(
-        ageGroup => {
+    ageGroups.forEach(ageGroup => {
 
-        (players[ageGroup] || [])
-            .forEach(player => {
+        (players[ageGroup] || []).forEach(player => {
 
-                if (player.archived) {
+            const isAnonymised =
+                /^Anonymous-\d+$/i.test(
+                    String(player.name || "").trim()
+                );
 
-                    result.push(player);
+            if (player.archived && !isAnonymised) {
+                result.push(player);
+            }
 
-                }
-
-            });
+        });
 
     });
 
     return result;
 
 }
-
+    
 function showArchiveList() {
 
     const archived =

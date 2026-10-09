@@ -3,6 +3,7 @@
    ========================================================= */
 
 
+
 /* =========================================================
    ANONYMISE ARCHIVED PLAYER
    ========================================================= */
@@ -15,6 +16,7 @@ async function permanentlyRemovePlayer(playerID) {
     diag?.log("Started. Player ID:", playerID);
 
     if (currentRole !== "senior") {
+
         diag?.error(
             "Permission check failed. Current role:",
             currentRole
@@ -27,37 +29,52 @@ async function permanentlyRemovePlayer(playerID) {
     const player = findPlayerByID(playerID);
 
     if (!player) {
-        diag?.error("Player not found locally:", playerID);
+
+        diag?.error(
+            "Player not found locally:",
+            playerID
+        );
+
         alert("Player could not be found.");
         return;
     }
 
+    if (!player.archived) {
+
+        diag?.error(
+            "Player is not archived:",
+            playerID
+        );
+
+        alert("Only archived players can be anonymised.");
+        return;
+    }
+
     diag?.log(
-        "Local player found:",
+        "Player found:",
         player.name,
         "Archived:",
         player.archived
     );
 
-    if (!player.archived) {
-        diag?.error("Player is not archived:", playerID);
-        alert("Only archived players can be anonymised.");
-        return;
-    }
-
     if (!confirm(
         "ANONYMISE " + player.name + "?\n\n" +
         "Their name will be replaced with an anonymous ID.\n" +
-        "Their player ID and historical attendance will be retained.\n" +
+        "Their player ID and historical attendance will be retained.\n\n" +
         "This cannot be undone."
     )) {
+
         diag?.log("Cancelled by user.");
         return;
     }
 
     try {
 
-        diag?.log("Step 1: Reading anonymous names from Supabase.");
+        /* STEP 1 — READ EXISTING ANONYMOUS NAMES */
+
+        diag?.log(
+            "Step 1: Reading anonymous names from Supabase."
+        );
 
         const {
             data: anonymousPlayers,
@@ -68,26 +85,29 @@ async function permanentlyRemovePlayer(playerID) {
             .like("name", "Anonymous-%");
 
         if (readError) {
-            diag?.error("Step 1 failed: Supabase read.", readError);
+
+            diag?.error(
+                "Step 1 failed: Supabase read.",
+                readError
+            );
+
             throw readError;
         }
-
-        diag?.log(
-            "Step 1 complete. Records returned:",
-            anonymousPlayers?.length
-        );
 
         let highestNumber = 0;
 
         (anonymousPlayers || []).forEach(item => {
 
-            const match = /^Anonymous-(\d+)$/.exec(item.name);
+            const match =
+                /^Anonymous-(\d+)$/.exec(item.name);
 
             if (match) {
+
                 highestNumber = Math.max(
                     highestNumber,
                     Number(match[1])
                 );
+
             }
 
         });
@@ -96,9 +116,19 @@ async function permanentlyRemovePlayer(playerID) {
             "Anonymous-" +
             String(highestNumber + 1).padStart(3, "0");
 
-        diag?.log("New anonymous name:", anonymousName);
+        diag?.log(
+            "Step 1 complete. Existing anonymous records:",
+            anonymousPlayers?.length,
+            "New name:",
+            anonymousName
+        );
 
-        diag?.log("Step 2: Updating Supabase player record.");
+
+        /* STEP 2 — UPDATE SUPABASE */
+
+        diag?.log(
+            "Step 2: Updating Supabase player record."
+        );
 
         const {
             data: updatedPlayer,
@@ -110,43 +140,77 @@ async function permanentlyRemovePlayer(playerID) {
                 gms: false,
                 coach_gms_suggestion: false,
                 active: false,
-                archived: false,
+                archived: true,
                 last_attendance_date: null
             })
             .eq("player_id", playerID)
             .eq("archived", true)
-            .select("player_id, name");
+            .select("player_id, name, active, archived");
 
         if (updateError) {
-            diag?.error("Step 2 failed: Supabase update.", updateError);
+
+            diag?.error(
+                "Step 2 failed: Supabase update.",
+                updateError
+            );
+
             throw updateError;
         }
 
         diag?.log(
-            "Step 2 returned:",
+            "Step 2 response:",
             updatedPlayer
         );
 
-        if (!updatedPlayer || updatedPlayer.length !== 1) {
+        if (
+            !Array.isArray(updatedPlayer) ||
+            updatedPlayer.length !== 1
+        ) {
 
-            const message =
+            throw new Error(
                 "Supabase did not confirm exactly one updated player. " +
-                "Check the player ID, archived status and update permissions.";
+                "Check the player ID, archived status and database permissions."
+            );
 
-            diag?.error("Step 2 failed:", message);
-
-            throw new Error(message);
         }
 
-        diag?.log("Step 3: Updating local app data.");
+        const confirmedPlayer = updatedPlayer[0];
+
+        if (
+            confirmedPlayer.player_id !== playerID ||
+            confirmedPlayer.name !== anonymousName ||
+            confirmedPlayer.active !== false ||
+            confirmedPlayer.archived !== true
+        ) {
+
+            throw new Error(
+                "The returned player record did not match the expected anonymised values."
+            );
+
+        }
+
+        diag?.log(
+            "Step 2 complete. Supabase confirmed:",
+            anonymousName
+        );
+
+
+        /* STEP 3 — UPDATE LOCAL DATA */
+
+        diag?.log(
+            "Step 3: Removing identifiable local player data."
+        );
 
         ageGroups.forEach(ageGroup => {
 
-            if (!players[ageGroup]) return;
+            if (!players[ageGroup]) {
+                return;
+            }
 
-            players[ageGroup] = players[ageGroup].filter(
-                item => item.id !== playerID
-            );
+            players[ageGroup] =
+                players[ageGroup].filter(
+                    item => item.id !== playerID
+                );
 
         });
 
@@ -154,29 +218,32 @@ async function permanentlyRemovePlayer(playerID) {
 
         diag?.log(
             "SUCCESS: Player anonymised as",
-            anonymousName
+            anonymousName,
+            "Player ID and historical attendance retained."
         );
 
-        alert("Player anonymised successfully as " + anonymousName + ".");
+        alert(
+            "Player anonymised successfully as " +
+            anonymousName + "."
+        );
 
         showArchiveList();
 
     } catch (error) {
 
         diag?.error(
-            "ANONYMISATION FAILED — actual error:",
+            "ANONYMISATION FAILED:",
             error
         );
 
         alert(
-            "Anonymisation failed. Read the diagnostic panel " +
-            "for the failing step and error details."
+            "Anonymisation failed. Check the on-screen " +
+            "diagnostics for the exact error."
         );
 
     }
 
 }
-
 
 /* =========================================================
 USER MANAGEMENT

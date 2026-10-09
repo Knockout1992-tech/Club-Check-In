@@ -98,15 +98,11 @@ async function showUserManagement() {
         );
 
         renderShell(`
-
             <div class="card">
-
                 <button
                     class="back-button"
                     onclick="showSeniorDashboard()">
-
                     ← Senior Dashboard
-
                 </button>
 
                 <h2>User Management</h2>
@@ -114,24 +110,19 @@ async function showUserManagement() {
                 <div class="info-box">
                     Unable to load users.
                 </div>
-
             </div>
-
         `);
 
         return;
     }
 
     renderShell(`
-
         <div class="card">
 
             <button
                 class="back-button"
                 onclick="showSeniorDashboard()">
-
                 ← Senior Dashboard
-
             </button>
 
             <h2>User Management</h2>
@@ -139,23 +130,19 @@ async function showUserManagement() {
             <button
                 class="primary-button"
                 onclick="showAddCoach()">
-
                 + Add Coach
-
             </button>
 
             <br><br>
 
             ${
                 users.length === 0
-
                 ? `
                     <div class="info-box">
                         No users have been added yet.
                     </div>
                 `
-
-                : users.map(user => `
+                : users.map((user, index) => `
 
                     <div class="info-box user-management-card">
 
@@ -170,9 +157,7 @@ async function showUserManagement() {
                                 ? "user-status-active"
                                 : "user-status-inactive"
                             }">
-
                                 ${user.active ? "Active" : "Inactive"}
-
                             </span>
 
                         </div>
@@ -186,32 +171,25 @@ async function showUserManagement() {
                                     : "user-action-primary"
                                 }"
                                 onclick="setUserActive(
-                                    '${user.person_id}',
+                                    ${JSON.stringify(user.person_id)},
                                     ${!user.active}
                                 )">
-
                                 ${user.active ? "Deactivate" : "Activate"}
-
                             </button>
 
                             <button
                                 class="user-action-button user-action-neutral"
                                 onclick="resetUserInstallation(
-                                    '${user.person_id}'
+                                    ${JSON.stringify(user.person_id)}
                                 )">
-
                                 Reset Installation
-
                             </button>
 
                             <button
-                                class="user-action-button user-action-neutral"
-                                onclick="showChangeUserName(
-                                    '${user.person_id}'
-                                )">
-
+                                type="button"
+                                class="user-action-button user-action-neutral change-user-name-button"
+                                data-user-index="${index}">
                                 Change Name
-
                             </button>
 
                         </div>
@@ -222,10 +200,35 @@ async function showUserManagement() {
             }
 
         </div>
-
     `);
-}
 
+    document
+        .querySelectorAll(".change-user-name-button")
+        .forEach(button => {
+
+            button.addEventListener("click", () => {
+
+                const index =
+                    Number(button.dataset.userIndex);
+
+                const selectedUser = users[index];
+
+                if (!selectedUser) {
+
+                    alert("User could not be found.");
+
+                    return;
+                }
+
+                showChangeUserName(
+                    selectedUser.person_id
+                );
+
+            });
+
+        });
+
+}
 
 /* =========================================================
    ADD COACH

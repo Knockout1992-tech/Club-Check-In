@@ -1233,12 +1233,13 @@ async function showRegister() {
    ROSTER
    ========================================================= */
 
+
 function showRoster() {
 
     const groups =
         selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
+            ? selectedAgeGroups
+            : [currentAgeGroup];
 
     renderShell(`
 
@@ -1252,9 +1253,7 @@ function showRoster() {
 
             </button>
 
-            <h2>
-                Roster
-            </h2>
+            <h2>Roster</h2>
 
             <div class="subtitle">
 
@@ -1266,151 +1265,98 @@ function showRoster() {
                 groups.map(ageGroup => {
 
                     const active =
-                        getActivePlayers(
-                            ageGroup
-                        );
+                        getActivePlayers(ageGroup);
 
                     return `
 
                         <div class="age-section">
 
-                            <div class="
-                                age-section-title
-                            ">
-
-                                <span>
-                                    ${ageGroup}
-                                </span>
-
-                                <span
-                                    class="age-section-count">
-
-                                    ${active.length}
-
-                                </span>
-
+                            <div class="age-section-title">
+                                <span>${escapeHTML(ageGroup)}</span>
+                                <span class="age-section-count">${active.length}</span>
                             </div>
 
                             ${
                                 active.length === 0
 
-                                ? `
+                                    ? `
+                                        <div class="empty">
+                                            No active players.
+                                        </div>
+                                    `
 
-                                    <div class="empty">
-                                        No active players.
-                                    </div>
+                                    : active.map(player => {
 
-                                `
+                                        const seniorConfirmed =
+                                            player.gms === true;
 
-                                : active.map(
-                                    player => {
+                                        const coachSuggested =
+                                            player.coachGmsSuggestion === true;
 
-                                    const seniorConfirmed =
-                                        player.gms === true;
+                                        const toggleOn =
+                                            seniorConfirmed || coachSuggested;
 
-                                    const coachSuggested =
-                                        player.coachGmsSuggestion === true;
+                                        return `
 
-                                    const toggleOn =
-                                        seniorConfirmed ||
-                                        coachSuggested;
+                                            <div class="player-row player-management-row">
 
-                                    return `
+                                                <div class="player-info">
 
-                                        <div class="
-                                            player-row
-                                            player-management-row
-                                        ">
+                                                    <div class="player-name">
+                                                        ${escapeHTML(player.name)}
+                                                    </div>
 
-                                            <div
-                                                class="player-info">
+                                                    ${
+                                                        !seniorConfirmed && coachSuggested
 
-                                                <div
-                                                    class="player-name">
+                                                            ? `
+                                                                <div class="player-small">
+                                                                    Coach has suggested GMS
+                                                                </div>
+                                                            `
 
-                                                    ${escapeHTML(
-                                                        player.name
-                                                    )}
+                                                            : ""
+                                                    }
 
                                                 </div>
 
-                                                ${
-                                                    !seniorConfirmed &&
-                                                    coachSuggested
-                                                    ? `
-                                                        <div
-                                                            class="player-small">
+                                                <div class="row-actions">
 
-                                                            Coach has suggested GMS
-
-                                                        </div>
-                                                    `
-                                                    : ""
-                                                }
-
-                                            </div>
-
-                                            <div
-                                                class="row-actions">
-
-                                                <label
-                                                    class="
+                                                    <label class="
                                                         toggle
                                                         gms-toggle
-                                                        ${
-                                                            toggleOn
-                                                            ? "confirmed"
-                                                            : "not-confirmed"
-                                                        }
-                                                        ${
-                                                            seniorConfirmed
-                                                            ? "locked"
-                                                            : ""
-                                                        }
+                                                        ${toggleOn ? "confirmed" : "not-confirmed"}
+                                                        ${seniorConfirmed ? "locked" : ""}
                                                     ">
 
-                                                    <input
-                                                        type="checkbox"
-                                                        ${
-                                                            toggleOn
-                                                            ? "checked"
-                                                            : ""
-                                                        }
-                                                        ${
-                                                            seniorConfirmed
-                                                            ? "disabled"
-                                                            : `onchange='setCoachGMSSuggestion(${JSON.stringify(player.id)}, this.checked)'`
-                                                        }>
+                                                        <input
+                                                            type="checkbox"
+                                                            ${toggleOn ? "checked" : ""}
+                                                            ${seniorConfirmed ? "disabled" : ""}
+                                                            onchange="setCoachGMSSuggestion(
+                                                                ${JSON.stringify(player.id)},
+                                                                this.checked
+                                                            )">
 
-                                                    <span
-                                                        class="toggle-knob">
-                                                    </span>
+                                                        <span class="toggle-knob"></span>
 
-                                                    <span
-                                                        class="toggle-label">
-                                                    </span>
+                                                        <span class="toggle-label"></span>
 
-                                                </label>
+                                                    </label>
+
+                                                </div>
 
                                             </div>
 
-                                        </div>
-
-                                    `;
-
-                                }).join("")
+                                        `;
+                                    }).join("")
                             }
 
                             <br>
 
                             <button
                                 class="green-button"
-                                onclick="
-                                    showCoachAddPlayer(
-                                        true,
-                                        '${ageGroup}'
-                                    )
-                                ">
+                                onclick="showCoachAddPlayer(true, ${JSON.stringify(ageGroup)})">
 
                                 + ADD PLAYER
 
@@ -1419,26 +1365,22 @@ function showRoster() {
                         </div>
 
                     `;
-
                 }).join("")
             }
 
             <div class="info-box">
 
-                Green means you are suggesting that you
-                believe the player is registered.
+                Green means you are suggesting that you believe the player is registered.
 
                 <br><br>
 
-                Once a Senior Member confirms GMS, the status
-                is locked for coaches.
+                Once a Senior Member confirms GMS, the status is locked for coaches.
 
             </div>
 
         </div>
 
     `);
-
 }
 
 /* =========================================================

@@ -1,333 +1,115 @@
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
 * {
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
+    width: 100%;
     min-height: 100%;
     font-family: Arial, Helvetica, sans-serif;
-    background: #f5f5f5;
+    background: #f4f4f4;
     color: #111;
 }
 
 body {
-    min-height: 100vh;
+    padding: 12px;
 }
 
 button,
-input {
-    font: inherit;
+input,
+select,
+textarea {
+    font-family: inherit;
 }
 
 button {
     cursor: pointer;
 }
 
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   APP CONTAINER
+   ========================================================= */
+
 #app {
-    min-height: 100vh;
-}
-
-/* =========================
-   APP HEADER
-   ========================= */
-
-.app-header {
-    background: #000;
-    color: #fff;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand img {
-    width: 42px;
-    height: 42px;
-    object-fit: contain;
-}
-
-.brand-title {
-    font-size: 17px;
-    font-weight: 700;
-}
-
-.brand-season {
-    font-size: 11px;
-    color: #bbb;
-    margin-top: 2px;
-}
-
-.header-button {
-    background: #333;
-    border: 0;
-    color: #fff;
-    border-radius: 8px;
-    padding: 8px 11px;
-    font-size: 12px;
-}
-
-/* =========================
-   MAIN
-   ========================= */
-
-.page {
-    max-width: 850px;
+    width: 100%;
+    max-width: 650px;
     margin: 0 auto;
-    padding: 15px;
 }
 
 .card {
+    width: 100%;
     background: #fff;
-    border-radius: 14px;
+    border-radius: 12px;
     padding: 18px;
     margin-bottom: 15px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
     margin-top: 0;
 }
 
+h1 {
+    font-size: 24px;
+}
+
 h2 {
-    font-size: 22px;
-    margin-bottom: 6px;
+    font-size: 21px;
 }
 
-.subtitle {
-    color: #666;
-    font-size: 14px;
-    margin-bottom: 18px;
-}
-
-.back-button {
-    background: #e5e5e5;
-    border: 0;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 13px;
-    margin-bottom: 15px;
-}
-
-.primary-button {
-    width: 100%;
-    background: #000;
-    color: #fff;
-    border: 0;
-    border-radius: 11px;
-    padding: 16px;
-    font-weight: 700;
-    font-size: 16px;
-}
-
-.secondary-button {
-    background: #ddd;
-    color: #111;
-    border: 0;
-    border-radius: 9px;
-    padding: 11px 14px;
-    font-weight: 700;
-}
-
-.green-button {
-    background: #198754;
-    color: #fff;
-    border: 0;
-    border-radius: 9px;
-    padding: 11px 14px;
-    font-weight: 700;
-}
-
-.red-button {
-    background: #c82333;
-    color: #fff;
-    border: 0;
-    border-radius: 9px;
-    padding: 10px 13px;
-    font-weight: 700;
-}
-
-.blue-button {
-    background: #0d6efd;
-    color: #fff;
-    border: 0;
-    border-radius: 9px;
-    padding: 11px 14px;
-    font-weight: 700;
-}
-
-.small-button {
-    padding: 8px 11px;
-    font-size: 12px;
-}
-
-/* =========================
-   WELCOME
-   ========================= */
-
-.welcome {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 25px 18px;
-}
-
-.welcome-card {
-    width: 100%;
-    max-width: 430px;
-    text-align: center;
-    background: #fff;
-    border-radius: 18px;
-    padding: 30px 22px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.06);
-}
-
-.welcome-logo {
-    width: 135px;
-    height: 135px;
-    object-fit: contain;
-    margin-bottom: 15px;
-}
-
-.welcome-title {
-    font-size: 31px;
-    font-weight: 800;
-    margin-bottom: 5px;
-}
-
-.welcome-club {
-    color: #666;
-    margin-bottom: 28px;
-}
-
-.role-button {
-    width: 100%;
-    padding: 17px;
-    margin-top: 10px;
-    border: 0;
-    border-radius: 11px;
-    background: #000;
-    color: #fff;
-    font-weight: 700;
+h3 {
     font-size: 17px;
 }
 
-.welcome-version {
-    color: #666;
-    margin-top: 20px;
-    font-size: 8px;
+p {
+    line-height: 1.45;
 }
 
-/* =========================
-   PIN
-   ========================= */
+/* =========================================================
+   HEADER
+   ========================================================= */
 
-.pin-card {
-    max-width: 420px;
-    margin: 45px auto;
+.app-header {
     text-align: center;
+    margin-bottom: 18px;
 }
 
-.pin-input {
+.app-logo {
+    display: block;
     width: 100%;
-    padding: 15px;
-    text-align: center;
-    font-size: 25px;
-    letter-spacing: 7px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    margin: 15px 0;
+    max-width: 300px;
+    height: auto;
+    margin: 0 auto 12px;
 }
 
-.error {
-    min-height: 22px;
-    color: #c82333;
-    font-weight: 700;
-    margin-bottom: 8px;
-}
-
-/* =========================
-   AGE GROUPS
-   ========================= */
-
-.age-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-}
-
-.age-button {
-    background: #111;
-    color: #fff;
-    border: 0;
-    border-radius: 11px;
-    padding: 19px 8px;
-    font-size: 18px;
-    font-weight: 700;
-    box-shadow: none;
-}
-
-.age-button.gms-needs-confirmation {
-    background: #d6a900;
-    color: #111;
-}
-
-.age-button.selected-age {
-    background: #198754;
-    color: #fff;
-    transform: translateY(-1px);
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
-    filter: brightness(0.92);
-}
-
-/* =========================
-   DASHBOARD
-   ========================= */
-
-.stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin: 15px 0;
-}
-
-.stat {
-    background: #f0f0f0;
-    border-radius: 10px;
-    padding: 13px 7px;
-    text-align: center;
-}
-
-.stat-number {
-    font-size: 25px;
-    font-weight: 800;
-}
-
-.stat-label {
-    color: #666;
+.app-version {
     font-size: 11px;
-    margin-top: 3px;
+    color: #777;
+    text-align: center;
+    margin-top: 12px;
 }
 
-.menu-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-}
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 
 .menu-button {
+    width: 100%;
     min-height: 82px;
     border: 0;
     border-radius: 12px;
@@ -336,6 +118,7 @@ h2 {
     font-weight: 700;
     font-size: 15px;
     padding: 12px;
+    margin-bottom: 10px;
     box-shadow: none;
 }
 
@@ -343,216 +126,104 @@ h2 {
     background: #0d6efd;
 }
 
-/* =========================
-   PLAYER ROW
-   ========================= */
-
-.player-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 13px 0;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.player-row:last-child {
-    border-bottom: 0;
-}
-
-.player-name {
-    font-weight: 700;
-}
-
-.player-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.player-small {
-    color: #777;
-    font-size: 12px;
-    margin-top: 3px;
-}
-
-.row-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.gms-count {
-    font-size: 12px;
-    font-weight: 600;
-    opacity: 0.7;
-}
-
-.player-management-row {
-    flex-direction: row !important;
-    align-items: center !important;
-}
-
-/* =========================
-   SLIDE TOGGLES
-   ========================= */
-
-.toggle {
-    position: relative;
-    display: inline-flex;
-    width: 108px;
-    height: 38px;
-    border-radius: 30px;
-    cursor: pointer;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.toggle input {
-    display: none;
-}
-
-.toggle-knob {
-    position: absolute;
-    top: 4px;
-    width: 30px;
-    height: 30px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(0,0,0,.25);
-    transition: left .18s ease;
-    z-index: 2;
-}
-
-.toggle-label {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    color: #fff;
-    font-size: 11px;
-    font-weight: 800;
-    z-index: 3;
-}
-
-.toggle.present,
-.toggle.confirmed {
+.menu-button.green {
     background: #198754;
 }
 
-.toggle.absent,
-.toggle.not-confirmed {
+.menu-button.red {
     background: #c82333;
 }
 
-.toggle.present .toggle-knob,
-.toggle.confirmed .toggle-knob {
-    left: 74px;
-}
-
-.toggle.absent .toggle-knob,
-.toggle.not-confirmed .toggle-knob {
-    left: 4px;
-}
-
-.toggle.present .toggle-label {
-    justify-content: flex-start;
-    padding-left: 10px;
-}
-
-.toggle.absent .toggle-label {
-    justify-content: flex-end;
-    padding-right: 9px;
-}
-
-.toggle.gms-toggle .toggle-label {
-    display: none;
-}
-
-.toggle.gms-toggle {
-    width: 54px;
-    height: 30px;
-}
-
-.toggle.gms-toggle .toggle-knob {
-    width: 22px;
-    height: 22px;
-    top: 4px;
-}
-
-.toggle.gms-toggle.confirmed .toggle-knob {
-    left: 28px;
-}
-
-.toggle.gms-toggle.not-confirmed .toggle-knob {
-    left: 4px;
-}
-
-.toggle.gms-toggle.locked {
-    opacity: 0.55;
-    cursor: default;
-}
-
-/* =========================
-   REGISTER STATUS
-   ========================= */
-
-.register-status {
-    padding: 11px 13px;
-    border-radius: 9px;
-    margin-bottom: 15px;
+.back-button {
+    display: inline-block;
+    width: auto;
+    min-height: 36px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    border: 0;
+    border-radius: 7px;
+    background: #e5e5e5;
+    color: #111;
     font-size: 13px;
     font-weight: 700;
 }
 
-.register-open {
-    background: #d1e7dd;
-    color: #0f5132;
-    border: 1px solid #a3cfbb;
-}
-
-.register-submitted {
-    background: #e2e3e5;
-    color: #41464b;
-    border: 1px solid #d3d6d8;
-}
-
-.gms-suggestion {
-    font-size: 11px;
-    color: #666;
-    margin-top: 4px;
-}
-
-.gms-suggestion-label {
-    font-size: 11px;
-    color: #666;
+.primary-button,
+.green-button,
+.red-button,
+.secondary-button {
+    display: inline-block;
+    min-height: 38px;
+    padding: 9px 13px;
+    border: 0;
+    border-radius: 7px;
+    font-size: 13px;
     font-weight: 700;
+    margin: 3px 3px 3px 0;
 }
 
-/* =========================
+.primary-button {
+    background: #0d6efd;
+    color: #fff;
+}
+
+.green-button {
+    background: #198754;
+    color: #fff;
+}
+
+.red-button {
+    background: #c82333;
+    color: #fff;
+}
+
+.secondary-button {
+    background: #e5e5e5;
+    color: #111;
+}
+
+/* =========================================================
    FORMS
-   ========================= */
+   ========================================================= */
 
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label.title {
+input,
+select,
+textarea {
     display: block;
-    font-weight: 700;
-    margin-bottom: 6px;
-}
-
-.text-input {
     width: 100%;
-    padding: 13px;
+    min-height: 42px;
+    padding: 10px;
+    margin-bottom: 12px;
     border: 1px solid #ccc;
-    border-radius: 9px;
-    font-size: 16px;
+    border-radius: 7px;
+    background: #fff;
+    color: #111;
+    font-size: 14px;
 }
 
-/* =========================
+textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    display: inline-block;
+    width: auto;
+    min-height: auto;
+    margin: 0 7px 0 0;
+}
+
+/* =========================================================
    INFORMATION BOXES
-   ========================= */
+   ========================================================= */
 
 .info-box {
     padding: 13px;
@@ -562,159 +233,244 @@ h2 {
     font-size: 14px;
 }
 
-.warning-box {
-    background: #fff3cd;
-    color: #664d03;
-    border: 1px solid #ffe69c;
-}
-
-.danger-box {
-    background: #f8d7da;
-    color: #842029;
-    border: 1px solid #f1aeb5;
-}
-
 .success-box {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
     background: #d1e7dd;
     color: #0f5132;
-    border: 1px solid #a3cfbb;
-}
-
-/* =========================
-   LISTS
-   ========================= */
-
-.list-row {
-    padding: 13px 0;
-    border-bottom: 1px solid #ddd;
-}
-
-.list-row:last-child {
-    border-bottom: 0;
-}
-
-.list-title {
-    font-weight: 700;
-}
-
-.list-sub {
-    color: #666;
     font-size: 13px;
-    margin-top: 3px;
 }
 
-.promotion-row {
+.warning-box {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: #fff3cd;
+    color: #664d03;
+    font-size: 13px;
+}
+
+.error-box {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: #f8d7da;
+    color: #842029;
+    font-size: 13px;
+}
+
+/* =========================================================
+   USER MANAGEMENT
+   ========================================================= */
+
+.user-management-card {
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.user-management-header {
+    margin-bottom: 8px;
+}
+
+.user-management-actions {
     display: flex;
-    justify-content: space-between;
-    padding: 11px 0;
-    border-bottom: 1px solid #ddd;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
 }
 
-.promotion-row:last-child {
-    border-bottom: 0;
-}
-
-.empty {
-    text-align: center;
-    color: #777;
-    padding: 25px 10px;
-}
-
-/* =========================
-   SENIOR ALL PLAYERS
-   ========================= */
-
-.age-section {
-    margin-top: 20px;
-}
-
-.age-section:first-child {
-    margin-top: 0;
-}
-
-.age-section-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #111;
-    color: #fff;
-    padding: 11px 13px;
-    border-radius: 9px;
+.user-action-button {
+    width: auto;
+    min-height: 36px;
+    padding: 8px 11px;
+    margin: 0;
+    border: 0;
+    border-radius: 7px;
+    font-size: 12px;
     font-weight: 700;
+    cursor: pointer;
 }
 
-.age-section-warning {
-    background: #d6a900;
+.user-action-primary {
+    background: #0d6efd;
+    color: #fff;
+}
+
+.user-action-neutral {
+    background: #e5e5e5;
     color: #111;
 }
 
-.age-section-count {
-    font-size: 12px;
+.user-action-danger {
+    background: #c82333;
+    color: #fff;
+}
+
+.user-status {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
     font-weight: 700;
 }
 
-.archive-age-title {
-    background: #555;
+.user-status-active {
+    background: #d1e7dd;
+    color: #0f5132;
 }
 
-.archive-due {
-    background: #fff3cd;
-    color: #664d03;
-    border: 1px solid #ffe69c;
+.user-status-inactive {
+    background: #f8d7da;
+    color: #842029;
 }
 
-/* =========================
-   MULTI AGE SELECTION
-   ========================= */
+/* =========================================================
+   PLAYER LISTS
+   ========================================================= */
 
-.multi-age-summary {
-    padding: 12px 13px;
-    background: #eee;
+.player-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #f1f1f1;
+    border-radius: 8px;
+}
+
+.player-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.player-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.player-actions button {
+    width: auto;
+}
+
+/* =========================================================
+   DASHBOARD / STATISTICS
+   ========================================================= */
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.stat-box {
+    padding: 12px 6px;
     border-radius: 9px;
-    margin: 15px 0;
+    background: #eee;
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 23px;
+    font-weight: 700;
+}
+
+.stat-label {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+/* =========================================================
+   ATTENDANCE
+   ========================================================= */
+
+.attendance-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #f1f1f1;
+    border-radius: 8px;
+}
+
+.attendance-row label {
+    flex: 1;
+    margin: 0;
     font-size: 14px;
 }
 
-.multi-age-summary strong {
-    display: block;
-    margin-bottom: 4px;
+.attendance-row input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
 }
 
-.multi-age-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 15px;
+/* =========================================================
+   ARCHIVE / STATUS
+   ========================================================= */
+
+.status-label {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
 }
 
-/* =========================
+.status-active {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.status-inactive {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.status-archived {
+    background: #e2e3e5;
+    color: #41464b;
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.app-footer {
+    text-align: center;
+    padding: 12px 0;
+    color: #777;
+    font-size: 11px;
+}
+
+/* =========================================================
    MOBILE
-   ========================= */
+   ========================================================= */
 
 @media (max-width: 520px) {
 
-    .page {
-        padding: 10px;
+    body {
+        padding: 8px;
     }
 
     .card {
-        border-radius: 12px;
-        padding: 15px;
+        padding: 13px;
+        border-radius: 10px;
     }
 
-    .age-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 13px;
+    h1 {
+        font-size: 22px;
     }
 
-    .age-button {
-        padding: 17px 5px;
-        font-size: 17px;
-    }
-
-    .menu-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 13px;
+    h2 {
+        font-size: 19px;
     }
 
     .menu-button {
@@ -722,33 +478,29 @@ h2 {
         font-size: 14px;
     }
 
+    .user-management-card {
+        padding: 11px;
+    }
+
+    .user-management-actions {
+        gap: 6px;
+    }
+
+    .user-action-button {
+        min-height: 34px;
+        padding: 7px 9px;
+        font-size: 11px;
+    }
+
     .player-row {
-        align-items: center;
-        flex-direction: row;
+        align-items: flex-start;
     }
 
-    .row-actions {
-        width: auto;
-        justify-content: flex-end;
-    }
-
-    .player-management-row {
-        flex-direction: row !important;
-        align-items: center !important;
-    }
-}
-
-@media (max-width: 360px) {
-
-    .age-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .stats {
-        grid-template-columns: 1fr 1fr 1fr;
+    .stats-container {
+        gap: 5px;
     }
 
     .stat-number {
-        font-size: 21px;
+        font-size: 20px;
     }
 }

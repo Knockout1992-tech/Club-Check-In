@@ -2749,6 +2749,65 @@ function showAddCoach() {
     `);
 
 }
+
+async function addCoach() {
+
+    const name =
+        document.getElementById(
+            "newCoachName"
+        ).value.trim();
+
+    const message =
+        document.getElementById(
+            "addCoachMessage"
+        );
+
+    if (!name) {
+
+        message.textContent =
+            "Please enter the coach's name.";
+
+        return;
+    }
+
+    const {
+        data,
+        error
+    } = await supabaseClient.rpc(
+        "add_manageable_user",
+        {
+            current_senior_code:
+                currentSeniorPIN,
+
+            requested_name:
+                name
+        }
+    );
+
+    if (error) {
+
+        console.error(
+            "Add coach failed:",
+            error
+        );
+
+        message.textContent =
+            "Unable to add coach. Please try again.";
+
+        return;
+    }
+
+    if (!data) {
+
+        message.textContent =
+            "Unable to add coach. Check the details and try again.";
+
+        return;
+    }
+
+    await showUserManagement();
+
+}
 /* =========================================================
    SENIOR ALL AGE GROUPS
    ========================================================= */

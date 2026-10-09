@@ -95,132 +95,153 @@ async function addPlayerToAgeGroup(
    SENIOR GMS
    ========================================================= */
 
-async function setGMS(
-    playerID,
-    confirmed
-) {
 
-    const player =
-        findPlayerByID(
-            playerID
-        );
+async function setGMS(playerID, confirmed) {
+    const debug = window.clubCheckInDiagnostics;
 
-    if (!player) {
-        return;
-    }
+    debug.log("setGMS START", {
+        playerID: playerID,
+        confirmed: confirmed
+    });
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
+    try {
+        const player = findPlayerByID(playerID);
+
+        if (!player) {
+            throw new Error(
+                "findPlayerByID returned no player for ID: " + playerID
+            );
+        }
+
+        if (!supabaseClient) {
+            throw new Error("supabaseClient is not available.");
+        }
+
+        debug.log("setGMS: player found", player.name);
+        debug.log("setGMS: sending Supabase update");
+
+        const { data, error } = await supabaseClient
             .from("players")
             .update({
                 gms: confirmed,
-
-                coach_gms_suggestion:
-                    confirmed
-                        ? false
-                        : player.coachGmsSuggestion
+                coach_gms_suggestion: confirmed
+                    ? false
+                    : player.coachGmsSuggestion
             })
-            .eq(
-                "player_id",
-                playerID
-            )
+            .eq("player_id", playerID)
             .select()
             .single();
 
-    if (error) {
+        if (error) {
+            throw error;
+        }
 
-        console.error(
-            "Supabase GMS update failed:",
-            error
-        );
+        if (!data) {
+            throw new Error("Supabase returned no updated player data.");
+        }
+
+        debug.log("setGMS: Supabase update succeeded", data);
+
+        player.gms = data.gms;
+        player.coachGmsSuggestion = data.coach_gms_suggestion;
+
+        saveData();
+
+        debug.log("setGMS: local data saved; refreshing player management");
+
+        showPlayerManagement(player.ageGroup);
+
+        debug.log("setGMS COMPLETE");
+    } catch (error) {
+        debug.error("setGMS FAILED", error);
 
         alert(
-            "Unable to update GMS. Please try again."
+            "GMS UPDATE FAILED\n\n" +
+            (error.message || String(error)) +
+            "\n\nFull details are shown in the GMS diagnostics panel."
         );
-
-        return;
     }
-
-    player.gms =
-        data.gms;
-
-    player.coachGmsSuggestion =
-        data.coach_gms_suggestion;
-
-    saveData();
-
-    showPlayerManagement(
-        player.ageGroup
-    );
 }
 
 
-/* =========================================================
-   COACH GMS SUGGESTION
-   ========================================================= */
+async function setCoachGMSSuggestion(playerID, suggested) {
+    const debug = window.clubCheckInDiagnostics;
 
+    debug.log("setCoachGMSSuggestion START", {
+        playerID: playerID,
+        suggested: suggested
+    });
 
-async function setCoachGMSSuggestion(
-    playerID,
-    suggested
-) {
+    try {
+        const player = findPlayerByID(playerID);
 
-    const player =
-        findPlayerByID(
-            playerID
+        if (!player) {
+            throw new Error(
+                "findPlayerByID returned no player for ID: " + playerID
+            );
+        }
+
+        if (!supabaseClient) {
+            throw new Error("supabaseClient is not available.");
+        }
+
+        debug.log(
+            "setCoachGMSSuggestion: player found",
+            player.name
         );
 
-    if (!player) {
-        return;
-    }
+        debug.log(
+            "setCoachGMSSuggestion: sending Supabase update"
+        );
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
+        const { data, error } = await supabaseClient
             .from("players")
             .update({
-                coach_gms_suggestion:
-                    suggested
+                coach_gms_suggestion: suggested
             })
-            .eq(
-                "player_id",
-                playerID
-            )
+            .eq("player_id", playerID)
             .select()
             .single();
 
-    if (error) {
+        if (error) {
+            throw error;
+        }
 
-        console.error(
-            "Supabase coach GMS suggestion update failed:",
-            error
+        if (!data) {
+            throw new Error("Supabase returned no updated player data.");
+        }
+
+        debug.log(
+            "setCoachGMSSuggestion: Supabase update succeeded",
+            data
         );
+
+        player.coachGmsSuggestion = data.coach_gms_suggestion;
+
+        if (player.gms) {
+            player.coachGmsSuggestion = false;
+        }
+
+        saveData();
+
+        debug.log(
+            "setCoachGMSSuggestion: local data saved; refreshing roster"
+        );
+
+        showRoster();
+
+        debug.log("setCoachGMSSuggestion COMPLETE");
+    } catch (error) {
+        debug.error("setCoachGMSSuggestion FAILED", error);
 
         alert(
-            "Unable to update the GMS suggestion. Please try again."
+            "COACH GMS UPDATE FAILED\n\n" +
+            (error.message || String(error)) +
+            "\n\nFull details are shown in the GMS diagnostics panel."
         );
-
-        return;
     }
-
-    player.coachGmsSuggestion =
-        data.coach_gms_suggestion;
-
-    if (player.gms) {
-
-        player.coachGmsSuggestion =
-            false;
-    }
-
-    saveData();
-
-    showRoster();
 }
+
 /* =========================================================
    ARCHIVE PLAYER
    ========================================================= */

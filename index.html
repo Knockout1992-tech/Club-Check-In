@@ -2786,16 +2786,17 @@ async function addCoach() {
 
     if (error) {
 
-        console.error(
-            "Add coach failed:",
-            error
-        );
+    console.error(
+        "Add coach failed:",
+        error
+    );
 
-        message.textContent =
-            "Unable to add coach. Please try again.";
+    message.textContent =
+        "Unable to add coach: " +
+        error.message;
 
-        return;
-    }
+    return;
+}
 
     if (!data) {
 

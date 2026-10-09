@@ -182,32 +182,45 @@ function backfillLastAttendanceDates() {
 
 }
 
+
 function saveData() {
 
-    localStorage.setItem(
-        "clubCheckInData",
-        JSON.stringify({
+    try {
 
-            players:
-                players,
+        localStorage.setItem(
+            "clubCheckInData",
+            JSON.stringify({
 
-            sessions:
-                sessions,
+                players:
+                    players,
 
-            dailyRegisters:
-                dailyRegisters,
+                dailyRegisters:
+                    dailyRegisters,
 
-            currentSeason:
-                currentSeason,
+                currentSeason:
+                    currentSeason,
 
-            coachPIN:
-                coachPIN,
+                coachPIN:
+                    coachPIN,
 
-            seniorPIN:
-                seniorPIN
+                seniorPIN:
+                    seniorPIN
 
-        })
-    );
+            })
+        );
+
+        console.log("Saved data successfully.");
+
+    } catch (error) {
+
+        console.error(
+            "Failed to save local data:",
+            error
+        );
+
+        throw error;
+
+    }
 
 }
 

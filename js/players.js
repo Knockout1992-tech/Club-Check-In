@@ -168,43 +168,33 @@ async function setCoachGMSSuggestion(
     suggested
 ) {
 
-    const player = findPlayerByID(playerID);
-
-    if (!player) {
-        console.error(
-            "Coach GMS suggestion failed: player not found",
+    const player =
+        findPlayerByID(
             playerID
         );
+
+    if (!player) {
         return;
     }
 
-    try {
-
-        const { data, error } = await supabaseClient
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
             .from("players")
             .update({
-                coach_gms_suggestion: suggested
+                coach_gms_suggestion:
+                    suggested
             })
-            .eq("player_id", playerID)
-            .select("player_id, coach_gms_suggestion")
+            .eq(
+                "player_id",
+                playerID
+            )
+            .select()
             .single();
 
-        if (error) {
-            throw error;
-        }
-
-        if (!data) {
-            throw new Error("No updated player was returned.");
-        }
-
-        player.coachGmsSuggestion =
-            data.coach_gms_suggestion;
-
-        saveData();
-
-        showRoster();
-
-    } catch (error) {
+    if (error) {
 
         console.error(
             "Supabase coach GMS suggestion update failed:",
@@ -212,15 +202,25 @@ async function setCoachGMSSuggestion(
         );
 
         alert(
-            "Unable to save the GMS suggestion. Please try again."
+            "Unable to update the GMS suggestion. Please try again."
         );
 
-        // Restore the roster to its current in-memory state.
-        showRoster();
+        return;
     }
+
+    player.coachGmsSuggestion =
+        data.coach_gms_suggestion;
+
+    if (player.gms) {
+
+        player.coachGmsSuggestion =
+            false;
+    }
+
+    saveData();
+
+    showRoster();
 }
-
-
 /* =========================================================
    ARCHIVE PLAYER
    ========================================================= */

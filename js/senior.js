@@ -74,51 +74,31 @@ function permanentlyRemovePlayer(playerID) {
 
 
 /* =========================================================
-   USER MANAGEMENT
-   ========================================================= */
+USER MANAGEMENT
+========================================================= */
 
 async function showUserManagement() {
 
-    const {
-        data: users,
-        error
-    } = await supabaseClient.rpc(
-        "get_manageable_users",
-        {
-            current_senior_code:
-                currentSeniorPIN
-        }
-    );
-
-    if (error || !Array.isArray(users)) {
-
-        console.error(
-            "User management load failed:",
-            error
-        );
-
-        renderShell(`
-            <div class="card">
-                <button
-                    class="back-button"
-                    onclick="showSeniorDashboard()">
-                    ← Senior Dashboard
-                </button>
-
-                <h2>User Management</h2>
-
-                <div class="info-box">
-                    Unable to load users.
-                </div>
-            </div>
-        `);
-
-        return;
+const {
+    data: users,
+    error
+} = await supabaseClient.rpc(
+    "get_manageable_users",
+    {
+        current_senior_code:
+            currentSeniorPIN
     }
+);
+
+if (error || !Array.isArray(users)) {
+
+    console.error(
+        "User management load failed:",
+        error
+    );
 
     renderShell(`
         <div class="card">
-
             <button
                 class="back-button"
                 onclick="showSeniorDashboard()">
@@ -127,106 +107,187 @@ async function showUserManagement() {
 
             <h2>User Management</h2>
 
-            <button
-                class="primary-button"
-                onclick="showAddCoach()">
-                + Add Coach
-            </button>
-
-            <br><br>
-
-            ${
-                users.length === 0
-                ? `
-                    <div class="info-box">
-                        No users have been added yet.
-                    </div>
-                `
-                : users.map((user, index) => `
-
-                    <div class="info-box user-management-card">
-
-                        <div class="user-management-header">
-
-                            <strong>${escapeHTML(user.name)}</strong>
-
-                            <br>
-
-                            <span class="user-status ${
-                                user.active
-                                ? "user-status-active"
-                                : "user-status-inactive"
-                            }">
-                                ${user.active ? "Active" : "Inactive"}
-                            </span>
-
-                        </div>
-
-                        <div class="user-management-actions">
-
-                            <button
-                                class="user-action-button ${
-                                    user.active
-                                    ? "user-action-danger"
-                                    : "user-action-primary"
-                                }"
-                                onclick="setUserActive(
-                                    ${JSON.stringify(user.person_id)},
-                                    ${!user.active}
-                                )">
-                                ${user.active ? "Deactivate" : "Activate"}
-                            </button>
-
-                            <button
-                                class="user-action-button user-action-neutral"
-                                onclick="resetUserInstallation(
-                                    ${JSON.stringify(user.person_id)}
-                                )">
-                                Reset Installation
-                            </button>
-
-                            <button
-                                type="button"
-                                class="user-action-button user-action-neutral change-user-name-button"
-                                data-user-index="${index}">
-                                Change Name
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                `).join("")
-            }
-
+            <div class="info-box">
+                Unable to load users.
+            </div>
         </div>
     `);
 
-    document
-        .querySelectorAll(".change-user-name-button")
-        .forEach(button => {
+    return;
+}
 
-            button.addEventListener("click", () => {
+renderShell(`
+    <div class="card">
 
-                const index =
-                    Number(button.dataset.userIndex);
+        <button
+            class="back-button"
+            onclick="showSeniorDashboard()">
+            ← Senior Dashboard
+        </button>
 
-                const selectedUser = users[index];
+        <h2>User Management</h2>
 
-                if (!selectedUser) {
+        <button
+            class="primary-button"
+            onclick="showAddCoach()">
+            + Add Coach
+        </button>
 
-                    alert("User could not be found.");
+        <br><br>
 
-                    return;
-                }
+        ${
+            users.length === 0
+            ? `
+                <div class="info-box">
+                    No users have been added yet.
+                </div>
+            `
+            : users.map((user, index) => `
 
-                showChangeUserName(
-                    selectedUser.person_id
-                );
+                <div class="info-box user-management-card">
 
-            });
+                    <div class="user-management-header">
+
+                        <strong>${escapeHTML(user.name)}</strong>
+
+                        <br>
+
+                        <span class="user-status ${
+                            user.active
+                            ? "user-status-active"
+                            : "user-status-inactive"
+                        }">
+                            ${user.active ? "Active" : "Inactive"}
+                        </span>
+
+                    </div>
+
+                    <div class="user-management-actions">
+
+                        <button
+                            type="button"
+                            class="user-action-button ${
+                                user.active
+                                ? "user-action-danger"
+                                : "user-action-primary"
+                            } user-active-button"
+                            data-user-index="${index}">
+                            ${user.active ? "Deactivate" : "Activate"}
+                        </button>
+
+                        <button
+                            type="button"
+                            class="user-action-button user-action-neutral reset-installation-button"
+                            data-user-index="${index}">
+                            Reset Installation
+                        </button>
+
+                        <button
+                            type="button"
+                            class="user-action-button user-action-neutral change-user-name-button"
+                            data-user-index="${index}">
+                            Change Name
+                        </button>
+
+                    </div>
+
+                </div>
+
+            `).join("")
+        }
+
+    </div>
+`);
+
+/* ACTIVATE / DEACTIVATE */
+
+document
+    .querySelectorAll(".user-active-button")
+    .forEach(button => {
+
+        button.addEventListener("click", async () => {
+
+            const index =
+                Number(button.dataset.userIndex);
+
+            const selectedUser =
+                users[index];
+
+            if (!selectedUser) {
+
+                alert("User could not be found.");
+
+                return;
+            }
+
+            await setUserActive(
+                selectedUser.person_id,
+                !selectedUser.active
+            );
 
         });
+
+    });
+
+
+/* RESET INSTALLATION */
+
+document
+    .querySelectorAll(".reset-installation-button")
+    .forEach(button => {
+
+        button.addEventListener("click", async () => {
+
+            const index =
+                Number(button.dataset.userIndex);
+
+            const selectedUser =
+                users[index];
+
+            if (!selectedUser) {
+
+                alert("User could not be found.");
+
+                return;
+            }
+
+            await resetUserInstallation(
+                selectedUser.person_id
+            );
+
+        });
+
+    });
+
+
+/* CHANGE NAME */
+
+document
+    .querySelectorAll(".change-user-name-button")
+    .forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const index =
+                Number(button.dataset.userIndex);
+
+            const selectedUser =
+                users[index];
+
+            if (!selectedUser) {
+
+                alert("User could not be found.");
+
+                return;
+            }
+
+            showChangeUserName(
+                selectedUser.person_id
+            );
+
+        });
+
+    });
 
 }
 

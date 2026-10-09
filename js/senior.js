@@ -4,62 +4,61 @@
 
 
 /* =========================================================
-   PERMANENTLY REMOVE ARCHIVED PLAYER
-   ========================================================= */
-
-
-/* =========================================================
    ANONYMISE ARCHIVED PLAYER
    ========================================================= */
 
 async function permanentlyRemovePlayer(playerID) {
 
-window.clubCheckInDiagnostics?.log(
-    "TEST: permanentlyRemovePlayer started",
-    playerID
-);
+    const diag = window.clubCheckInDiagnostics;
+
+    diag?.section("ANONYMISE PLAYER");
+    diag?.log("Started. Player ID:", playerID);
 
     if (currentRole !== "senior") {
-
-        alert(
-            "Only Senior users can anonymise players."
+        diag?.error(
+            "Permission check failed. Current role:",
+            currentRole
         );
 
+        alert("Only Senior users can anonymise players.");
         return;
     }
 
     const player = findPlayerByID(playerID);
 
     if (!player) {
-
+        diag?.error("Player not found locally:", playerID);
         alert("Player could not be found.");
-
         return;
     }
+
+    diag?.log(
+        "Local player found:",
+        player.name,
+        "Archived:",
+        player.archived
+    );
 
     if (!player.archived) {
-
-        alert(
-            "Only archived players can be anonymised."
-        );
-
+        diag?.error("Player is not archived:", playerID);
+        alert("Only archived players can be anonymised.");
         return;
     }
 
-    const confirmed = confirm(
+    if (!confirm(
         "ANONYMISE " + player.name + "?\n\n" +
         "Their name will be replaced with an anonymous ID.\n" +
         "Their player ID and historical attendance will be retained.\n" +
         "This cannot be undone."
-    );
-
-    if (!confirmed) {
+    )) {
+        diag?.log("Cancelled by user.");
         return;
     }
 
     try {
 
-        // Read existing anonymous names from Supabase.
+        diag?.log("Step 1: Reading anonymous names from Supabase.");
+
         const {
             data: anonymousPlayers,
             error: readError
@@ -69,23 +68,26 @@ window.clubCheckInDiagnostics?.log(
             .like("name", "Anonymous-%");
 
         if (readError) {
+            diag?.error("Step 1 failed: Supabase read.", readError);
             throw readError;
         }
+
+        diag?.log(
+            "Step 1 complete. Records returned:",
+            anonymousPlayers?.length
+        );
 
         let highestNumber = 0;
 
         (anonymousPlayers || []).forEach(item => {
 
-            const match =
-                /^Anonymous-(\d+)$/.exec(item.name);
+            const match = /^Anonymous-(\d+)$/.exec(item.name);
 
             if (match) {
-
                 highestNumber = Math.max(
                     highestNumber,
                     Number(match[1])
                 );
-
             }
 
         });
@@ -94,7 +96,10 @@ window.clubCheckInDiagnostics?.log(
             "Anonymous-" +
             String(highestNumber + 1).padStart(3, "0");
 
-        // Update the existing Supabase record.
+        diag?.log("New anonymous name:", anonymousName);
+
+        diag?.log("Step 2: Updating Supabase player record.");
+
         const {
             data: updatedPlayer,
             error: updateError
@@ -113,59 +118,65 @@ window.clubCheckInDiagnostics?.log(
             .select("player_id, name");
 
         if (updateError) {
+            diag?.error("Step 2 failed: Supabase update.", updateError);
             throw updateError;
         }
 
+        diag?.log(
+            "Step 2 returned:",
+            updatedPlayer
+        );
+
         if (!updatedPlayer || updatedPlayer.length !== 1) {
 
-            throw new Error(
-                "The player record was not updated. " +
-                "Check that it still exists and is archived, " +
-                "and that Supabase permissions allow the update."
-            );
+            const message =
+                "Supabase did not confirm exactly one updated player. " +
+                "Check the player ID, archived status and update permissions.";
 
+            diag?.error("Step 2 failed:", message);
+
+            throw new Error(message);
         }
 
-        // Remove the player from local app data only
-        // after Supabase confirms the update.
+        diag?.log("Step 3: Updating local app data.");
+
         ageGroups.forEach(ageGroup => {
 
-            if (!players[ageGroup]) {
-                return;
-            }
+            if (!players[ageGroup]) return;
 
-            players[ageGroup] =
-                players[ageGroup].filter(
-                    item => item.id !== playerID
-                );
+            players[ageGroup] = players[ageGroup].filter(
+                item => item.id !== playerID
+            );
 
         });
 
         saveData();
 
-        alert(
-            "Player anonymised successfully as " +
-            anonymousName + "."
+        diag?.log(
+            "SUCCESS: Player anonymised as",
+            anonymousName
         );
+
+        alert("Player anonymised successfully as " + anonymousName + ".");
 
         showArchiveList();
 
     } catch (error) {
 
-        console.error(
-            "Player anonymisation failed:",
+        diag?.error(
+            "ANONYMISATION FAILED — actual error:",
             error
         );
 
         alert(
-            "The player could not be anonymised. " +
-            "No local removal has been performed. " +
-            "Please check the console diagnostics."
+            "Anonymisation failed. Read the diagnostic panel " +
+            "for the failing step and error details."
         );
 
     }
 
 }
+
 
 /* =========================================================
 USER MANAGEMENT

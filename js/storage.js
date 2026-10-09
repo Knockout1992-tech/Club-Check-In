@@ -1,112 +1,106 @@
+
 /* =========================================================
    STORAGE / PERSISTENCE
    ========================================================= */
 
 
+/* =========================================================
+   LOAD SAVED DATA
+   ========================================================= */
+
 function loadSavedData() {
 
     try {
 
-        const saved =
-            JSON.parse(
-                localStorage.getItem(
-                    "clubCheckInData"
-                )
-            );
+        const rawData =
+            localStorage.getItem("clubCheckInData");
 
-        if (saved) {
+        if (rawData) {
 
-            if (saved.players) {
+            const saved = JSON.parse(rawData);
+
+            if (
+                saved.players &&
+                typeof saved.players === "object"
+            ) {
                 players = saved.players;
             }
 
-            if (saved.sessions) {
-                sessions = saved.sessions;
+            if (
+                saved.dailyRegisters &&
+                typeof saved.dailyRegisters === "object"
+            ) {
+                dailyRegisters = saved.dailyRegisters;
             }
 
-            if (saved.dailyRegisters) {
-                dailyRegisters =
-                    saved.dailyRegisters;
-            }
-
-            if (saved.currentSeason) {
-                currentSeason =
-                    saved.currentSeason;
-            }
-
-            if (saved.coachPIN) {
-                coachPIN =
-                    saved.coachPIN;
-            }
-
-            if (saved.seniorPIN) {
-                seniorPIN =
-                    saved.seniorPIN;
+            if (
+                typeof saved.currentSeason === "string" &&
+                saved.currentSeason
+            ) {
+                currentSeason = saved.currentSeason;
             }
 
         }
 
+        // Ensure every age group has a player array.
         ageGroups.forEach(ageGroup => {
 
-            if (!players[ageGroup]) {
+            if (!Array.isArray(players[ageGroup])) {
                 players[ageGroup] = [];
             }
 
-            if (!sessions[ageGroup]) {
-                sessions[ageGroup] = [];
+        });
+
+        // Normalise player properties.
+        Object.values(players).forEach(ageGroupPlayers => {
+
+            if (!Array.isArray(ageGroupPlayers)) {
+                return;
             }
 
-            players[ageGroup].forEach(player => {
+            ageGroupPlayers.forEach(player => {
 
                 if (
-                    typeof player.coachGmsSuggestion
-                    !== "boolean"
+                    typeof player.coachGmsSuggestion !== "boolean"
                 ) {
-
                     player.coachGmsSuggestion =
                         !!player.gms;
-
                 }
 
-                if (
-                    typeof player.archived
-                    !== "boolean"
-                ) {
-
+                if (typeof player.archived !== "boolean") {
                     player.archived = false;
+                }
 
+                if (typeof player.active !== "boolean") {
+                    player.active = !player.archived;
                 }
 
                 if (
-                    typeof player.active
-                    !== "boolean"
+                    typeof player.lastAttendanceDate === "undefined"
                 ) {
-
-                    player.active =
-                        !player.archived;
-
-                }
-
-                if (
-                    typeof player.lastAttendanceDate
-                    === "undefined"
-                ) {
-
-                    player.lastAttendanceDate =
-                        null;
-
+                    player.lastAttendanceDate = null;
                 }
 
             });
 
         });
 
+        if (
+            !dailyRegisters ||
+            typeof dailyRegisters !== "object" ||
+            Array.isArray(dailyRegisters)
+        ) {
+            dailyRegisters = {};
+        }
+
         backfillLastAttendanceDates();
+
+        console.log("Saved data loaded successfully.");
 
     } catch (error) {
 
-        console.log(
-            "Saved data could not be loaded.",
+        console.error(
+            "Saved data could not be loaded:",
             error
         );
 
@@ -114,99 +108,85 @@ function loadSavedData() {
 
 }
 
+
 /* =========================================================
-   BACKFILL ATTENDANCE
+   BACKFILL LAST ATTENDANCE DATES
    ========================================================= */
 
 function backfillLastAttendanceDates() {
 
-    Object.keys(dailyRegisters)
-        .forEach(dateKey => {
+    Object.keys(dailyRegisters).forEach(dateKey => {
 
-            const day =
-                dailyRegisters[dateKey];
+        const day = dailyRegisters[dateKey];
 
-            if (!day) {
+        if (!day || typeof day !== "object") {
+            return;
+        }
+
+        Object.keys(day).forEach(ageGroup => {
+
+            const register = day[ageGroup];
+
+            if (
+                !register ||
+                !register.attendance ||
+                typeof register.attendance !== "object"
+            ) {
                 return;
             }
 
-            Object.keys(day)
-                .forEach(ageGroup => {
+            Object.keys(register.attendance).forEach(playerID => {
 
-                    const register =
-                        day[ageGroup];
+                if (register.attendance[playerID] !== true) {
+                    return;
+                }
 
-                    if (
-                        !register ||
-                        !register.attendance
-                    ) {
-                        return;
-                    }
+                const player = findPlayerByID(playerID);
 
-                    Object.keys(
-                        register.attendance
-                    ).forEach(playerID => {
+                if (!player) {
+                    return;
+                }
 
-                        if (
-                            register.attendance[playerID]
-                            !== true
-                        ) {
-                            return;
-                        }
+                if (
+                    !player.lastAttendanceDate ||
+                    dateKey > player.lastAttendanceDate
+                ) {
+                    player.lastAttendanceDate = dateKey;
+                }
 
-                        const player =
-                            findPlayerByID(
-                                playerID
-                            );
-
-                        if (!player) {
-                            return;
-                        }
-
-                        if (
-                            !player.lastAttendanceDate ||
-                            dateKey >
-                            player.lastAttendanceDate
-                        ) {
-
-                            player.lastAttendanceDate =
-                                dateKey;
-
-                        }
-
-                    });
-
-                });
+            });
 
         });
 
+    });
+
 }
 
+
+/* =========================================================
+   SAVE DATA
+   ========================================================= */
 
 function saveData() {
 
     try {
 
+        const saved = {
+
+            players:
+                players,
+
+            dailyRegisters:
+                dailyRegisters,
+
+            currentSeason:
+                currentSeason
+
+        };
+
         localStorage.setItem(
             "clubCheckInData",
-            JSON.stringify({
-
-                players:
-                    players,
-
-                dailyRegisters:
-                    dailyRegisters,
-
-                currentSeason:
-                    currentSeason,
-
-                coachPIN:
-                    coachPIN,
-
-                seniorPIN:
-                    seniorPIN
-
-            })
+            JSON.stringify(saved)
         );
 
         console.log("Saved data successfully.");
@@ -224,14 +204,85 @@ function saveData() {
 
 }
 
+
+/* =========================================================
+   LOAD PLAYERS FROM SUPABASE
+   ========================================================= */
+
 async function loadPlayersFromSupabase() {
 
-    const { data, error } =
-        await supabaseClient
-            .from("players")
-            .select("*");
+    try {
 
-    if (error) {
+        const { data, error } =
+            await supabaseClient
+                .from("players")
+                .select("*");
+
+        if (error) {
+            throw error;
+        }
+
+        if (!Array.isArray(data)) {
+            throw new Error(
+                "Supabase returned an invalid players result."
+            );
+        }
+
+        players = {};
+
+        data.forEach(player => {
+
+            if (!players[player.age_group]) {
+                players[player.age_group] = [];
+            }
+
+            players[player.age_group].push({
+
+                id:
+                    player.player_id,
+
+                name:
+                    player.name,
+
+                ageGroup:
+                    player.age_group,
+
+                gms:
+                    player.gms,
+
+                coachGmsSuggestion:
+                    player.coach_gms_suggestion,
+
+                active:
+                    player.active,
+
+                archived:
+                    player.archived,
+
+                lastAttendanceDate:
+                    player.last_attendance_date
+
+            });
+
+        });
+
+        // Ensure configured age groups exist.
+        ageGroups.forEach(ageGroup => {
+
+            if (!Array.isArray(players[ageGroup])) {
+                players[ageGroup] = [];
+            }
+
+        });
+
+        console.log(
+            "Supabase players loaded successfully:",
+            players
+        );
+
+        return true;
+
+    } catch (error) {
 
         console.error(
             "Supabase player load failed:",
@@ -239,50 +290,7 @@ async function loadPlayersFromSupabase() {
         );
 
         return false;
+
     }
 
-    players = {};
-
-    data.forEach(player => {
-
-        if (!players[player.age_group]) {
-            players[player.age_group] = [];
-        }
-
-        players[player.age_group].push({
-
-            id:
-                player.player_id,
-
-            name:
-                player.name,
-
-            ageGroup:
-                player.age_group,
-
-            gms:
-                player.gms,
-
-            coachGmsSuggestion:
-                player.coach_gms_suggestion,
-
-            active:
-                player.active,
-
-            archived:
-                player.archived,
-
-            lastAttendanceDate:
-                player.last_attendance_date
-
-        });
-
-    });
-
-    console.log(
-        "Supabase players loaded:",
-        players
-    );
-
-    return true;
 }

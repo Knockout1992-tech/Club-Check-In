@@ -1021,12 +1021,22 @@ function openSelectedCoachAgeGroups() {
    COACH DASHBOARD
    ========================================================= */
 
-function showCoachDashboard() {
+
+async function showCoachDashboard() {
 
     const groups =
         selectedAgeGroups.length
         ? selectedAgeGroups
         : [currentAgeGroup];
+
+    // Ensure today's attendance is loaded first.
+    for (const ageGroup of groups) {
+
+        await ensureTodayAttendanceRegister(
+            ageGroup
+        );
+
+    }
 
     let activeCount = 0;
     let presentCount = 0;
@@ -1034,35 +1044,26 @@ function showCoachDashboard() {
     groups.forEach(ageGroup => {
 
         const active =
-            getActivePlayers(
-                ageGroup
-            );
+            getActivePlayers(ageGroup);
 
         const register =
-            getTodayRegister(
-                ageGroup
-            );
+            getTodayRegister(ageGroup);
 
-        activeCount +=
-            active.length;
+        activeCount += active.length;
 
         if (register) {
 
-            presentCount +=
-                active.filter(
-                    player =>
-                        register.attendance[
-                            player.id
-                        ] === true
-                ).length;
+            presentCount += active.filter(
+                player =>
+                    register.attendance[player.id] === true
+            ).length;
 
         }
 
     });
 
     const absentCount =
-        activeCount -
-        presentCount;
+        activeCount - presentCount;
 
     renderShell(`
 
@@ -1086,11 +1087,7 @@ function showCoachDashboard() {
 
             <div class="subtitle">
 
-                ${
-                    groups.join(
-                        " + "
-                    )
-                }
+                ${groups.join(" + ")}
 
                 <br>
 
@@ -1101,39 +1098,18 @@ function showCoachDashboard() {
             <div class="stats">
 
                 <div class="stat">
-
-                    <div class="stat-number">
-                        ${activeCount}
-                    </div>
-
-                    <div class="stat-label">
-                        Players
-                    </div>
-
+                    <div class="stat-number">${activeCount}</div>
+                    <div class="stat-label">Players</div>
                 </div>
 
                 <div class="stat">
-
-                    <div class="stat-number">
-                        ${presentCount}
-                    </div>
-
-                    <div class="stat-label">
-                        Present
-                    </div>
-
+                    <div class="stat-number">${presentCount}</div>
+                    <div class="stat-label">Present</div>
                 </div>
 
                 <div class="stat">
-
-                    <div class="stat-number">
-                        ${absentCount}
-                    </div>
-
-                    <div class="stat-label">
-                        Absent
-                    </div>
-
+                    <div class="stat-number">${absentCount}</div>
+                    <div class="stat-label">Absent</div>
                 </div>
 
             </div>
@@ -1143,27 +1119,19 @@ function showCoachDashboard() {
                 <button
                     class="menu-button"
                     onclick="showRegister()">
-
-                    Today's<br>
-                    Register
-
+                    Today's<br>Register
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showRoster()">
-
                     Roster
-
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showSessionHistory()">
-
-                    Session<br>
-                    History
-
+                    Session<br>History
                 </button>
 
             </div>

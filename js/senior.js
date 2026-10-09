@@ -1,9 +1,14 @@
 /* =========================================================
    SENIOR / ADMIN
    ========================================================= */
+
+
+/* =========================================================
+   PERMANENTLY REMOVE ARCHIVED PLAYER
+   ========================================================= */
+
 function permanentlyRemovePlayer(playerID) {
 
-    // Senior only
     if (currentRole !== "senior") {
 
         alert(
@@ -11,13 +16,10 @@ function permanentlyRemovePlayer(playerID) {
         );
 
         return;
-
     }
 
     const player =
-        findPlayerByID(
-            playerID
-        );
+        findPlayerByID(playerID);
 
     if (!player) {
 
@@ -26,10 +28,8 @@ function permanentlyRemovePlayer(playerID) {
         );
 
         return;
-
     }
 
-    // Player must already be archived
     if (!player.archived) {
 
         alert(
@@ -37,7 +37,6 @@ function permanentlyRemovePlayer(playerID) {
         );
 
         return;
-
     }
 
     const confirmed =
@@ -52,38 +51,27 @@ function permanentlyRemovePlayer(playerID) {
         );
 
     if (!confirmed) {
-
         return;
-
     }
 
-    /*
-        Remove the player from every age-group array.
-        Historical daily registers are deliberately
-        left untouched.
-    */
+    ageGroups.forEach(ageGroup => {
 
-    ageGroups.forEach(
-        ageGroup => {
-
-            if (!players[ageGroup]) {
-                return;
-            }
-
-            players[ageGroup] =
-                players[ageGroup].filter(
-                    item =>
-                        item.id !== player.id
-                );
-
+        if (!players[ageGroup]) {
+            return;
         }
-    );
+
+        players[ageGroup] =
+            players[ageGroup].filter(
+                item => item.id !== player.id
+            );
+
+    });
 
     saveData();
 
-showArchiveList();
-
+    showArchiveList();
 }
+
 
 /* =========================================================
    USER MANAGEMENT
@@ -102,7 +90,7 @@ async function showUserManagement() {
         }
     );
 
-    if (error) {
+    if (error || !Array.isArray(users)) {
 
         console.error(
             "User management load failed:",
@@ -162,11 +150,9 @@ async function showUserManagement() {
                 users.length === 0
 
                 ? `
-
                     <div class="info-box">
                         No users have been added yet.
                     </div>
-
                 `
 
                 : users.map(user => `
@@ -175,9 +161,7 @@ async function showUserManagement() {
 
                         <div class="user-management-header">
 
-                            <strong>
-                                ${user.name}
-                            </strong>
+                            <strong>${escapeHTML(user.name)}</strong>
 
                             <br>
 
@@ -187,11 +171,7 @@ async function showUserManagement() {
                                 : "user-status-inactive"
                             }">
 
-                                ${
-                                    user.active
-                                    ? "Active"
-                                    : "Inactive"
-                                }
+                                ${user.active ? "Active" : "Inactive"}
 
                             </span>
 
@@ -210,11 +190,7 @@ async function showUserManagement() {
                                     ${!user.active}
                                 )">
 
-                                ${
-                                    user.active
-                                    ? "Deactivate"
-                                    : "Activate"
-                                }
+                                ${user.active ? "Deactivate" : "Activate"}
 
                             </button>
 
@@ -243,15 +219,17 @@ async function showUserManagement() {
                     </div>
 
                 `).join("")
-
             }
 
         </div>
 
     `);
-
 }
 
+
+/* =========================================================
+   ADD COACH
+   ========================================================= */
 
 function showAddCoach() {
 
@@ -267,14 +245,13 @@ function showAddCoach() {
 
             </button>
 
-            <h2>
-                Add Coach
-            </h2>
+            <h2>Add Coach</h2>
 
             <input
                 type="text"
                 id="newCoachName"
                 placeholder="Coach Name"
+                maxlength="100"
                 autocomplete="off"
             >
 
@@ -294,25 +271,35 @@ function showAddCoach() {
         </div>
 
     `);
-
 }
+
 
 async function addCoach() {
 
-    const name =
-        document.getElementById(
-            "newCoachName"
-        ).value.trim();
+    const input =
+        document.getElementById("newCoachName");
 
     const message =
-        document.getElementById(
-            "addCoachMessage"
-        );
+        document.getElementById("addCoachMessage");
+
+    if (!input || !message) {
+        return;
+    }
+
+    const name = input.value.trim();
 
     if (!name) {
 
         message.textContent =
             "Please enter the coach's name.";
+
+        return;
+    }
+
+    if (name.length > 100) {
+
+        message.textContent =
+            "The name cannot exceed 100 characters.";
 
         return;
     }
@@ -333,39 +320,213 @@ async function addCoach() {
 
     if (error) {
 
-    console.error(
-        "Add coach failed:",
-        error
-    );
+        console.error(
+            "Add coach failed:",
+            error
+        );
 
-    message.textContent =
-        "Unable to add coach: " +
-        error.message;
+        message.textContent =
+            "Unable to add coach. Please try again.";
 
-    return;
-}
+        return;
+    }
 
     if (!data) {
 
         message.textContent =
-            "Unable to add coach. Check the details and try again.";
+            "A user with that name may already exist. Check the name and try again.";
 
         return;
     }
 
     await showUserManagement();
-
 }
 
-async function setUserActive(
-    personID,
-    active
-) {
+
+/* =========================================================
+   CHANGE USER NAME
+   ========================================================= */
+
+async function showChangeUserName(personID) {
+
+    const {
+        data: users,
+        error
+    } = await supabaseClient.rpc(
+        "get_manageable_users",
+        {
+            current_senior_code:
+                currentSeniorPIN
+        }
+    );
+
+    if (error || !Array.isArray(users)) {
+
+        console.error(
+            "Unable to load user for renaming:",
+            error
+        );
+
+        alert(
+            "Unable to load the user's details."
+        );
+
+        return;
+    }
+
+    const user =
+        users.find(
+            item => item.person_id === personID
+        );
+
+    if (!user) {
+
+        alert(
+            "User could not be found."
+        );
+
+        return;
+    }
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showUserManagement()">
+
+                ← User Management
+
+            </button>
+
+            <h2>Change Name</h2>
+
+            <label for="updatedUserName">
+                User name
+            </label>
+
+            <input
+                type="text"
+                id="updatedUserName"
+                maxlength="100"
+                autocomplete="off"
+                placeholder="Enter user name"
+            >
+
+            <button
+                class="menu-button blue"
+                onclick="saveUserName(
+                    '${personID}'
+                )">
+
+                Save Name
+
+            </button>
+
+            <div
+                id="changeUserNameMessage"
+                class="info-box">
+            </div>
+
+        </div>
+
+    `);
+
+    const nameInput =
+        document.getElementById("updatedUserName");
+
+    if (nameInput) {
+
+        nameInput.value = user.name;
+
+        nameInput.focus();
+
+        nameInput.select();
+    }
+}
+
+
+async function saveUserName(personID) {
+
+    const input =
+        document.getElementById("updatedUserName");
+
+    const message =
+        document.getElementById("changeUserNameMessage");
+
+    if (!input || !message) {
+        return;
+    }
+
+    const name = input.value.trim();
+
+    if (!name) {
+
+        message.textContent =
+            "Please enter a name.";
+
+        return;
+    }
+
+    if (name.length > 100) {
+
+        message.textContent =
+            "The name cannot exceed 100 characters.";
+
+        return;
+    }
+
+    const {
+        data,
+        error
+    } = await supabaseClient.rpc(
+        "rename_manageable_user",
+        {
+            current_senior_code:
+                currentSeniorPIN,
+
+            requested_person_id:
+                personID,
+
+            requested_name:
+                name
+        }
+    );
+
+    if (error) {
+
+        console.error(
+            "Rename user failed:",
+            error
+        );
+
+        message.textContent =
+            "Unable to change the name. Please try again.";
+
+        return;
+    }
+
+    if (!data) {
+
+        message.textContent =
+            "A user with that name may already exist, or the name could not be changed.";
+
+        return;
+    }
+
+    await showUserManagement();
+}
+
+
+/* =========================================================
+   ACTIVATE / DEACTIVATE USER
+   ========================================================= */
+
+async function setUserActive(personID, active) {
 
     const action =
-        active
-        ? "activate"
-        : "deactivate";
+        active ? "activate" : "deactivate";
 
     if (
         !confirm(
@@ -416,12 +577,14 @@ async function setUserActive(
     }
 
     await showUserManagement();
-
 }
 
-async function resetUserInstallation(
-    personID
-) {
+
+/* =========================================================
+   RESET USER INSTALLATION
+   ========================================================= */
+
+async function resetUserInstallation(personID) {
 
     if (
         !confirm(
@@ -473,5 +636,4 @@ async function resetUserInstallation(
     );
 
     await showUserManagement();
-
 }

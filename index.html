@@ -1333,10 +1333,10 @@ function showRoster() {
                                                             type="checkbox"
                                                             ${toggleOn ? "checked" : ""}
                                                             ${seniorConfirmed ? "disabled" : ""}
-                                                            onchange="setCoachGMSSuggestion(
-                                                                ${JSON.stringify(player.id)},
-                                                                this.checked
-                                                            )">
+                                                            onchange='setCoachGMSSuggestion(
+    ${JSON.stringify(player.id)},
+    this.checked
+)'>
 
                                                         <span class="toggle-knob"></span>
 

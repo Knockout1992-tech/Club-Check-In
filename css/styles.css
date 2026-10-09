@@ -551,6 +551,71 @@ h2 {
 }
 
 /* =========================
+   USER MANAGEMENT
+   ========================= */
+
+.user-management-card {
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.user-management-header {
+    margin-bottom: 8px;
+}
+
+.user-management-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.user-action-button {
+    min-height: 36px;
+    padding: 8px 11px;
+    border: 0;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.user-action-primary {
+    background: #0d6efd;
+    color: #fff;
+}
+
+.user-action-neutral {
+    background: #e5e5e5;
+    color: #111;
+}
+
+.user-action-danger {
+    background: #c82333;
+    color: #fff;
+}
+
+.user-status {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.user-status-active {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.user-status-inactive {
+    background: #f8d7da;
+    color: #842029;
+}
+
+/* =========================
    INFORMATION BOXES
    ========================= */
 

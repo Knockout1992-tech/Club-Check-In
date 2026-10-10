@@ -297,19 +297,28 @@ async function showUserManagement() {
         .from("installations")
         .select("person_id, active, last_seen_at");
 
-    if (installationError) {
+    
+if (installationError) {
 
-        console.error(
-            "Installation status load failed:",
+    console.error(
+        "Installation status load failed:",
+        installationError
+    );
+
+    if (window.clubCheckInDiagnostics) {
+        window.clubCheckInDiagnostics.error(
+            "Installation status load failed",
             installationError
         );
-
-        alert(
-            "Unable to load device registration status. Please try again."
-        );
-
-        return;
     }
+
+    alert(
+        "Unable to load device registration status. Check the diagnostic box."
+    );
+
+    return;
+}
+
 
     const installationSummary = {};
 

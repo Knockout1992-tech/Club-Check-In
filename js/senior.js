@@ -249,28 +249,126 @@ async function permanentlyRemovePlayer(playerID) {
 USER MANAGEMENT
 ========================================================= */
 
+
 async function showUserManagement() {
 
-const {
-    data: users,
-    error
-} = await supabaseClient.rpc(
-    "get_manageable_users",
-    {
-        current_senior_code:
-            currentSeniorPIN
-    }
-);
-
-if (error || !Array.isArray(users)) {
-
-    console.error(
-        "User management load failed:",
+    const {
+        data: users,
         error
+    } = await supabaseClient.rpc(
+        "get_manageable_users",
+        {
+            current_senior_code: currentSeniorPIN
+        }
     );
+
+    if (error || !Array.isArray(users)) {
+
+        console.error(
+            "User management load failed:",
+            error
+        );
+
+        renderShell(`
+            <div class="card">
+                <button
+                    class="back-button"
+                    onclick="showSeniorDashboard()">
+                    ← Senior Dashboard
+                </button>
+
+                <h2>User Management</h2>
+
+                <div class="info-box">
+                    Unable to load users.
+                </div>
+            </div>
+        `);
+
+        return;
+    }
+
+    /* LOAD REGISTERED INSTALLATIONS */
+
+    const {
+        data: installations,
+        error: installationError
+    } = await supabaseClient
+        .from("installations")
+        .select("person_id, active, last_seen_at");
+
+    if (installationError) {
+
+        console.error(
+            "Installation status load failed:",
+            installationError
+        );
+
+        alert(
+            "Unable to load device registration status. Please try again."
+        );
+
+        return;
+    }
+
+    const installationSummary = {};
+
+    (installations || []).forEach(installation => {
+
+        const personID = installation.person_id;
+
+        if (!installationSummary[personID]) {
+
+            installationSummary[personID] = {
+                activeCount: 0,
+                lastSeen: null
+            };
+
+        }
+
+        if (installation.active) {
+
+            installationSummary[personID].activeCount++;
+
+            if (
+                installation.last_seen_at &&
+                (
+                    !installationSummary[personID].lastSeen ||
+                    new Date(installation.last_seen_at) >
+                    new Date(installationSummary[personID].lastSeen)
+                )
+            ) {
+
+                installationSummary[personID].lastSeen =
+                    installation.last_seen_at;
+
+            }
+
+        }
+
+    });
+
+    function formatDeviceLastSeen(value) {
+
+        if (!value) {
+            return "Not available";
+        }
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return "Not available";
+        }
+
+        return date.toLocaleString("en-GB", {
+            dateStyle: "medium",
+            timeStyle: "short"
+        });
+    }
 
     renderShell(`
         <div class="card">
+
             <button
                 class="back-button"
                 onclick="showSeniorDashboard()">
@@ -279,187 +377,194 @@ if (error || !Array.isArray(users)) {
 
             <h2>User Management</h2>
 
-            <div class="info-box">
-                Unable to load users.
-            </div>
+            <button
+                class="primary-button"
+                onclick="showAddCoach()">
+                + Add Coach
+            </button>
+
+            <br><br>
+
+            ${
+                users.length === 0
+                ? `
+                    <div class="info-box">
+                        No users have been added yet.
+                    </div>
+                `
+                : users.map((user, index) => {
+
+                    const device =
+                        installationSummary[user.person_id] || {
+                            activeCount: 0,
+                            lastSeen: null
+                        };
+
+                    const deviceStatus =
+                        device.activeCount > 0
+                        ? "Device Registered"
+                        : "No Active Device";
+
+                    const deviceClass =
+                        device.activeCount > 0
+                        ? "user-status-active"
+                        : "user-status-inactive";
+
+                    return `
+
+                        <div class="info-box user-management-card">
+
+                            <div class="user-management-header">
+
+                                <strong>${escapeHTML(user.name)}</strong>
+
+                                <br>
+
+                                <span class="user-status ${
+                                    user.active
+                                    ? "user-status-active"
+                                    : "user-status-inactive"
+                                }">
+                                    ${user.active ? "Active" : "Inactive"}
+                                </span>
+
+                                <br>
+
+                                <span class="user-status ${deviceClass}">
+                                    ${deviceStatus}
+                                </span>
+
+                                ${
+                                    device.activeCount > 1
+                                    ? `
+                                        <br>
+                                        <span class="user-status user-status-inactive">
+                                            Warning: ${device.activeCount} active installations
+                                        </span>
+                                    `
+                                    : ""
+                                }
+
+                                <br>
+
+                                <small>
+                                    Last seen:
+                                    ${formatDeviceLastSeen(device.lastSeen)}
+                                </small>
+
+                            </div>
+
+                            <div class="user-management-actions">
+
+                                <button
+                                    type="button"
+                                    class="user-action-button ${
+                                        user.active
+                                        ? "user-action-danger"
+                                        : "user-action-primary"
+                                    } user-active-button"
+                                    data-user-index="${index}">
+                                    ${user.active ? "Deactivate" : "Activate"}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="user-action-button user-action-neutral reset-installation-button"
+                                    data-user-index="${index}">
+                                    Reset Installation
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="user-action-button user-action-neutral change-user-name-button"
+                                    data-user-index="${index}">
+                                    Change Name
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }).join("")
+            }
+
         </div>
     `);
 
-    return;
-}
+    /* ACTIVATE / DEACTIVATE */
 
-renderShell(`
-    <div class="card">
+    document
+        .querySelectorAll(".user-active-button")
+        .forEach(button => {
 
-        <button
-            class="back-button"
-            onclick="showSeniorDashboard()">
-            ← Senior Dashboard
-        </button>
+            button.addEventListener("click", async () => {
 
-        <h2>User Management</h2>
+                const selectedUser =
+                    users[Number(button.dataset.userIndex)];
 
-        <button
-            class="primary-button"
-            onclick="showAddCoach()">
-            + Add Coach
-        </button>
+                if (!selectedUser) {
+                    alert("User could not be found.");
+                    return;
+                }
 
-        <br><br>
+                await setUserActive(
+                    selectedUser.person_id,
+                    !selectedUser.active
+                );
 
-        ${
-            users.length === 0
-            ? `
-                <div class="info-box">
-                    No users have been added yet.
-                </div>
-            `
-            : users.map((user, index) => `
-
-                <div class="info-box user-management-card">
-
-                    <div class="user-management-header">
-
-                        <strong>${escapeHTML(user.name)}</strong>
-
-                        <br>
-
-                        <span class="user-status ${
-                            user.active
-                            ? "user-status-active"
-                            : "user-status-inactive"
-                        }">
-                            ${user.active ? "Active" : "Inactive"}
-                        </span>
-
-                    </div>
-
-                    <div class="user-management-actions">
-
-                        <button
-                            type="button"
-                            class="user-action-button ${
-                                user.active
-                                ? "user-action-danger"
-                                : "user-action-primary"
-                            } user-active-button"
-                            data-user-index="${index}">
-                            ${user.active ? "Deactivate" : "Activate"}
-                        </button>
-
-                        <button
-                            type="button"
-                            class="user-action-button user-action-neutral reset-installation-button"
-                            data-user-index="${index}">
-                            Reset Installation
-                        </button>
-
-                        <button
-                            type="button"
-                            class="user-action-button user-action-neutral change-user-name-button"
-                            data-user-index="${index}">
-                            Change Name
-                        </button>
-
-                    </div>
-
-                </div>
-
-            `).join("")
-        }
-
-    </div>
-`);
-
-/* ACTIVATE / DEACTIVATE */
-
-document
-    .querySelectorAll(".user-active-button")
-    .forEach(button => {
-
-        button.addEventListener("click", async () => {
-
-            const index =
-                Number(button.dataset.userIndex);
-
-            const selectedUser =
-                users[index];
-
-            if (!selectedUser) {
-
-                alert("User could not be found.");
-
-                return;
-            }
-
-            await setUserActive(
-                selectedUser.person_id,
-                !selectedUser.active
-            );
+            });
 
         });
 
-    });
+    /* RESET INSTALLATION */
 
+    document
+        .querySelectorAll(".reset-installation-button")
+        .forEach(button => {
 
-/* RESET INSTALLATION */
+            button.addEventListener("click", async () => {
 
-document
-    .querySelectorAll(".reset-installation-button")
-    .forEach(button => {
+                const selectedUser =
+                    users[Number(button.dataset.userIndex)];
 
-        button.addEventListener("click", async () => {
+                if (!selectedUser) {
+                    alert("User could not be found.");
+                    return;
+                }
 
-            const index =
-                Number(button.dataset.userIndex);
+                await resetUserInstallation(
+                    selectedUser.person_id
+                );
 
-            const selectedUser =
-                users[index];
-
-            if (!selectedUser) {
-
-                alert("User could not be found.");
-
-                return;
-            }
-
-            await resetUserInstallation(
-                selectedUser.person_id
-            );
+            });
 
         });
 
-    });
+    /* CHANGE NAME */
 
+    document
+        .querySelectorAll(".change-user-name-button")
+        .forEach(button => {
 
-/* CHANGE NAME */
+            button.addEventListener("click", () => {
 
-document
-    .querySelectorAll(".change-user-name-button")
-    .forEach(button => {
+                const selectedUser =
+                    users[Number(button.dataset.userIndex)];
 
-        button.addEventListener("click", () => {
+                if (!selectedUser) {
+                    alert("User could not be found.");
+                    return;
+                }
 
-            const index =
-                Number(button.dataset.userIndex);
+                showChangeUserName(
+                    selectedUser.person_id
+                );
 
-            const selectedUser =
-                users[index];
-
-            if (!selectedUser) {
-
-                alert("User could not be found.");
-
-                return;
-            }
-
-            showChangeUserName(
-                selectedUser.person_id
-            );
+            });
 
         });
-
-    });
 
 }
 

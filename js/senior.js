@@ -22,7 +22,7 @@ async function permanentlyRemovePlayer(playerID) {
             currentRole
         );
 
-        alert("Only Senior users can anonymise players.");
+        alert("Only Admin can anonymise players.");
         return;
     }
 
@@ -286,7 +286,7 @@ async function showUserManagement() {
                 <button
                     class="back-button"
                     onclick="showSeniorDashboard()">
-                    ← Senior Dashboard
+                    ← Admin Dashboard
                 </button>
 
                 <h2>User Management</h2>
@@ -347,7 +347,7 @@ async function showUserManagement() {
                 <button
                     class="back-button"
                     onclick="showSeniorDashboard()">
-                    ← Senior Dashboard
+                    ← Admin Dashboard
                 </button>
 
                 <h2>User Management</h2>
@@ -409,7 +409,7 @@ async function showUserManagement() {
             <button
                 class="back-button"
                 onclick="showSeniorDashboard()">
-                ← Senior Dashboard
+                ← Admin Dashboard
             </button>
 
             <h2>User Management</h2>

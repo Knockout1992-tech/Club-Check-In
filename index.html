@@ -68,56 +68,6 @@ if ("serviceWorker" in navigator) {
 <script>
 
 /* =========================================================
-   ACTIVE PLAYERS
-   ========================================================= */
-
-function getActivePlayers(ageGroup) {
-
-    if (!players[ageGroup]) {
-        return [];
-    }
-
-    return players[ageGroup]
-        .filter(player =>
-            player.active &&
-            !player.archived
-        );
-
-}
-
-function getAllActivePlayers() {
-
-    let result = [];
-
-    ageGroups.forEach(ageGroup => {
-
-        getActivePlayers(ageGroup)
-            .forEach(player => {
-
-                result.push(player);
-
-            });
-
-    });
-
-    return result;
-
-}
-
-function ageGroupNeedsGMSConfirmation(
-    ageGroup
-) {
-
-    return getActivePlayers(
-        ageGroup
-    ).some(
-        player =>
-            !player.gms
-    );
-
-}
-
-/* =========================================================
    GENERAL HELPERS
    ========================================================= */
 

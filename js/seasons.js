@@ -4,6 +4,59 @@
 
 
 /* =========================================================
+   LOAD CURRENT SEASON FROM SUPABASE
+   ========================================================= */
+
+async function loadCurrentSeasonFromSupabase() {
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("seasons")
+                .select("season_name")
+                .eq("is_current", true)
+                .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || !data.season_name) {
+
+            throw new Error(
+                "No current season is marked in Supabase."
+            );
+
+        }
+
+        currentSeason =
+            data.season_name;
+
+        saveData();
+
+        console.log(
+            "Current season loaded from Supabase:",
+            currentSeason
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load current season from Supabase:",
+            error
+        );
+
+        return false;
+
+    }
+
+}
+
+
+/* =========================================================
    GET NEXT SEASON
    ========================================================= */
 
@@ -31,6 +84,7 @@ function getNextSeason(season) {
             end + 1
         ).slice(-2)
     );
+
 }
 
 
@@ -75,6 +129,7 @@ async function performNewSeason(
         );
 
         return false;
+
     }
 
     if (data !== true) {
@@ -84,6 +139,7 @@ async function performNewSeason(
         );
 
         return false;
+
     }
 
 
@@ -103,6 +159,7 @@ async function performNewSeason(
         );
 
         return false;
+
     }
 
 
@@ -123,4 +180,5 @@ async function performNewSeason(
     showSeniorDashboard();
 
     return true;
+
 }

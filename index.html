@@ -39,6 +39,7 @@
 <div id="app"></div>
 
 <script src="js/config.js"></script>
+<script src="js/helpers.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="js/storage.js"></script>
@@ -66,21 +67,6 @@ if ("serviceWorker" in navigator) {
 </script>
 
 <script>
-
-/* =========================================================
-   GENERAL HELPERS
-   ========================================================= */
-
-function escapeHTML(value) {
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
 
 function getNextAgeGroup(ageGroup) {
 

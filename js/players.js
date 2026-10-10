@@ -1,7 +1,5 @@
-/* =========================================================
-   PLAYERS
-   ========================================================= */
-
+// Find Players ===========================
+  
 function findPlayerByID(playerID) {
 
     for (const ageGroup of ageGroups) {
@@ -26,9 +24,60 @@ function findPlayerByID(playerID) {
 
 }
 
-/* =========================================================
-   ADD PLAYER
-   ========================================================= */
+// Active Players =================================
+   
+function getActivePlayers(ageGroup) {
+
+    if (!players[ageGroup]) {
+        return [];
+    }
+
+    return players[ageGroup]
+        .filter(player =>
+            player.active &&
+            !player.archived
+        );
+
+}
+
+// All active player ==========================
+
+function getAllActivePlayers() {
+
+    let result = [];
+
+    ageGroups.forEach(ageGroup => {
+
+        getActivePlayers(ageGroup)
+            .forEach(player => {
+
+                result.push(player);
+
+            });
+
+    });
+
+    return result;
+
+}
+
+//Age group needs GMS Confirmation ===================================
+
+function ageGroupNeedsGMSConfirmation(
+    ageGroup
+) {
+
+    return getActivePlayers(
+        ageGroup
+    ).some(
+        player =>
+            !player.gms
+    );
+
+}
+
+// Add Player =========================================
+  
 async function addPlayerToAgeGroup(
     ageGroup,
     name,
@@ -113,10 +162,7 @@ async function addPlayerToAgeGroup(
 }
 
 
-/* =========================================================
-   SENIOR GMS
-   ========================================================= */
-
+// Senior Set GMS ========================
 
 async function setGMS(playerID, confirmed) {
     const debug = window.clubCheckInDiagnostics;
@@ -185,6 +231,7 @@ async function setGMS(playerID, confirmed) {
     }
 }
 
+// Set Coach GMS Suggestion =====================================
 
 async function setCoachGMSSuggestion(playerID, suggested) {
     const debug = window.clubCheckInDiagnostics;
@@ -264,9 +311,7 @@ async function setCoachGMSSuggestion(playerID, suggested) {
     }
 }
 
-/* =========================================================
-   ARCHIVE PLAYER
-   ========================================================= */
+// Archive Player =============================================
 
 async function archivePlayer(
     playerID,
@@ -354,9 +399,7 @@ async function archivePlayer(
 }
 
 
-/* =========================================================
-   COACH RESTORE PLAYER
-   ========================================================= */
+// Coach Restore Player ====================================
 
 async function restoreArchivedPlayer(
     playerID,
@@ -554,9 +597,7 @@ async function restoreArchivedPlayer(
 }
 
 
-/* =========================================================
-   SENIOR RESTORE PLAYER
-   ========================================================= */
+// Senior Restore Player ====================================
 
 async function seniorRestorePlayer(
     playerID
@@ -690,9 +731,7 @@ async function seniorRestorePlayer(
 }
 
 
-/* =========================================================
-   MOVE PLAYER
-   ========================================================= */
+// Move Player =======================================
 
 async function movePlayer(
     playerID

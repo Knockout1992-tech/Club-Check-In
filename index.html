@@ -68,35 +68,6 @@ if ("serviceWorker" in navigator) {
 
 <script>
 
-function getNextAgeGroup(ageGroup) {
-
-    const currentGroup =
-        ageGroupData.find(
-            group => group.age_group === ageGroup
-        );
-
-    if (!currentGroup) {
-        return null;
-    }
-
-    if (!currentGroup.next_age_group_id) {
-        return null;
-    }
-
-    const nextGroup =
-        ageGroupData.find(
-            group =>
-                group.id ===
-                currentGroup.next_age_group_id
-        );
-
-    if (!nextGroup) {
-        return null;
-    }
-
-    return nextGroup.age_group;
-}
-
 /* =========================================================
    SHELL
    ========================================================= */

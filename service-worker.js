@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "club-check-in-v043";
+const CACHE_NAME = "club-check-in-v044";
 
 const APP_SHELL = [
     "./",
@@ -44,12 +44,29 @@ self.addEventListener("fetch", event => {
         return;
     }
 
-    if (request.mode === "navigate") {
-        event.respondWith(
-            fetch(request).catch(async () => {
-                return await caches.match("./") ||
-                    new Response("Offline", { status: 503 });
+    event.respondWith(
+        fetch(request)
+            .then(async response => {
+                if (response.ok && response.type === "basic") {
+                    const cache = await caches.open(CACHE_NAME);
+                    await cache.put(request, response.clone());
+                }
+
+                return response;
             })
-        );
-    }
+            .catch(async () => {
+                const cachedResponse = await caches.match(request);
+
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+
+                if (request.mode === "navigate") {
+                    return await caches.match("./") ||
+                        new Response("Offline", { status: 503 });
+                }
+
+                return new Response("Offline", { status: 503 });
+            })
+    );
 });

@@ -4849,11 +4849,14 @@ async function initialisePWA() {
    START
    ========================================================= */
 
+
 (async function () {
 
     loadSavedData();
 
     await loadAgeGroupsFromSupabase();
+
+    await loadCurrentSeasonFromSupabase();
 
     await loadPlayersFromSupabase();
 
@@ -4873,6 +4876,7 @@ async function initialisePWA() {
     }
 
 })();
+
 
 setInterval(
     async () => {

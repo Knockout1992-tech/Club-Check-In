@@ -84,7 +84,7 @@ function showWelcome() {
                     class="role-button"
                     onclick="showPIN('senior')">
 
-                    Senior Member
+                    Admin Member
 
                 </button>
 

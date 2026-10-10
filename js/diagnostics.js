@@ -36,22 +36,23 @@
         button = document.createElement("button");
         button.id = "clubCheckInDebugToggle";
         button.type = "button";
-        button.textContent = "🔧 Debug";
-
-        Object.assign(button.style, {
-            position: "fixed",
-            right: "10px",
-            bottom: "10px",
-            padding: "10px 14px",
-            background: "#222",
-            color: "#fff",
-            border: "2px solid #ff3030",
-            borderRadius: "8px",
-            fontSize: "14px",
-            fontWeight: "bold",
-            zIndex: "2147483647",
-            cursor: "pointer"
-        });
+        button.textContent = "🔧";
+        
+       Object.assign(button.style, {
+           position: "fixed",
+           right: "8px",
+           bottom: "8px",
+           padding: "5px 8px",
+           background: "#444",
+           color: "#fff",
+           border: "1px solid #777",
+           borderRadius: "5px",
+           fontSize: "11px",
+           fontWeight: "normal",
+           opacity: "0.7",
+           zIndex: "2147483647",
+           cursor: "pointer"
+       });
 
         button.onclick = function () {
             const element = panel();

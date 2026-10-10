@@ -1,13 +1,7 @@
-/* =========================================================
-   AGE GROUPS - SUPABASE BACKEND
-   ========================================================= */
-
 let ageGroupData = [];
 
 
-/* =========================================================
-   LOAD AGE GROUPS
-   ========================================================= */
+// Load age groups =======================================
 
 async function loadAgeGroupsFromSupabase() {
 
@@ -50,9 +44,7 @@ async function loadAgeGroupsFromSupabase() {
         data || [];
 
 
-    /* -----------------------------------------------------
-       BUILD AGE GROUP LIST
-       ----------------------------------------------------- */
+    // Build age group list --------------------------------- 
 
     ageGroups =
         ageGroupData.map(
@@ -76,9 +68,7 @@ async function loadAgeGroupsFromSupabase() {
 }
 
 
-/* =========================================================
-   GET ACTIVE AGE GROUPS
-   ========================================================= */
+// Get active age groups ====================================
 
 function getActiveAgeGroups() {
 
@@ -89,4 +79,35 @@ function getActiveAgeGroups() {
         .map(
             group => group.age_group
         );
+}
+
+// Get Next Age Group ==============================
+
+function getNextAgeGroup(ageGroup) {
+
+    const currentGroup =
+        ageGroupData.find(
+            group => group.age_group === ageGroup
+        );
+
+    if (!currentGroup) {
+        return null;
+    }
+
+    if (!currentGroup.next_age_group_id) {
+        return null;
+    }
+
+    const nextGroup =
+        ageGroupData.find(
+            group =>
+                group.id ===
+                currentGroup.next_age_group_id
+        );
+
+    if (!nextGroup) {
+        return null;
+    }
+
+    return nextGroup.age_group;
 }

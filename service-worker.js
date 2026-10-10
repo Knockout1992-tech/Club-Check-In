@@ -1,11 +1,13 @@
 
-const CACHE_NAME = "club-check-in-v044";
+const CACHE_NAME = "club-check-in-v045";
 
 const APP_SHELL = [
     "./",
     "./manifest.json",
     "./icons/icon.svg"
 ];
+
+// Install =========================================
 
 self.addEventListener("install", event => {
     event.waitUntil(
@@ -14,6 +16,8 @@ self.addEventListener("install", event => {
             .then(() => self.skipWaiting())
     );
 });
+
+// Activate ========================================
 
 self.addEventListener("activate", event => {
     event.waitUntil(
@@ -30,6 +34,8 @@ self.addEventListener("activate", event => {
     );
 });
 
+// Network First — Bypass Browser Cache ============
+
 self.addEventListener("fetch", event => {
     const request = event.request;
     const url = new URL(request.url);
@@ -45,17 +51,26 @@ self.addEventListener("fetch", event => {
     }
 
     event.respondWith(
-        fetch(request)
+        fetch(new Request(request, {
+            cache: "no-store"
+        }))
             .then(async response => {
+
                 if (response.ok && response.type === "basic") {
                     const cache = await caches.open(CACHE_NAME);
-                    await cache.put(request, response.clone());
+
+                    await cache.put(
+                        request,
+                        response.clone()
+                    );
                 }
 
                 return response;
             })
             .catch(async () => {
-                const cachedResponse = await caches.match(request);
+
+                const cachedResponse =
+                    await caches.match(request);
 
                 if (cachedResponse) {
                     return cachedResponse;
@@ -63,10 +78,14 @@ self.addEventListener("fetch", event => {
 
                 if (request.mode === "navigate") {
                     return await caches.match("./") ||
-                        new Response("Offline", { status: 503 });
+                        new Response("Offline", {
+                            status: 503
+                        });
                 }
 
-                return new Response("Offline", { status: 503 });
+                return new Response("Offline", {
+                    status: 503
+                });
             })
     );
 });

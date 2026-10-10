@@ -250,7 +250,10 @@ USER MANAGEMENT
 ========================================================= */
 
 
+
 async function showUserManagement() {
+
+    /* LOAD USERS */
 
     const {
         data: users,
@@ -269,8 +272,16 @@ async function showUserManagement() {
             error
         );
 
+        if (window.clubCheckInDiagnostics) {
+            window.clubCheckInDiagnostics.error(
+                "User management load failed",
+                error
+            );
+        }
+
         renderShell(`
             <div class="card">
+
                 <button
                     class="back-button"
                     onclick="showSeniorDashboard()">
@@ -282,109 +293,93 @@ async function showUserManagement() {
                 <div class="info-box">
                     Unable to load users.
                 </div>
+
             </div>
         `);
 
         return;
     }
 
+
     /* LOAD REGISTERED INSTALLATIONS */
 
     const {
-    data: installations,
-    error: installationError
-} = await supabaseClient.rpc(
-    "get_installation_status",
-    {
-        current_senior_code: currentSeniorPIN
-    }
-);
-
-    
-
-if (installationError) {
-
-    const errorDetails = {
-        message: installationError.message,
-        details: installationError.details,
-        hint: installationError.hint,
-        code: installationError.code
-    };
-
-    console.error(
-        "Installation status load failed:",
-        errorDetails
+        data: installations,
+        error: installationError
+    } = await supabaseClient.rpc(
+        "get_installation_status",
+        {
+            current_senior_code: currentSeniorPIN
+        }
     );
 
-    if (window.clubCheckInDiagnostics) {
-        window.clubCheckInDiagnostics.error(
-            "Installation status load failed",
+    if (installationError || !Array.isArray(installations)) {
+
+        const errorDetails = installationError
+            ? {
+                message: installationError.message,
+                details: installationError.details,
+                hint: installationError.hint,
+                code: installationError.code
+            }
+            : {
+                message: "Installation status returned an unexpected response."
+            };
+
+        console.error(
+            "Installation status load failed:",
             errorDetails
         );
 
-        window.clubCheckInDiagnostics.show();
+        if (window.clubCheckInDiagnostics) {
+            window.clubCheckInDiagnostics.error(
+                "Installation status load failed",
+                errorDetails
+            );
+
+            window.clubCheckInDiagnostics.show();
+        }
+
+        renderShell(`
+            <div class="card">
+
+                <button
+                    class="back-button"
+                    onclick="showSeniorDashboard()">
+                    ← Senior Dashboard
+                </button>
+
+                <h2>User Management</h2>
+
+                <div class="info-box">
+                    Unable to load device registration status.
+                    Check the diagnostic panel for details.
+                </div>
+
+            </div>
+        `);
+
+        return;
     }
 
-    renderShell(`
-        <div class="card">
 
-            <button
-                class="back-button"
-                onclick="showSeniorDashboard()">
-                ← Senior Dashboard
-            </button>
-
-            <h2>User Management</h2>
-
-            <div class="info-box">
-                Unable to load device registration status.
-                The diagnostic panel should contain the error.
-            </div>
-
-        </div>
-    `);
-
-    return;
-}
-
-
+    /* BUILD INSTALLATION SUMMARY */
 
     const installationSummary = {};
 
-    (installations || []).forEach(installation => {
+    installations.forEach(installation => {
 
-        const personID = installation.person_id;
-
-        if (!installationSummary[personID]) {
-
-            installationSummary[personID] = {
-                activeCount: 0,
-                lastSeen: null
-            };
-
-        }
-
-        if (installation.active) {
-
-            installationSummary[personID].activeCount++;
-
-            if (
-                installation.last_seen_at &&
-                (
-                    !installationSummary[personID].lastSeen ||
-                    new Date(installation.last_seen_at) >
-                    new Date(installationSummary[personID].lastSeen)
-                )
-            ) {
-
-                installationSummary[personID].lastSeen =
-                    installation.last_seen_at;
-
-            }
-
-        }
+        installationSummary[installation.person_id] = {
+            activeCount: Number(
+                installation.active_installations || 0
+            ),
+            lastSeen: installation.last_seen_at || null
+        };
 
     });
+
+
+    /* FORMAT LAST-SEEN DATE */
 
     function formatDeviceLastSeen(value) {
 
@@ -403,6 +398,9 @@ if (installationError) {
             timeStyle: "short"
         });
     }
+
+
+    /* DISPLAY USER MANAGEMENT */
 
     renderShell(`
         <div class="card">
@@ -476,6 +474,7 @@ if (installationError) {
                                     device.activeCount > 1
                                     ? `
                                         <br>
+
                                         <span class="user-status user-status-inactive">
                                             Warning: ${device.activeCount} active installations
                                         </span>
@@ -531,6 +530,7 @@ if (installationError) {
         </div>
     `);
 
+
     /* ACTIVATE / DEACTIVATE */
 
     document
@@ -543,7 +543,9 @@ if (installationError) {
                     users[Number(button.dataset.userIndex)];
 
                 if (!selectedUser) {
+
                     alert("User could not be found.");
+
                     return;
                 }
 
@@ -555,6 +557,7 @@ if (installationError) {
             });
 
         });
+
 
     /* RESET INSTALLATION */
 
@@ -568,7 +571,9 @@ if (installationError) {
                     users[Number(button.dataset.userIndex)];
 
                 if (!selectedUser) {
+
                     alert("User could not be found.");
+
                     return;
                 }
 
@@ -579,6 +584,7 @@ if (installationError) {
             });
 
         });
+
 
     /* CHANGE NAME */
 
@@ -592,7 +598,9 @@ if (installationError) {
                     users[Number(button.dataset.userIndex)];
 
                 if (!selectedUser) {
+
                     alert("User could not be found.");
+
                     return;
                 }
 
@@ -605,6 +613,7 @@ if (installationError) {
         });
 
 }
+
 
 /* =========================================================
    ADD COACH

@@ -298,26 +298,52 @@ async function showUserManagement() {
         .select("person_id, active, last_seen_at");
 
     
+
 if (installationError) {
+
+    const errorDetails = {
+        message: installationError.message,
+        details: installationError.details,
+        hint: installationError.hint,
+        code: installationError.code
+    };
 
     console.error(
         "Installation status load failed:",
-        installationError
+        errorDetails
     );
 
     if (window.clubCheckInDiagnostics) {
         window.clubCheckInDiagnostics.error(
             "Installation status load failed",
-            installationError
+            errorDetails
         );
+
+        window.clubCheckInDiagnostics.show();
     }
 
-    alert(
-        "Unable to load device registration status. Check the diagnostic box."
-    );
+    renderShell(`
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showSeniorDashboard()">
+                ← Senior Dashboard
+            </button>
+
+            <h2>User Management</h2>
+
+            <div class="info-box">
+                Unable to load device registration status.
+                The diagnostic panel should contain the error.
+            </div>
+
+        </div>
+    `);
 
     return;
 }
+
 
 
     const installationSummary = {};

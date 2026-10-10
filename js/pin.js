@@ -1,54 +1,6 @@
-// PIN Screen =======================================
+ // PIN Screen =======================================
 
 function showPIN(role) {
-
-    currentRole = role;
-
-    const roleName =
-        role === "coach"
-        ? "Coach"
-        : "Senior Member";
-
-    renderShell(`
-
-        <div class="card pin-card">
-
-            <button
-                class="back-button"
-                onclick="showWelcome()">
-
-                ← Back
-
-            </button>
-
-            <h2>
-                ${roleName} Access
-            </h2>
-
-            <div class="subtitle">
-
-                Enter your PIN to continue.
-
-            </div>
-
-            <input
-                id="pinInput"
-                class="pin-input"
-                type="password"
-                inputmode="numeric"
-                maxlength="8"
-                autocomplete="off">
-
-            <div
-                id="pinError"
-                class="error">
-            </div>
-
-            <button
-                class="primary-button"
-                onclick="checkPIN()">
-
-                Continuefunction showPIN(role) {
 
     currentRole = role;
 
@@ -116,18 +68,6 @@ function showPIN(role) {
 
 }
 
-            </button>
-
-        </div>
-
-    `);
-
-    document.getElementById(
-        "pinInput"
-    ).focus();
-
-}
-
 async function checkPIN() {
 
     const entered =
@@ -166,9 +106,7 @@ async function checkPIN() {
             }
         );
 
-    if (
-        supabaseError
-    ) {
+    if (supabaseError) {
 
         console.error(
             "PIN verification error:",
@@ -184,9 +122,7 @@ async function checkPIN() {
 
     if (data === true) {
 
-        if (
-            currentRole === "coach"
-        ) {
+        if (currentRole === "coach") {
 
             showCoachAgeGroups();
 
@@ -194,18 +130,15 @@ async function checkPIN() {
 
         }
 
-if (
-    currentRole === "senior"
-) {
+        if (currentRole === "senior") {
 
-    currentSeniorPIN =
-        entered;
+            currentSeniorPIN = entered;
 
-    showSeniorDashboard();
+            showSeniorDashboard();
 
-    return;
+            return;
 
-}
+        }
 
     }
 

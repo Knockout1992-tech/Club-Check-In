@@ -1022,8 +1022,6 @@ function openSelectedCoachAgeGroups() {
 /* =========================================================
    COACH DASHBOARD
    ========================================================= */
-
-
 async function showCoachDashboard() {
 
     const groups =
@@ -1031,38 +1029,100 @@ async function showCoachDashboard() {
         ? selectedAgeGroups
         : [currentAgeGroup];
 
-    // Ensure today's attendance is loaded first.
-    for (const ageGroup of groups) {
-
-        await ensureTodayAttendanceRegister(
-            ageGroup
-        );
-
-    }
-
     let activeCount = 0;
     let presentCount = 0;
 
-    groups.forEach(ageGroup => {
+    /*
+     * Read today's registers without creating them.
+     * Only count attendance where a register already exists.
+     */
+
+    const todayKey = getTodayKey();
+
+    const { data: registers, error } =
+        await supabaseClient
+            .from("attendance_registers")
+            .select(`
+                id,
+                age_group,
+                submitted,
+                closed_automatically
+            `)
+            .eq("register_date", todayKey)
+            .in("age_group", groups);
+
+    if (error) {
+        console.error(
+            "Dashboard register load failed:",
+            error
+        );
+
+        alert(
+            "Unable to load today's attendance. Please try again."
+        );
+
+        return;
+    }
+
+    for (const ageGroup of groups) {
 
         const active =
             getActivePlayers(ageGroup);
 
-        const register =
-            getTodayRegister(ageGroup);
-
         activeCount += active.length;
 
-        if (register) {
+        const registerRow =
+            registers.find(
+                register =>
+                    register.age_group === ageGroup
+            );
 
-            presentCount += active.filter(
-                player =>
-                    register.attendance[player.id] === true
-            ).length;
-
+        if (!registerRow) {
+            continue;
         }
 
-    });
+        const { data: records, error: recordsError } =
+            await supabaseClient
+                .from("attendance_records")
+                .select("player_id, present")
+                .eq("register_id", registerRow.id);
+
+        if (recordsError) {
+            console.error(
+                "Dashboard attendance load failed:",
+                recordsError
+            );
+
+            alert(
+                "Unable to load today's attendance. Please try again."
+            );
+
+            return;
+        }
+
+        const attendance = {};
+
+        (records || []).forEach(record => {
+            attendance[record.player_id] =
+                record.present === true;
+        });
+
+        attendanceRegisters[todayKey] =
+            attendanceRegisters[todayKey] || {};
+
+        attendanceRegisters[todayKey][ageGroup] = {
+            id: registerRow.id,
+            submitted: registerRow.submitted,
+            closedAutomatically:
+                registerRow.closed_automatically,
+            attendance
+        };
+
+        presentCount += active.filter(
+            player =>
+                attendance[player.id] === true
+        ).length;
+    }
 
     const absentCount =
         activeCount - presentCount;

@@ -3,7 +3,8 @@ const CACHE_NAME = "club-check-in-v043";
 
 const APP_SHELL = [
     "./",
-    "./manifest.json"
+    "./manifest.json",
+    "./icons/icon.svg"
 ];
 
 self.addEventListener("install", event => {
@@ -37,36 +38,18 @@ self.addEventListener("fetch", event => {
     if (
         request.method !== "GET" ||
         url.origin !== scope.origin ||
-        !url.pathname.startsWith(scope.pathname)
+        !url.pathname.startsWith(scope.pathname) ||
+        url.pathname.endsWith("/service-worker.js")
     ) {
         return;
     }
 
-    event.respondWith(
-        fetch(request)
-            .then(response => {
-                if (response.ok) {
-                    const copy = response.clone();
-
-                    caches.open(CACHE_NAME)
-                        .then(cache => cache.put(request, copy));
-                }
-
-                return response;
+    if (request.mode === "navigate") {
+        event.respondWith(
+            fetch(request).catch(async () => {
+                return await caches.match("./") ||
+                    new Response("Offline", { status: 503 });
             })
-            .catch(async () => {
-                const cached = await caches.match(request);
-
-                if (cached) return cached;
-
-                if (request.mode === "navigate") {
-                    return await caches.match("./");
-                }
-
-                return new Response(
-                    "Offline — this file is not cached.",
-                    { status: 503 }
-                );
-            })
-    );
+        );
+    }
 });

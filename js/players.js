@@ -2,11 +2,33 @@
    PLAYERS
    ========================================================= */
 
+function findPlayerByID(playerID) {
+
+    for (const ageGroup of ageGroups) {
+
+        if (!players[ageGroup]) {
+            continue;
+        }
+
+        const player =
+            players[ageGroup].find(
+                player =>
+                    String(player.id) === String(playerID)
+            );
+
+        if (player) {
+            return player;
+        }
+
+    }
+
+    return null;
+
+}
 
 /* =========================================================
    ADD PLAYER
    ========================================================= */
-
 async function addPlayerToAgeGroup(
     ageGroup,
     name,

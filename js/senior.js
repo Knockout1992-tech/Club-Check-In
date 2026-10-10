@@ -251,6 +251,7 @@ USER MANAGEMENT
 
 
 
+
 async function showUserManagement() {
 
     /* LOAD USERS */
@@ -454,21 +455,21 @@ async function showUserManagement() {
 
                                 <strong>${escapeHTML(user.name)}</strong>
 
-                                <br>
+                                <div style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;">
 
-                                <span class="user-status ${
-                                    user.active
-                                    ? "user-status-active"
-                                    : "user-status-inactive"
-                                }">
-                                    ${user.active ? "Active" : "Inactive"}
-                                </span>
+                                    <span class="user-status ${
+                                        user.active
+                                        ? "user-status-active"
+                                        : "user-status-inactive"
+                                    }">
+                                        ${user.active ? "Active" : "Inactive"}
+                                    </span>
 
-                                <br>
+                                    <span class="user-status ${deviceClass}">
+                                        ${deviceStatus}
+                                    </span>
 
-                                <span class="user-status ${deviceClass}">
-                                    ${deviceStatus}
-                                </span>
+                                </div>
 
                                 ${
                                     device.activeCount > 1
@@ -613,7 +614,6 @@ async function showUserManagement() {
         });
 
 }
-
 
 /* =========================================================
    ADD COACH

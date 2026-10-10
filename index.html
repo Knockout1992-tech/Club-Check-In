@@ -247,23 +247,8 @@
 })();
 </script>
 
-<script>
-(function () {
-
-    const warning = document.getElementById("connectionWarning");
-
-    function updateConnectionStatus() {
-        warning.style.display = navigator.onLine ? "none" : "block";
-    }
-
-    window.addEventListener("online", updateConnectionStatus);
-    window.addEventListener("offline", updateConnectionStatus);
-
-    updateConnectionStatus();
-
-})();
-</script>
-
+<script src="js/connection.js"></script>
+    
 <script>
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {

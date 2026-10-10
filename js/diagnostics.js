@@ -1,5 +1,4 @@
-
-(function () {
+ (function () {
 
     const entries = [];
     const MAX_ENTRIES = 100;
@@ -27,9 +26,53 @@
         }
     }
 
+    function createToggle() {
+        let button = document.getElementById(
+            "clubCheckInDebugToggle"
+        );
+
+        if (button) return button;
+
+        button = document.createElement("button");
+        button.id = "clubCheckInDebugToggle";
+        button.type = "button";
+        button.textContent = "🔧 Debug";
+
+        Object.assign(button.style, {
+            position: "fixed",
+            right: "10px",
+            bottom: "10px",
+            padding: "10px 14px",
+            background: "#222",
+            color: "#fff",
+            border: "2px solid #ff3030",
+            borderRadius: "8px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            zIndex: "2147483647",
+            cursor: "pointer"
+        });
+
+        button.onclick = function () {
+            const element = panel();
+
+            if (element.style.display === "none") {
+                element.style.display = "block";
+                render();
+            } else {
+                element.style.display = "none";
+            }
+        };
+
+        document.body.appendChild(button);
+
+        return button;
+    }
+
     function panel() {
-        let element =
-            document.getElementById("clubCheckInDebugPanel");
+        let element = document.getElementById(
+            "clubCheckInDebugPanel"
+        );
 
         if (element) return element;
 
@@ -42,7 +85,7 @@
             top: "6px",
             right: "6px",
             width: "min(94vw, 440px)",
-            maxHeight: "32vh",
+            maxHeight: "60vh",
             overflowY: "auto",
             background: "#111",
             color: "#fff",
@@ -58,10 +101,12 @@
 
         const header = document.createElement("div");
 
-        header.style.display = "flex";
-        header.style.alignItems = "center";
-        header.style.justifyContent = "space-between";
-        header.style.gap = "8px";
+        Object.assign(header.style, {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px"
+        });
 
         const heading = document.createElement("strong");
         heading.textContent = "CLUB CHECK-IN DIAGNOSTICS";
@@ -155,6 +200,8 @@
         },
 
         show: function () {
+            const element = panel();
+            element.style.display = "block";
             render();
         },
 
@@ -192,6 +239,7 @@
         log("Diagnostic listeners installed.");
     });
 
+    createToggle();
     log("General diagnostic system loaded.");
 
 })();

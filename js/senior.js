@@ -291,11 +291,14 @@ async function showUserManagement() {
     /* LOAD REGISTERED INSTALLATIONS */
 
     const {
-        data: installations,
-        error: installationError
-    } = await supabaseClient
-        .from("installations")
-        .select("person_id, active, last_seen_at");
+    data: installations,
+    error: installationError
+} = await supabaseClient.rpc(
+    "get_installation_status",
+    {
+        current_senior_code: currentSeniorPIN
+    }
+);
 
     
 

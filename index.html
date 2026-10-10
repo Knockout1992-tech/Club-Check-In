@@ -71,9 +71,7 @@ if ("serviceWorker" in navigator) {
 
 <script>
 
-/* =========================================================
-   COACH AGE GROUP SELECTION
-   ========================================================= */
+// Coach age group selection ================================
 
 function showCoachAgeGroups() {
 
@@ -273,9 +271,7 @@ function openSelectedCoachAgeGroups() {
 
 }
 
-/* =========================================================
-   COACH DASHBOARD
-   ========================================================= */
+// Coach Dashboard ==========================================
 async function showCoachDashboard() {
 
     const groups =
@@ -458,9 +454,7 @@ async function showCoachDashboard() {
 
 }
 
-/* =========================================================
-   MULTI-AGE REGISTER
-   ========================================================= */
+// Mult-age register ===========================
 
 async function showRegister() {
 
@@ -773,9 +767,7 @@ async function showRegister() {
     `);
 
 }
-/* =========================================================
-   ROSTER
-   ========================================================= */
+// Roster ===========================
 
 
 function showRoster() {
@@ -918,7 +910,7 @@ function showRoster() {
 
                 <br><br>
 
-                Once a Senior Member confirms GMS, the status is locked for coaches.
+                Once a Admin Member confirms GMS, the status is locked for coaches.
 
             </div>
 
@@ -927,9 +919,7 @@ function showRoster() {
     `);
 }
 
-/* =========================================================
-   COACH ADD / RESTORE PLAYER
-   ========================================================= */
+// Coach add / Restore player ===========================
 
 function showCoachAddPlayer(
     fromRoster = false,
@@ -1566,9 +1556,7 @@ ${
 
 }
 
-/* =========================================================
-   SESSION HISTORY
-   ========================================================= */
+// Session History ===========================
 
 async function showSessionHistory() {
 
@@ -1880,9 +1868,7 @@ async function showSessionHistory() {
     `);
 
 }
-/* =========================================================
-   SENIOR DASHBOARD
-   ========================================================= */
+// Senior Dashboard ===========================
 
 function getArchiveReviewCount() {
 
@@ -1913,7 +1899,7 @@ function showSeniorDashboard() {
         <div class="card">
 
             <h2>
-                Senior Dashboard
+                Admin Dashboard
             </h2>
 
             <div class="subtitle">
@@ -2069,9 +2055,7 @@ function showSeniorDashboard() {
 
 }
 
-/* =========================================================
-   SENIOR ALL AGE GROUPS
-   ========================================================= */
+// Senior all age groups ===========================
 
 function showSeniorAgeGroups() {
 
@@ -2200,9 +2184,7 @@ function showSeniorAgeGroups() {
 
 }
 
-/* =========================================================
-   ARCHIVE REVIEW
-   ========================================================= */
+// Archive review ===========================
 
 function showArchiveReview() {
 
@@ -2415,9 +2397,7 @@ function showArchiveReview() {
     `);
 
 }
-/* =========================================================
-   ARCHIVED PLAYER LIST
-   ========================================================= */
+// Archived plater list ===========================
     
 function getAllArchivedPlayers() {
 
@@ -2603,7 +2583,7 @@ function showArchiveList() {
 
             <div class="info-box">
 
-                Senior Members can restore archived players
+                Admin can restore archived players
                 and select their current age group.
 
                 <br><br>
@@ -3597,7 +3577,7 @@ function showPINManagement() {
 
             <div class="subtitle">
 
-                Senior Members can change both access PINs.
+                Admin Members can change both access PINs.
 
             </div>
 
@@ -3632,7 +3612,7 @@ function showPINManagement() {
             <div class="list-row">
 
                 <div class="list-title">
-                    Senior Member PIN
+                    Admin PIN
                 </div>
 
                 <div class="list-sub">
@@ -3651,7 +3631,7 @@ function showPINManagement() {
                         )
                     ">
 
-                    Change Senior Member PIN
+                    Change Admin PIN
 
                 </button>
 
@@ -3670,7 +3650,7 @@ function showChangePIN(
     const title =
         type === "coach"
         ? "Change Coach PIN"
-        : "Change Senior Member PIN";
+        : "Change Admin PIN";
 
     renderShell(`
 
@@ -3691,7 +3671,7 @@ function showChangePIN(
             <div class="form-group">
 
                 <label class="title">
-                    Current Senior Member PIN
+                    Current Admin PIN
                 </label>
 
                 <input
@@ -3869,7 +3849,7 @@ async function changePIN(
     ) {
 
         error.textContent =
-            "The current Senior Member PIN is incorrect.";
+            "The current Admin PIN is incorrect.";
 
         return;
 
@@ -3878,7 +3858,7 @@ async function changePIN(
     alert(
         type === "coach"
             ? "Coach PIN changed successfully."
-            : "Senior Member PIN changed successfully."
+            : "Admin PIN changed successfully."
     );
 
     showPINManagement();
@@ -4086,7 +4066,7 @@ async function initialisePWA() {
     if (data === "ALREADY_INSTALLED") {
 
         message.textContent =
-            "This user is already registered on another device. Please contact a Senior user.";
+            "This user is already registered on another device. Please contact a Admin user.";
 
         return;
     }

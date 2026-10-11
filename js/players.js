@@ -839,3 +839,85 @@ async function movePlayer(
         targetAgeGroup
     );
 }
+
+// Rename players =======================================
+
+
+async function renamePlayer(playerID) {
+
+    const player = findPlayerByID(playerID);
+
+    if (!player) {
+        alert("Player could not be found.");
+        return;
+    }
+
+    const newName = prompt(
+        "Enter the new player name:",
+        player.name
+    );
+
+    if (newName === null) {
+        return;
+    }
+
+    const name = newName.trim();
+
+    if (!name) {
+        alert("Player name cannot be blank.");
+        return;
+    }
+
+    if (name === player.name) {
+        return;
+    }
+
+    const confirmed = confirm(
+        "Change the player name from:\n\n" +
+        player.name +
+        "\n\nto:\n\n" +
+        name +
+        "?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from("players")
+            .update({ name: name })
+            .eq("player_id", playerID)
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+            throw new Error("No updated player record was returned.");
+        }
+
+        player.name = data.name;
+
+        saveData();
+
+        if (currentRole === "senior") {
+            showPlayerManagement(player.ageGroup);
+        } else {
+            showRoster();
+        }
+
+    } catch (error) {
+
+        console.error("Player rename failed:", error);
+
+        alert(
+            "Unable to change the player name. Please try again."
+        );
+    }
+}
+

@@ -1516,6 +1516,7 @@ ${
 
 // Session History ===========================
 
+
 async function showSessionHistory() {
 
     const groups =
@@ -1523,309 +1524,240 @@ async function showSessionHistory() {
         ? selectedAgeGroups
         : [currentAgeGroup];
 
+    /* LOAD REGISTERS */
 
-    /* -----------------------------------------------------
-       LOAD REGISTERS
-       ----------------------------------------------------- */
+    const {
+        data: registers,
+        error: registerError
+    } = await supabaseClient
+        .from("attendance_registers")
+        .select(`
+            id,
+            register_date,
+            age_group,
+            submitted,
+            closed_automatically
+        `)
+        .in("age_group", groups)
+        .order("register_date", {
+            ascending: false
+        });
 
-    const { data: registers, error } =
-        await supabaseClient
-            .from("attendance_registers")
-            .select(`
-                id,
-                register_date,
-                age_group,
-                submitted,
-                closed_automatically
-            `)
-            .in(
-                "age_group",
-                groups
-            )
-            .order(
-                "register_date",
-                {
-                    ascending: false
-                }
-            );
-
-    if (error) {
-
+    if (registerError) {
         console.error(
-            "Supabase session history load failed:",
-            error
+            "Session history register load failed:",
+            registerError
         );
 
-        alert(
-            "Unable to load session history. Please try again."
-        );
-
+        alert("Unable to load session history. Please try again.");
         return;
     }
 
+    const registerList = registers || [];
 
-    /* -----------------------------------------------------
-       LOAD ATTENDANCE RECORDS
-       ----------------------------------------------------- */
+    if (registerList.length === 0) {
+        renderShell(`
+            <div class="card">
+                <button class="back-button"
+                    onclick="showCoachDashboard()">
+                    ← Back
+                </button>
 
-    let attendanceRecords = [];
+                <h2>Session History</h2>
 
-    if (registers.length) {
-
-        const registerIDs =
-            registers.map(
-                register => register.id
-            );
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("attendance_records")
-                .select(`
-                    register_id,
-                    player_id,
-                    present
-                `)
-                .in(
-                    "register_id",
-                    registerIDs
-                );
-
-        if (error) {
-
-            console.error(
-                "Supabase session attendance load failed:",
-                error
-            );
-
-            alert(
-                "Unable to load session attendance. Please try again."
-            );
-
-            return;
-        }
-
-        attendanceRecords =
-            data || [];
+                <div class="info-box">
+                    No session history available.
+                </div>
+            </div>
+        `);
+        return;
     }
 
+    const registerIDs =
+        registerList.map(register => register.id);
 
-    /* -----------------------------------------------------
-       RENDER
-       ----------------------------------------------------- */
+    /* LOAD LIVE ATTENDANCE RECORDS */
+
+    const {
+        data: attendanceRecords,
+        error: attendanceError
+    } = await supabaseClient
+        .from("attendance_records")
+        .select(`
+            register_id,
+            player_id,
+            present
+        `)
+        .in("register_id", registerIDs);
+
+    if (attendanceError) {
+        console.error(
+            "Session attendance load failed:",
+            attendanceError
+        );
+
+        alert("Unable to load session attendance. Please try again.");
+        return;
+    }
+
+    /* LOAD PERMANENT HISTORICAL SNAPSHOTS */
+
+    const {
+        data: history,
+        error: historyError
+    } = await supabaseClient
+        .from("attendance_history")
+        .select(`
+            register_id,
+            total_players,
+            present_count,
+            absent_count
+        `)
+        .in("register_id", registerIDs);
+
+    if (historyError) {
+        console.error(
+            "Session history snapshot load failed:",
+            historyError
+        );
+
+        alert("Unable to load saved session history. Please try again.");
+        return;
+    }
+
+    const liveRecords = attendanceRecords || [];
+    const snapshots = history || [];
+
+    /* RENDER HISTORY */
 
     renderShell(`
-
         <div class="card">
 
-            <button
-                class="back-button"
+            <button class="back-button"
                 onclick="showCoachDashboard()">
-
                 ← Back
-
             </button>
 
-            <h2>
-                Session History
-            </h2>
+            <h2>Session History</h2>
 
             <div class="subtitle">
-
-                ${groups.join(" + ")}
-
+                ${groups.map(group => escapeHTML(group)).join(" + ")}
             </div>
 
             ${
-                groups.map(
-                    ageGroup => {
+                groups.map(ageGroup => {
 
                     const groupRegisters =
-                        registers.filter(
+                        registerList.filter(
                             register =>
-                                register.age_group ===
-                                ageGroup
+                                register.age_group === ageGroup
                         );
 
-                    if (
-                        groupRegisters.length === 0
-                    ) {
-
+                    if (groupRegisters.length === 0) {
                         return `
+                            <h3>${escapeHTML(ageGroup)}</h3>
 
                             <div class="info-box">
-
-                                No session history
-                                available.
-
+                                No session history available.
                             </div>
-
                         `;
-
                     }
 
                     return `
-
-                        <h3>
-                            ${ageGroup}
-                        </h3>
+                        <h3>${escapeHTML(ageGroup)}</h3>
 
                         ${
-                            groupRegisters.map(
-                                register => {
+                            groupRegisters.map(register => {
 
-                                /* -------------------------------------------------
-                                   CURRENT ACTIVE ROSTER
-                                   ------------------------------------------------- */
-
-                                const activePlayers =
-                                    getActivePlayers(
-                                        register.age_group
+                                const snapshot =
+                                    snapshots.find(
+                                        item =>
+                                            String(item.register_id) ===
+                                            String(register.id)
                                     );
 
+                                let presentCount;
+                                let totalCount;
 
-                                /* -------------------------------------------------
-                                   ATTENDANCE RECORDS FOR THIS REGISTER
-                                   ------------------------------------------------- */
+                                /*
+                                   CLOSED SESSION:
+                                   Use permanent snapshot totals.
+                                */
 
-                                const records =
-                                    attendanceRecords.filter(
-                                        record =>
-                                            record.register_id ===
-                                            register.id
-                                    );
+                                if (snapshot) {
 
+                                    presentCount =
+                                        snapshot.present_count;
 
-                                /* -------------------------------------------------
-                                   BUILD ACTIVE PLAYER ID SET
-                                   ------------------------------------------------- */
+                                    totalCount =
+                                        snapshot.total_players;
 
-                                const activePlayerIDs =
-                                    new Set(
-                                        activePlayers.map(
-                                            player =>
-                                                String(
-                                                    player.id
-                                                )
-                                        )
-                                    );
+                                } else {
 
+                                    /*
+                                       IN-PROGRESS SESSION:
+                                       Use saved attendance records,
+                                       not the current active roster.
+                                    */
 
-                                /* -------------------------------------------------
-                                   ONLY RECORDS BELONGING TO ACTIVE PLAYERS
-                                   ------------------------------------------------- */
+                                    const records =
+                                        liveRecords.filter(
+                                            record =>
+                                                String(record.register_id) ===
+                                                String(register.id)
+                                        );
 
-                                const activeRecords =
-                                    records.filter(
-                                        record =>
-                                            activePlayerIDs.has(
-                                                String(
-                                                    record.player_id
-                                                )
-                                            )
-                                    );
+                                    totalCount = records.length;
 
-
-                                /* -------------------------------------------------
-                                   PRESENT COUNT
-                                   ------------------------------------------------- */
-
-                                const presentCount =
-                                    activeRecords.filter(
-                                        record =>
-                                            record.present === true
-                                    ).length;
-
-
-                                /* -------------------------------------------------
-                                   TOTAL = CURRENT ACTIVE ROSTER
-                                   ------------------------------------------------- */
-
-                                const totalCount =
-                                    activePlayers.length;
-
-
-                                /* -------------------------------------------------
-                                   STATUS
-                                   ------------------------------------------------- */
-
-                                let status =
-                                    "In Progress";
-
-                                if (
-                                    register.closed_automatically
-                                ) {
-
-                                    status =
-                                        "Closed";
-
-                                } else if (
-                                    register.submitted
-                                ) {
-
-                                    status =
-                                        "Closed";
-
+                                    presentCount =
+                                        records.filter(
+                                            record =>
+                                                record.present === true
+                                        ).length;
                                 }
 
-
-                                /* -------------------------------------------------
-                                   DATE
-                                   ------------------------------------------------- */
+                                const status =
+                                    (
+                                        register.submitted ||
+                                        register.closed_automatically
+                                    )
+                                    ? "Closed"
+                                    : "In Progress";
 
                                 const date =
                                     new Date(
-                                        register.register_date
-                                    ).toLocaleDateString(
-                                        "en-GB"
-                                    );
-
+                                        register.register_date +
+                                        "T00:00:00"
+                                    ).toLocaleDateString("en-GB");
 
                                 return `
-
-                                    <div
-                                        class="
-                                            promotion-row
-                                        ">
+                                    <div class="promotion-row">
 
                                         <span>
-
                                             ${date}
-
                                             <br>
-
                                             ${presentCount}
                                             of
                                             ${totalCount}
                                             present
-
                                         </span>
 
-                                        <strong>
-
-                                            ${status}
-
-                                        </strong>
+                                        <strong>${status}</strong>
 
                                     </div>
-
                                 `;
 
                             }).join("")
                         }
-
                     `;
 
                 }).join("")
             }
 
         </div>
-
     `);
-
 }
+
 // Senior Dashboard ===========================
 
 function getArchiveReviewCount() {

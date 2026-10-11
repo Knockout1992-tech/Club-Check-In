@@ -2815,9 +2815,7 @@ function showPlayerManagement(
 
 }
 
-function renderPlayerManagementList(
-    ageGroup
-) {
+function renderPlayerManagementList(ageGroup) {
 
     const active =
         getActivePlayers(
@@ -2829,7 +2827,7 @@ function renderPlayerManagementList(
         <div class="card">
 
             <h3>
-                ${ageGroup}
+                ${escapeHTML(ageGroup)}
             </h3>
 
             ${
@@ -2938,6 +2936,21 @@ function renderPlayerManagementList(
                                     small-button
                                 "
                                 onclick='
+                                    renamePlayer(
+                                        ${JSON.stringify(player.id)}
+                                    )
+                                '>
+
+                                Edit Name
+
+                            </button>
+
+                            <button
+                                class="
+                                    secondary-button
+                                    small-button
+                                "
+                                onclick='
                                     showMovePlayer(
                                         ${JSON.stringify(player.id)}
                                     )
@@ -2990,7 +3003,6 @@ function renderPlayerManagementList(
     `;
 
 }
-
 function showMovePlayer(
     playerID
 ) {

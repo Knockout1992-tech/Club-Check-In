@@ -1542,16 +1542,23 @@ async function showSessionHistory() {
         .order("register_date", {
             ascending: false
         });
-
-    if (registerError) {
+    
+if (registerError) {
+    if (window.clubCheckInDiagnostics) {
+        window.clubCheckInDiagnostics.error(
+            "Session history register load failed",
+            registerError
+        );
+    } else {
         console.error(
             "Session history register load failed:",
             registerError
         );
-
-        alert("Unable to load session history. Please try again.");
-        return;
     }
+
+    alert("Register error. Check the 🔧 diagnostics panel.");
+    return;
+}
 
     const registerList = registers || [];
 

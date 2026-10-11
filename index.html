@@ -772,39 +772,29 @@ async function showRegister() {
 
 function showRoster() {
 
-    const groups =
-        selectedAgeGroups.length
-            ? selectedAgeGroups
-            : [currentAgeGroup];
+    const groups = selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
 
     renderShell(`
-
         <div class="card">
 
-            <button
-                class="back-button"
-                onclick="showCoachDashboard()">
-
+            <button class="back-button" onclick="showCoachDashboard()">
                 ← Back
-
             </button>
 
             <h2>Roster</h2>
 
             <div class="subtitle">
-
                 ${groups.join(" + ")} — Mark players you believe are registered on GMS
-
             </div>
 
             ${
                 groups.map(ageGroup => {
 
-                    const active =
-                        getActivePlayers(ageGroup);
+                    const active = getActivePlayers(ageGroup);
 
                     return `
-
                         <div class="age-section">
 
                             <div class="age-section-title">
@@ -814,68 +804,45 @@ function showRoster() {
 
                             ${
                                 active.length === 0
-
-                                    ? `
-                                        <div class="empty">
-                                            No active players.
-                                        </div>
-                                    `
-
+                                    ? `<div class="empty-state">No active players in this age group.</div>`
                                     : active.map(player => {
 
-                                        const seniorConfirmed =
-                                            player.gms === true;
-
-                                        const coachSuggested =
-                                            player.coachGmsSuggestion === true;
-
-                                        const toggleOn =
-                                            seniorConfirmed || coachSuggested;
+                                        const seniorConfirmed = player.gms === true;
+                                        const coachSuggested = player.coachGmsSuggestion === true;
+                                        const toggleOn = seniorConfirmed || coachSuggested;
 
                                         return `
-
                                             <div class="player-row player-management-row">
 
                                                 <div class="player-info">
-
                                                     <div class="player-name">
                                                         ${escapeHTML(player.name)}
                                                     </div>
 
                                                     ${
                                                         !seniorConfirmed && coachSuggested
-
-                                                            ? `
-                                                                <div class="player-small">
-                                                                    Coach has suggested GMS
-                                                                </div>
-                                                            `
-
+                                                            ? `<div class="player-small">Coach has suggested GMS</div>`
                                                             : ""
                                                     }
-
                                                 </div>
 
                                                 <div class="row-actions">
 
-                                                    <label class="
-                                                        toggle
-                                                        gms-toggle
-                                                        ${toggleOn ? "confirmed" : "not-confirmed"}
-                                                        ${seniorConfirmed ? "locked" : ""}
-                                                    ">
+                                                    <button
+                                                        class="secondary-button small-button"
+                                                        onclick='renamePlayer(${JSON.stringify(player.id)})'>
+                                                        Edit Name
+                                                    </button>
+
+                                                    <label class="toggle gms-toggle ${toggleOn ? "confirmed" : "not-confirmed"} ${seniorConfirmed ? "locked" : ""}">
 
                                                         <input
                                                             type="checkbox"
                                                             ${toggleOn ? "checked" : ""}
                                                             ${seniorConfirmed ? "disabled" : ""}
-                                                            onchange='setCoachGMSSuggestion(
-    ${JSON.stringify(player.id)},
-    this.checked
-)'>
+                                                            onchange='setCoachGMSSuggestion(${JSON.stringify(player.id)}, this.checked)'>
 
                                                         <span class="toggle-knob"></span>
-
                                                         <span class="toggle-label"></span>
 
                                                     </label>
@@ -883,8 +850,8 @@ function showRoster() {
                                                 </div>
 
                                             </div>
-
                                         `;
+
                                     }).join("")
                             }
 
@@ -893,29 +860,20 @@ function showRoster() {
                             <button
                                 class="green-button"
                                 onclick='showCoachAddPlayer(true, ${JSON.stringify(ageGroup)})'>
-                            
                                 + ADD PLAYER
-                            
                             </button>
 
                         </div>
-
                     `;
+
                 }).join("")
             }
 
             <div class="info-box">
-
-                Green means you are suggesting that you believe the player is registered.
-
-                <br><br>
-
-                Once a Admin Member confirms GMS, the status is locked for coaches.
-
+                Coaches can suggest GMS registration status. Admin members confirm registration.
             </div>
 
         </div>
-
     `);
 }
 

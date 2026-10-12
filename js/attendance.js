@@ -386,85 +386,58 @@ async function setAttendance(
    ========================================================= */
 
 
+
 async function addPlayerToTodayAttendance(
     ageGroup,
     playerID
 ) {
 
     if (currentRole !== "coach" || !currentAccessPIN) {
-
         alert("Please log in as Coach again.");
         return false;
-
     }
 
-    const register =
-        getTodayRegister(ageGroup);
+    const register = getTodayRegister(ageGroup);
 
     if (!register) {
-
         return false;
-
     }
 
     if (register.submitted || register.closedAutomatically) {
-
         alert("This register is closed.");
         return false;
-
     }
 
-    const { data, error } =
-        await supabaseClient.rpc(
-            "add_player_to_attendance_register",
-            {
-                requested_register_id:
-                    register.id,
-
-                requested_player_id:
-                    playerID,
-
-                supplied_code:
-                    currentAccessPIN
-            }
-        );
+    const { data, error } = await supabaseClient.rpc(
+        "add_player_to_attendance_register",
+        {
+            requested_register_id: register.id,
+            requested_player_id: playerID,
+            supplied_code: currentAccessPIN,
+            supplied_role: "coach"
+        }
+    );
 
     if (error) {
-
         console.error(
             "Supabase add player to attendance failed:",
             error
         );
 
-        alert(
-            "Unable to add the player to today's register."
-        );
-
+        alert("Unable to add the player to today's register.");
         return false;
-
     }
 
     if (data !== true) {
-
-        alert(
-            "The player could not be added to today's register."
-        );
-
+        alert("The player could not be added to today's register.");
         return false;
-
     }
 
-    /*
-     * The backend inserts the player as absent.
-     * The FE mirror therefore starts false.
-     */
-
-    register.attendance[playerID] =
-        false;
+    register.attendance[playerID] = false;
 
     return true;
-
 }
+
 
 /* =========================================================
    SAVE / LEAVE REGISTER

@@ -4066,26 +4066,23 @@ async function initialisePWA() {
 
     loadSavedData();
 
+    const installationAuthorised =
+        await checkInstallationAccess();
+
+    if (!installationAuthorised) {
+
+        showInitialAccess();
+        return;
+
+    }
+
     await loadAgeGroupsFromSupabase();
 
     await loadCurrentSeasonFromSupabase();
 
-    await loadPlayersFromSupabase();
-
     await autoClosePreviousAttendanceRegisters();
 
-    const installationAuthorised =
-        await checkInstallationAccess();
-
-    if (installationAuthorised) {
-
-        showWelcome();
-
-    } else {
-
-        showInitialAccess();
-
-    }
+    showWelcome();
 
 })();
 

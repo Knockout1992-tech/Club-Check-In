@@ -735,121 +735,142 @@ async function seniorRestorePlayer(
 
 async function movePlayer(playerID) {
 
-    if (currentRole !== "senior" || !currentSeniorPIN) {
-        alert("Please log in as Senior again.");
-        return;
-    }
-
-    const player = findPlayerByID(playerID);
-
-    if (!player) {
-        return;
-    }
-
-    const select = document.getElementById("moveTargetAgeGroup");
-
-    if (!select || !select.value) {
-        return;
-    }
-
-    const targetAgeGroup = select.value;
-
-    if (targetAgeGroup === player.ageGroup) {
-        return;
-    }
-
-    const confirmed = confirm(
-        "Move "
-        + player.name
-        + " from "
-        + player.ageGroup
-        + " to "
-        + targetAgeGroup
-        + "?\n\n"
-        + "Their Player ID and attendance history will be retained."
-    );
-
-    if (!confirmed) {
-        return;
-    }
-
-    const { data, error } = await supabaseClient
-        .from("players")
-        .update({
-            age_group: targetAgeGroup
-        })
-        .eq("player_id", playerID)
-        .select()
-        .single();
-
-    if (error) {
-        console.error("Supabase player move failed:", error);
-
-        alert("Unable to move the player. Please try again.");
-        return;
-    }
-
-    // Update the local player lists
-    if (players[player.ageGroup]) {
-        players[player.ageGroup] =
-            players[player.ageGroup].filter(
-                item => item.id !== player.id
-            );
-    }
-
-    player.ageGroup = data.age_group;
-
-    if (!players[targetAgeGroup]) {
-        players[targetAgeGroup] = [];
-    }
-
-    players[targetAgeGroup].push(player);
-
-    saveData();
-
-    // If today's destination register is loaded and open,
-    // add the moved player as absent.
-    const register = getTodayRegister(targetAgeGroup);
-
-    if (
-        register &&
-        !register.submitted &&
-        !register.closedAutomatically
-    ) {
-
-        const { data: added, error: addError } =
-            await supabaseClient.rpc(
-                "add_player_to_attendance_register",
-                {
-                    requested_register_id: register.id,
-                    requested_player_id: playerID,
-                    supplied_code: currentSeniorPIN,
-                    supplied_role: "senior"
-                }
-            );
-
-        if (addError || added !== true) {
-            console.error(
-                "Player moved, but adding them to the open register failed:",
-                addError || added
-            );
-
-            alert(
-                "The player was moved successfully, but could not be added "
-                + "to today's open register. They may need to be added "
-                + "before attendance can be recorded."
-            );
-
-            showPlayerManagement(targetAgeGroup);
-            return;
-        }
-
-        register.attendance[playerID] = false;
-    }
-
-    showPlayerManagement(targetAgeGroup);
+if (currentRole !== "senior" || !currentSeniorPIN) {
+    alert("Please log in as Senior again.");
+    return;
 }
 
+const player = findPlayerByID(playerID);
+
+if (!player) {
+    return;
+}
+
+const select = document.getElementById("moveTargetAgeGroup");
+
+if (!select || !select.value) {
+    return;
+}
+
+const targetAgeGroup = select.value;
+
+if (targetAgeGroup === player.ageGroup) {
+    return;
+}
+
+const confirmed = confirm(
+    "Move "
+    + player.name
+    + " from "
+    + player.ageGroup
+    + " to "
+    + targetAgeGroup
+    + "?\n\n"
+    + "Their Player ID and attendance history will be retained."
+);
+
+if (!confirmed) {
+    return;
+}
+
+// Move the player in the database
+const { data, error } = await supabaseClient
+    .from("players")
+    .update({
+        age_group: targetAgeGroup
+    })
+    .eq("player_id", playerID)
+    .select()
+    .single();
+
+if (error) {
+    console.error("Supabase player move failed:", error);
+    alert("Unable to move the player. Please try again.");
+    return;
+}
+
+// Update the local player lists
+if (players[player.ageGroup]) {
+    players[player.ageGroup] =
+        players[player.ageGroup].filter(
+            item => item.id !== player.id
+        );
+}
+
+player.ageGroup = data.age_group;
+
+if (!players[targetAgeGroup]) {
+    players[targetAgeGroup] = [];
+}
+
+players[targetAgeGroup].push(player);
+
+saveData();
+
+// Find today's destination register directly in the database.
+// Senior does not need to load or open the register.
+const todayKey = getTodayKey();
+
+const { data: register, error: registerError } =
+    await supabaseClient
+        .from("attendance_registers")
+        .select("id, submitted, closed_automatically")
+        .eq("register_date", todayKey)
+        .eq("age_group", targetAgeGroup)
+        .maybeSingle();
+
+if (registerError) {
+    console.error(
+        "Player moved, but today's register could not be checked:",
+        registerError
+    );
+
+    alert(
+        "The player was moved successfully, but today's register "
+        + "could not be checked. Please ask the Coach to check attendance."
+    );
+
+    showPlayerManagement(targetAgeGroup);
+    return;
+}
+
+// Only add the player if a register already exists and is open.
+if (
+    register &&
+    !register.submitted &&
+    !register.closed_automatically
+) {
+    const { data: added, error: addError } =
+        await supabaseClient.rpc(
+            "add_player_to_attendance_register",
+            {
+                requested_register_id: register.id,
+                requested_player_id: playerID,
+                supplied_code: currentSeniorPIN,
+                supplied_role: "senior"
+            }
+        );
+
+    if (addError || added !== true) {
+        console.error(
+            "Player moved, but adding them to the open register failed:",
+            addError || added
+        );
+
+        alert(
+            "The player was moved successfully, but could not be added "
+            + "to today's open register. The Coach may need to resolve this "
+            + "before recording attendance."
+        );
+
+        showPlayerManagement(targetAgeGroup);
+        return;
+    }
+}
+
+showPlayerManagement(targetAgeGroup);
+
+}
 
 // Rename players =======================================
 

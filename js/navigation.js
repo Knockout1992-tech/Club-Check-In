@@ -45,8 +45,14 @@ function logout() {
 
 //Show welcome page ====================================
 
+
 function showWelcome() {
 
+    // Clear the current session credentials
+    currentAccessPIN = null;
+    currentSeniorPIN = null;
+
+    // Reset the current session selections
     currentRole = null;
     currentAgeGroup = null;
     selectedAgeGroups = [];

@@ -3814,9 +3814,54 @@ function showInitialAccess() {
     `;
 }
 
+
+/* =========================================================
+   AUTHORISED STARTUP
+   ========================================================= */
+
+let autoCloseInterval = null;
+
+async function completeAuthorisedStartup() {
+
+    // 1. Load age groups before restoring saved data
+    const ageGroupsLoaded =
+        await loadAgeGroupsFromSupabase();
+
+    if (!ageGroupsLoaded) {
+        return false;
+    }
+
+    // 2. Restore local data only after authorisation
+    loadSavedData();
+
+    // 3. Load the current season
+    await loadCurrentSeasonFromSupabase();
+
+    // 4. Run the existing register housekeeping
+    await autoClosePreviousAttendanceRegisters();
+
+    // 5. Start the periodic housekeeping once
+    if (autoCloseInterval === null) {
+
+        autoCloseInterval = setInterval(
+            async () => {
+                await autoClosePreviousAttendanceRegisters();
+            },
+            60000
+        );
+
+    }
+
+    // 6. Display the welcome screen
+    showWelcome();
+
+    return true;
+}
+
 /* =========================================================
    INITIALISE PWA
    ========================================================= */
+
 
 
 async function initialisePWA() {
@@ -3852,10 +3897,7 @@ async function initialisePWA() {
         }
     );
 
-    /*
-       RECOVER FROM A DUPLICATE INSTALLATION ID
-    */
-
+    // Recover from a duplicate installation ID
     const duplicateInstallationID =
         error &&
         error.code === "23505" &&
@@ -3907,7 +3949,7 @@ async function initialisePWA() {
     if (data === "ALREADY_INSTALLED") {
 
         message.textContent =
-            "This user is already registered on another device. Please contact a Admin user.";
+            "This user is already registered on another device. Please contact an Admin user.";
 
         return;
     }
@@ -3920,9 +3962,32 @@ async function initialisePWA() {
         return;
     }
 
-    message.textContent = "Device activated.";
+    message.textContent =
+        "Device activated. Verifying access...";
 
-    showWelcome();
+    // Verify the newly created installation before loading data
+    const installationAuthorised =
+        await checkInstallationAccess();
+
+    if (!installationAuthorised) {
+
+        message.textContent =
+            "Device activated, but access could not be verified. Please refresh the app or contact an Admin user.";
+
+        return;
+    }
+
+    // Use the same startup sequence as existing installations
+    const startupCompleted =
+        await completeAuthorisedStartup();
+
+    if (!startupCompleted) {
+
+        message.textContent =
+            "Device activated, but setup could not be completed. Please refresh the app and try again.";
+
+        return;
+    }
 }
 
 
@@ -3930,11 +3995,9 @@ async function initialisePWA() {
    START
    ========================================================= */
 
-
 (async function () {
 
-    loadSavedData();
-
+    // Check installation access before loading saved data
     const installationAuthorised =
         await checkInstallationAccess();
 
@@ -3945,26 +4008,20 @@ async function initialisePWA() {
 
     }
 
-    await loadAgeGroupsFromSupabase();
+    // Shared setup for authorised installations
+    const startupCompleted =
+        await completeAuthorisedStartup();
 
-    await loadCurrentSeasonFromSupabase();
+    if (!startupCompleted) {
 
-    await autoClosePreviousAttendanceRegisters();
+        console.error(
+            "Authorised startup could not be completed."
+        );
 
-    showWelcome();
+    }
 
 })();
 
-
-setInterval(
-    async () => {
-
-        await autoClosePreviousAttendanceRegisters();
-
-    },
-    60000
-);
-   
 
 </script>
 

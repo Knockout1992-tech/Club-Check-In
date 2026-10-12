@@ -244,719 +244,167 @@ async function addPlayerToAgeGroup(
 
 // Senior Set GMS ========================
 
+
 async function setGMS(playerID, confirmed) {
-    const debug = window.clubCheckInDiagnostics;
-
-    debug.log("setGMS START", {
-        playerID: playerID,
-        confirmed: confirmed
-    });
-
     try {
         const player = findPlayerByID(playerID);
+        if (!player) throw new Error("Player not found.");
 
-        if (!player) {
-            throw new Error(
-                "findPlayerByID returned no player for ID: " + playerID
-            );
-        }
-
-        if (!supabaseClient) {
-            throw new Error("supabaseClient is not available.");
-        }
-
-        debug.log("setGMS: player found", player.name);
-        debug.log("setGMS: sending Supabase update");
-
-        const { data, error } = await supabaseClient
-            .from("players")
-            .update({
-                gms: confirmed,
-                coach_gms_suggestion: confirmed
-                    ? false
-                    : player.coachGmsSuggestion
-            })
-            .eq("player_id", playerID)
-            .select()
-            .single();
-
-        if (error) {
-            throw error;
-        }
-
-        if (!data) {
-            throw new Error("Supabase returned no updated player data.");
-        }
-
-        debug.log("setGMS: Supabase update succeeded", data);
+        const data = await managePlayerRecord(
+            "set_gms", playerID, { value: confirmed }
+        );
 
         player.gms = data.gms;
         player.coachGmsSuggestion = data.coach_gms_suggestion;
-
         saveData();
-
-        debug.log("setGMS: local data saved; refreshing player management");
-
         showPlayerManagement(player.ageGroup);
-
-        debug.log("setGMS COMPLETE");
     } catch (error) {
-        debug.error("setGMS FAILED", error);
-
-        alert(
-            "GMS UPDATE FAILED\n\n" +
-            (error.message || String(error)) +
-            "\n\nFull details are shown in the GMS diagnostics panel."
-        );
+        console.error("GMS update failed:", error);
+        alert("Unable to update GMS. Please check your Senior login and try again.");
     }
 }
 
 // Set Coach GMS Suggestion =====================================
 
 async function setCoachGMSSuggestion(playerID, suggested) {
-    const debug = window.clubCheckInDiagnostics;
-
-    debug.log("setCoachGMSSuggestion START", {
-        playerID: playerID,
-        suggested: suggested
-    });
-
     try {
         const player = findPlayerByID(playerID);
+        if (!player) throw new Error("Player not found.");
 
-        if (!player) {
-            throw new Error(
-                "findPlayerByID returned no player for ID: " + playerID
-            );
-        }
-
-        if (!supabaseClient) {
-            throw new Error("supabaseClient is not available.");
-        }
-
-        debug.log(
-            "setCoachGMSSuggestion: player found",
-            player.name
-        );
-
-        debug.log(
-            "setCoachGMSSuggestion: sending Supabase update"
-        );
-
-        const { data, error } = await supabaseClient
-            .from("players")
-            .update({
-                coach_gms_suggestion: suggested
-            })
-            .eq("player_id", playerID)
-            .select()
-            .single();
-
-        if (error) {
-            throw error;
-        }
-
-        if (!data) {
-            throw new Error("Supabase returned no updated player data.");
-        }
-
-        debug.log(
-            "setCoachGMSSuggestion: Supabase update succeeded",
-            data
+        const data = await managePlayerRecord(
+            "set_coach_suggestion", playerID, { value: suggested }
         );
 
         player.coachGmsSuggestion = data.coach_gms_suggestion;
-
-        if (player.gms) {
-            player.coachGmsSuggestion = false;
-        }
-
         saveData();
-
-        debug.log(
-            "setCoachGMSSuggestion: local data saved; refreshing roster"
-        );
-
         showRoster();
-
-        debug.log("setCoachGMSSuggestion COMPLETE");
     } catch (error) {
-        debug.error("setCoachGMSSuggestion FAILED", error);
-
-        alert(
-            "COACH GMS UPDATE FAILED\n\n" +
-            (error.message || String(error)) +
-            "\n\nFull details are shown in the GMS diagnostics panel."
-        );
+        console.error("Coach GMS suggestion failed:", error);
+        alert("Unable to update the GMS suggestion. Please check your Coach login and try again.");
     }
 }
 
 // Archive Player =============================================
 
-async function archivePlayer(
-    playerID,
-    returnTo
-) {
+async function archivePlayer(playerID, returnTo) {
+    const player = findPlayerByID(playerID);
+    if (!player) return;
 
-    const player =
-        findPlayerByID(
-            playerID
-        );
+    if (!confirm(
+        "Archive " + player.name + "?\n\n" +
+        "Their historical attendance will be retained.\n" +
+        "They will disappear from active registers."
+    )) return;
 
-    if (!player) {
-        return;
-    }
+    try {
+        const data = await managePlayerRecord("archive", playerID);
 
-    const confirmed =
-        confirm(
-            "Archive "
-            + player.name
-            + "?\n\n"
-            + "Their historical attendance will be retained.\n"
-            + "They will disappear from active registers."
-        );
+        player.active = data.active;
+        player.archived = data.archived;
+        player.coachGmsSuggestion = data.coach_gms_suggestion;
+        saveData();
 
-    if (!confirmed) {
-        return;
-    }
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("players")
-            .update({
-                active: false,
-                archived: true,
-                coach_gms_suggestion: false
-            })
-            .eq(
-                "player_id",
-                playerID
-            )
-            .select()
-            .single();
-
-    if (error) {
-
-        console.error(
-            "Supabase player archive failed:",
-            error
-        );
-
-        alert(
-            "Unable to archive the player. Please try again."
-        );
-
-        return;
-    }
-
-    player.active =
-        data.active;
-
-    player.archived =
-        data.archived;
-
-    player.coachGmsSuggestion =
-        data.coach_gms_suggestion;
-
-    saveData();
-
-    if (
-        returnTo ===
-        "playerManagement"
-    ) {
-
-        showPlayerManagement(
-            player.ageGroup
-        );
-
-    } else {
-
-        showArchiveReview();
+        if (returnTo === "playerManagement") {
+            showPlayerManagement(player.ageGroup);
+        } else {
+            showArchiveReview();
+        }
+    } catch (error) {
+        console.error("Player archive failed:", error);
+        alert("Unable to archive the player. Please try again.");
     }
 }
 
-
 // Coach Restore Player ====================================
 
+
 async function restoreArchivedPlayer(
-    playerID,
-    fromRoster = false,
-    rosterAgeGroup = null
+    playerID, fromRoster = false, rosterAgeGroup = null
 ) {
+    const player = findPlayerByID(playerID);
+    if (!player) return;
 
-    const player =
-        findPlayerByID(
-            playerID
-        );
-
-    if (!player) {
-        return;
-    }
-
-    const groups =
-        rosterAgeGroup
+    const groups = rosterAgeGroup
         ? [rosterAgeGroup]
-        : (
-            selectedAgeGroups.length
-            ? selectedAgeGroups
-            : [currentAgeGroup]
-        );
+        : (selectedAgeGroups.length ? selectedAgeGroups : [currentAgeGroup]);
 
     if (!groups.length) {
-
-        alert(
-            "Please select an age group first."
-        );
-
+        alert("Please select an age group first.");
         return;
     }
 
-    let targetAgeGroup =
-        groups[0];
+    let targetAgeGroup = groups[0];
 
     if (groups.length > 1) {
-
-        const select =
-            document.getElementById(
-                "targetAgeGroup"
-            );
-
+        const select = document.getElementById("targetAgeGroup");
         if (!select || !select.value) {
-
-            alert(
-                "Please select the age group to restore the player to."
-            );
-
+            alert("Please select the age group to restore the player to.");
             return;
         }
-
-        targetAgeGroup =
-            select.value;
+        targetAgeGroup = select.value;
     }
 
     let register = null;
 
     if (!fromRoster) {
+        register = getTodayRegister(targetAgeGroup);
 
-        register =
-            getTodayRegister(
-                targetAgeGroup
-            );
-
-        if (
-            !register ||
-            register.submitted
-        ) {
-
-            alert(
-                "Today's register is not open for "
-                + targetAgeGroup
-                + "."
-            );
-
+        if (!register || register.submitted) {
+            alert("Today's register is not open for " + targetAgeGroup + ".");
             return;
         }
     }
 
-    const confirmed =
-        confirm(
-            "Restore "
-            + player.name
-            + " to "
-            + targetAgeGroup
-            + "?\n\n"
-            + "Their historical attendance will be retained.\n"
-            + (
-                fromRoster
-                ? "They will be added to the roster but NOT marked as present today.\n"
-                : "They will be marked as PRESENT today.\n"
-            )
-            + "GMS will be reset and require Senior confirmation."
+    if (!confirm(
+        "Restore " + player.name + " to " + targetAgeGroup + "?\n\n" +
+        "Their historical attendance will be retained.\n" +
+        (fromRoster
+            ? "They will be added to the roster but NOT marked as present today.\n"
+            : "They will be marked as PRESENT today.\n") +
+        "GMS will be reset and require Senior confirmation."
+    )) return;
+
+    try {
+        const data = await managePlayerRecord(
+            "restore", playerID, { ageGroup: targetAgeGroup }
         );
 
-    if (!confirmed) {
-        return;
-    }
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("players")
-            .update({
-                age_group: targetAgeGroup,
-                active: true,
-                archived: false,
-                gms: false,
-                coach_gms_suggestion: false
-            })
-            .eq(
-                "player_id",
-                playerID
-            )
-            .select()
-            .single();
-
-    if (error) {
-
-        console.error(
-            "Supabase player restore failed:",
-            error
-        );
-
-        alert(
-            "Unable to restore the player. Please try again."
-        );
-
-        return;
-    }
-
-    ageGroups.forEach(
-        ageGroup => {
-
-            if (!players[ageGroup]) {
-                return;
-            }
-
-            players[ageGroup] =
-                players[ageGroup].filter(
-                    item =>
-                        item.id !== player.id
+        ageGroups.forEach(ageGroup => {
+            if (players[ageGroup]) {
+                players[ageGroup] = players[ageGroup].filter(
+                    item => String(item.id) !== String(player.id)
                 );
+            }
+        });
+
+        player.ageGroup = data.age_group;
+        player.active = data.active;
+        player.archived = data.archived;
+        player.gms = data.gms;
+        player.coachGmsSuggestion = data.coach_gms_suggestion;
+        player.lastAttendanceDate = data.last_attendance_date;
+
+        if (!players[targetAgeGroup]) players[targetAgeGroup] = [];
+        players[targetAgeGroup].push(player);
+
+        if (!fromRoster) {
+            register.attendance[player.id] = true;
+            player.lastAttendanceDate = getTodayKey();
         }
-    );
 
-    player.ageGroup =
-        data.age_group;
+        saveData();
 
-    player.active =
-        data.active;
-
-    player.archived =
-        data.archived;
-
-    player.gms =
-        data.gms;
-
-    player.coachGmsSuggestion =
-        data.coach_gms_suggestion;
-
-    if (!players[targetAgeGroup]) {
-
-        players[targetAgeGroup] = [];
-    }
-
-    players[targetAgeGroup].push(
-        player
-    );
-
-    if (!fromRoster) {
-
-        register.attendance[
-            player.id
-        ] = true;
-
-        player.lastAttendanceDate =
-            getTodayKey();
-    }
-
-    saveData();
-
-    if (fromRoster) {
-
-        showRoster();
-
-    } else {
-
-        showRegister();
+        if (fromRoster) showRoster();
+        else showRegister();
+    } catch (error) {
+        console.error("Player restore failed:", error);
+        alert("Unable to restore the player. Please try again.");
     }
 }
-
 
 // Senior Restore Player ====================================
 
-async function seniorRestorePlayer(
-    playerID
-) {
-
-    const player =
-        findPlayerByID(
-            playerID
-        );
-
-    if (!player) {
-
-        alert(
-            "Player could not be found."
-        );
-
-        return;
-    }
-
-    const select =
-        document.getElementById(
-            "seniorRestoreAgeGroup"
-        );
-
-    if (!select || !select.value) {
-
-        alert(
-            "Please select an age group."
-        );
-
-        return;
-    }
-
-    const targetAgeGroup =
-        select.value;
-
-    const confirmed =
-        confirm(
-            "Restore "
-            + player.name
-            + " to "
-            + targetAgeGroup
-            + "?\n\n"
-            + "Their Player ID and historical attendance "
-            + "will be retained.\n\n"
-            + "They will NOT be marked as attending today."
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("players")
-            .update({
-                age_group: targetAgeGroup,
-                active: true,
-                archived: false,
-                gms: false,
-                coach_gms_suggestion: false
-            })
-            .eq(
-                "player_id",
-                playerID
-            )
-            .select()
-            .single();
-
-    if (error) {
-
-        console.error(
-            "Supabase senior player restore failed:",
-            error
-        );
-
-        alert(
-            "Unable to restore the player. Please try again."
-        );
-
-        return;
-    }
-
-    ageGroups.forEach(
-        ageGroup => {
-
-            if (!players[ageGroup]) {
-                return;
-            }
-
-            players[ageGroup] =
-                players[ageGroup].filter(
-                    item =>
-                        item.id !== player.id
-                );
-        }
-    );
-
-    player.ageGroup =
-        data.age_group;
-
-    player.active =
-        data.active;
-
-    player.archived =
-        data.archived;
-
-    player.gms =
-        data.gms;
-
-    player.coachGmsSuggestion =
-        data.coach_gms_suggestion;
-
-    if (!players[targetAgeGroup]) {
-
-        players[targetAgeGroup] = [];
-    }
-
-    players[targetAgeGroup].push(
-        player
-    );
-
-    saveData();
-
-    showPlayerManagement(
-        targetAgeGroup
-    );
-}
-
-
-// Move Player =======================================
-
-async function movePlayer(playerID) {
-
-if (currentRole !== "senior" || !currentSeniorPIN) {
-    alert("Please log in as Senior again.");
-    return;
-}
-
-const player = findPlayerByID(playerID);
-
-if (!player) {
-    return;
-}
-
-const select = document.getElementById("moveTargetAgeGroup");
-
-if (!select || !select.value) {
-    return;
-}
-
-const targetAgeGroup = select.value;
-
-if (targetAgeGroup === player.ageGroup) {
-    return;
-}
-
-const confirmed = confirm(
-    "Move "
-    + player.name
-    + " from "
-    + player.ageGroup
-    + " to "
-    + targetAgeGroup
-    + "?\n\n"
-    + "Their Player ID and attendance history will be retained."
-);
-
-if (!confirmed) {
-    return;
-}
-
-// Move the player in the database
-const { data, error } = await supabaseClient
-    .from("players")
-    .update({
-        age_group: targetAgeGroup
-    })
-    .eq("player_id", playerID)
-    .select()
-    .single();
-
-if (error) {
-    console.error("Supabase player move failed:", error);
-    alert("Unable to move the player. Please try again.");
-    return;
-}
-
-// Update the local player lists
-if (players[player.ageGroup]) {
-    players[player.ageGroup] =
-        players[player.ageGroup].filter(
-            item => item.id !== player.id
-        );
-}
-
-player.ageGroup = data.age_group;
-
-if (!players[targetAgeGroup]) {
-    players[targetAgeGroup] = [];
-}
-
-players[targetAgeGroup].push(player);
-
-saveData();
-
-// Find today's destination register directly in the database.
-// Senior does not need to load or open the register.
-const todayKey = getTodayKey();
-
-const { data: register, error: registerError } =
-    await supabaseClient
-        .from("attendance_registers")
-        .select("id, submitted, closed_automatically")
-        .eq("register_date", todayKey)
-        .eq("age_group", targetAgeGroup)
-        .maybeSingle();
-
-if (registerError) {
-    console.error(
-        "Player moved, but today's register could not be checked:",
-        registerError
-    );
-
-    alert(
-        "The player was moved successfully, but today's register "
-        + "could not be checked. Please ask the Coach to check attendance."
-    );
-
-    showPlayerManagement(targetAgeGroup);
-    return;
-}
-
-// Only add the player if a register already exists and is open.
-if (
-    register &&
-    !register.submitted &&
-    !register.closed_automatically
-) {
-    const { data: added, error: addError } =
-        await supabaseClient.rpc(
-            "add_player_to_attendance_register",
-            {
-                requested_register_id: register.id,
-                requested_player_id: playerID,
-                supplied_code: currentSeniorPIN,
-                supplied_role: "senior"
-            }
-        );
-
-    if (addError || added !== true) {
-        console.error(
-            "Player moved, but adding them to the open register failed:",
-            addError || added
-        );
-
-        alert(
-            "The player was moved successfully, but could not be added "
-            + "to today's open register. The Coach may need to resolve this "
-            + "before recording attendance."
-        );
-
-        showPlayerManagement(targetAgeGroup);
-        return;
-    }
-}
-
-showPlayerManagement(targetAgeGroup);
-
-}
-
-// Rename players =======================================
-
-
-async function renamePlayer(playerID) {
-
+async function seniorRestorePlayer(playerID) {
     const player = findPlayerByID(playerID);
 
     if (!player) {
@@ -964,14 +412,146 @@ async function renamePlayer(playerID) {
         return;
     }
 
-    const newName = prompt(
-        "Enter the new player name:",
-        player.name
-    );
+    const select = document.getElementById("seniorRestoreAgeGroup");
 
-    if (newName === null) {
+    if (!select || !select.value) {
+        alert("Please select an age group.");
         return;
     }
+
+    const targetAgeGroup = select.value;
+
+    if (!confirm(
+        "Restore " + player.name + " to " + targetAgeGroup + "?\n\n" +
+        "Their Player ID and historical attendance will be retained.\n\n" +
+        "They will NOT be marked as attending today."
+    )) return;
+
+    try {
+        const data = await managePlayerRecord(
+            "restore", playerID, { ageGroup: targetAgeGroup }
+        );
+
+        ageGroups.forEach(ageGroup => {
+            if (players[ageGroup]) {
+                players[ageGroup] = players[ageGroup].filter(
+                    item => String(item.id) !== String(player.id)
+                );
+            }
+        });
+
+        player.ageGroup = data.age_group;
+        player.active = data.active;
+        player.archived = data.archived;
+        player.gms = data.gms;
+        player.coachGmsSuggestion = data.coach_gms_suggestion;
+        player.lastAttendanceDate = data.last_attendance_date;
+
+        if (!players[targetAgeGroup]) players[targetAgeGroup] = [];
+        players[targetAgeGroup].push(player);
+
+        saveData();
+        showPlayerManagement(targetAgeGroup);
+    } catch (error) {
+        console.error("Senior player restore failed:", error);
+        alert("Unable to restore the player. Please try again.");
+    }
+}
+
+// Move Player =======================================
+
+async function movePlayer(playerID) {
+    if (currentRole !== "senior" || !currentSeniorPIN) {
+        alert("Please log in as Senior again.");
+        return;
+    }
+
+    const player = findPlayerByID(playerID);
+    if (!player) return;
+
+    const select = document.getElementById("moveTargetAgeGroup");
+    if (!select || !select.value) return;
+
+    const targetAgeGroup = select.value;
+    if (targetAgeGroup === player.ageGroup) return;
+
+    if (!confirm(
+        "Move " + player.name + " from " + player.ageGroup +
+        " to " + targetAgeGroup + "?\n\n" +
+        "Their Player ID and attendance history will be retained."
+    )) return;
+
+    try {
+        const data = await managePlayerRecord(
+            "move", playerID, { ageGroup: targetAgeGroup }
+        );
+
+        if (players[player.ageGroup]) {
+            players[player.ageGroup] = players[player.ageGroup].filter(
+                item => String(item.id) !== String(player.id)
+            );
+        }
+
+        player.ageGroup = data.age_group;
+
+        if (!players[targetAgeGroup]) players[targetAgeGroup] = [];
+        players[targetAgeGroup].push(player);
+        saveData();
+
+        const todayKey = getTodayKey();
+
+        const { data: register, error: registerError } =
+            await supabaseClient
+                .from("attendance_registers")
+                .select("id, submitted, closed_automatically")
+                .eq("register_date", todayKey)
+                .eq("age_group", targetAgeGroup)
+                .maybeSingle();
+
+        if (registerError) throw registerError;
+
+        if (register && !register.submitted && !register.closed_automatically) {
+            const { data: added, error: addError } =
+                await supabaseClient.rpc(
+                    "add_player_to_attendance_register",
+                    {
+                        requested_register_id: register.id,
+                        requested_player_id: playerID,
+                        supplied_code: currentSeniorPIN,
+                        supplied_role: "senior"
+                    }
+                );
+
+            if (addError) throw addError;
+            if (added !== true) {
+                throw new Error("Could not add the player to today's register.");
+            }
+        }
+
+        showPlayerManagement(targetAgeGroup);
+    } catch (error) {
+        console.error("Player move failed:", error);
+        alert(
+            "The player may have been moved, but a later register step failed. " +
+            "Check the roster and today's register before retrying."
+        );
+    }
+}
+
+// Rename players =======================================
+
+
+
+async function renamePlayer(playerID) {
+    const player = findPlayerByID(playerID);
+
+    if (!player) {
+        alert("Player could not be found.");
+        return;
+    }
+
+    const newName = prompt("Enter the new player name:", player.name);
+    if (newName === null) return;
 
     const name = newName.trim();
 
@@ -980,41 +560,19 @@ async function renamePlayer(playerID) {
         return;
     }
 
-    if (name === player.name) {
-        return;
-    }
+    if (name === player.name) return;
 
-    const confirmed = confirm(
+    if (!confirm(
         "Change the player name from:\n\n" +
-        player.name +
-        "\n\nto:\n\n" +
-        name +
-        "?"
-    );
-
-    if (!confirmed) {
-        return;
-    }
+        player.name + "\n\nto:\n\n" + name + "?"
+    )) return;
 
     try {
-
-        const { data, error } = await supabaseClient
-            .from("players")
-            .update({ name: name })
-            .eq("player_id", playerID)
-            .select()
-            .single();
-
-        if (error) {
-            throw error;
-        }
-
-        if (!data) {
-            throw new Error("No updated player record was returned.");
-        }
+        const data = await managePlayerRecord(
+            "rename", playerID, { name }
+        );
 
         player.name = data.name;
-
         saveData();
 
         if (currentRole === "senior") {
@@ -1022,14 +580,45 @@ async function renamePlayer(playerID) {
         } else {
             showRoster();
         }
-
     } catch (error) {
-
         console.error("Player rename failed:", error);
-
-        alert(
-            "Unable to change the player name. Please try again."
-        );
+        alert("Unable to change the player name. Please try again.");
     }
 }
 
+// Helper =============================================
+async function managePlayerRecord(action, playerID, options = {}) {
+    const role = currentRole;
+
+    const code =
+        role === "senior" ? currentSeniorPIN :
+        role === "coach" ? currentAccessPIN :
+        null;
+
+    if (!code || !role) {
+        throw new Error("Please log in again.");
+    }
+
+    const { data, error } = await supabaseClient.rpc(
+        "manage_player",
+        {
+            supplied_code: code,
+            supplied_role: role,
+            requested_action: action,
+            requested_player_id: String(playerID),
+            requested_name: options.name ?? null,
+            requested_age_group: options.ageGroup ?? null,
+            requested_boolean: options.value ?? null
+        }
+    );
+
+    if (error) throw error;
+
+    if (!Array.isArray(data) || data.length !== 1) {
+        throw new Error(
+            "The database rejected the change or returned no player."
+        );
+    }
+
+    return data[0];
+}

@@ -78,149 +78,169 @@ function ageGroupNeedsGMSConfirmation(
 
 // Add Player =========================================
   
+
 async function addPlayerToAgeGroup(
-ageGroup,
-name,
-gms
+    ageGroup,
+    name,
+    gms
 ) {
 
-// Require a valid logged-in role.
-let suppliedCode = null;
+    // Require a valid logged-in role and PIN.
+    let suppliedCode = null;
 
-if (currentRole === "coach") {
-    suppliedCode = currentAccessPIN;
-} else if (currentRole === "senior") {
-    suppliedCode = currentSeniorPIN;
-}
+    if (currentRole === "coach") {
+        suppliedCode = currentAccessPIN;
+    } else if (currentRole === "senior") {
+        suppliedCode = currentSeniorPIN;
+    }
 
-if (!suppliedCode) {
-    alert("Please log in again before adding a player.");
-    return null;
-}
+    if (!suppliedCode) {
+        alert("Please log in again before adding a player.");
+        return null;
+    }
 
-const playerID = crypto.randomUUID();
+    const playerID = crypto.randomUUID();
 
-// Create the player in Supabase.
-const { data, error } = await supabaseClient
-    .from("players")
-    .insert({
-        player_id: playerID,
-        name: name,
-        age_group: ageGroup,
-        gms: gms,
-        coach_gms_suggestion: false,
-        active: true,
-        archived: false,
-        last_attendance_date: null
-    })
-    .select()
-    .single();
-
-if (error) {
-    console.error(
-        "Supabase player creation failed:",
+    // Create the player through the PIN-protected database function.
+    const {
+        data,
         error
+    } = await supabaseClient.rpc(
+        "create_player",
+        {
+            requested_player_id: playerID,
+            requested_name: name,
+            requested_age_group: ageGroup,
+            requested_gms: gms,
+            supplied_code: suppliedCode,
+            supplied_role: currentRole
+        }
     );
 
-    alert("Unable to add the player. Please try again.");
-    return null;
-}
-
-// Update the local roster.
-const newPlayer = {
-    id: data.player_id,
-    name: data.name,
-    ageGroup: data.age_group,
-    gms: data.gms,
-    coachGmsSuggestion: data.coach_gms_suggestion,
-    active: data.active,
-    archived: data.archived,
-    lastAttendanceDate: data.last_attendance_date
-};
-
-if (!players[data.age_group]) {
-    players[data.age_group] = [];
-}
-
-players[data.age_group].push(newPlayer);
-
-saveData();
-
-// Check whether today's destination register already exists.
-const todayKey = getTodayKey();
-
-const {
-    data: register,
-    error: registerError
-} = await supabaseClient
-    .from("attendance_registers")
-    .select("id, submitted, closed_automatically")
-    .eq("register_date", todayKey)
-    .eq("age_group", ageGroup)
-    .maybeSingle();
-
-if (registerError) {
-    console.error(
-        "Player created, but today's register could not be checked:",
-        registerError
-    );
-
-    alert(
-        "The player was added to the roster, but today's register "
-        + "could not be checked. Please ask the Coach to check attendance."
-    );
-
-    return newPlayer;
-}
-
-// Only add them if today's register exists and remains open.
-// Do not create a register automatically.
-if (
-    register &&
-    !register.submitted &&
-    !register.closed_automatically
-) {
-
-    const { data: added, error: addError } =
-        await supabaseClient.rpc(
-            "add_player_to_attendance_register",
-            {
-                requested_register_id: register.id,
-                requested_player_id: playerID,
-                supplied_code: suppliedCode,
-                supplied_role: currentRole
-            }
+    if (error) {
+        console.error(
+            "Supabase player creation failed:",
+            error
         );
 
-    if (addError || added !== true) {
+        alert("Unable to add the player. Please try again.");
+        return null;
+    }
+
+    // The function returns a table, so expect one returned row.
+    if (!Array.isArray(data) || data.length !== 1) {
         console.error(
-            "Player created, but register addition failed:",
-            addError || added
+            "Player creation was not confirmed by the database:",
+            data
         );
 
         alert(
-            "The player was added to the roster, but could not be "
-            + "added to today's open register. Please check attendance "
-            + "before marking them present."
+            "The player could not be created. "
+            + "Please check your login and try again."
+        );
+
+        return null;
+    }
+
+    const savedPlayer = data[0];
+
+    // Update the local roster using the saved database record.
+    const newPlayer = {
+        id: savedPlayer.player_id,
+        name: savedPlayer.name,
+        ageGroup: savedPlayer.age_group,
+        gms: savedPlayer.gms,
+        coachGmsSuggestion: savedPlayer.coach_gms_suggestion,
+        active: savedPlayer.active,
+        archived: savedPlayer.archived,
+        lastAttendanceDate: savedPlayer.last_attendance_date
+    };
+
+    if (!players[savedPlayer.age_group]) {
+        players[savedPlayer.age_group] = [];
+    }
+
+    players[savedPlayer.age_group].push(newPlayer);
+
+    saveData();
+
+    // Check whether today's destination register already exists.
+    const todayKey = getTodayKey();
+
+    const {
+        data: register,
+        error: registerError
+    } = await supabaseClient
+        .from("attendance_registers")
+        .select("id, submitted, closed_automatically")
+        .eq("register_date", todayKey)
+        .eq("age_group", ageGroup)
+        .maybeSingle();
+
+    if (registerError) {
+        console.error(
+            "Player created, but today's register could not be checked:",
+            registerError
+        );
+
+        alert(
+            "The player was added to the roster, but today's register "
+            + "could not be checked. Please ask the Coach to check attendance."
         );
 
         return newPlayer;
     }
 
-    // Keep the in-memory register in sync if it is loaded.
-    const loadedRegister = getTodayRegister(ageGroup);
-
+    // Add them only when today's register exists and remains open.
+    // Do not create a register automatically.
     if (
-        loadedRegister &&
-        loadedRegister.id === register.id
+        register &&
+        !register.submitted &&
+        !register.closed_automatically
     ) {
-        loadedRegister.attendance[playerID] = false;
+
+        const {
+            data: added,
+            error: addError
+        } = await supabaseClient.rpc(
+            "add_player_to_attendance_register",
+            {
+                requested_register_id: register.id,
+                requested_player_id: savedPlayer.player_id,
+                supplied_code: suppliedCode,
+                supplied_role: currentRole
+            }
+        );
+
+        if (addError || added !== true) {
+            console.error(
+                "Player created, but register addition failed:",
+                addError || added
+            );
+
+            alert(
+                "The player was added to the roster, but could not be "
+                + "added to today's open register. Please check attendance "
+                + "before marking them present."
+            );
+
+            return newPlayer;
+        }
+
+        // Keep the in-memory register in sync if it is loaded.
+        const loadedRegister = getTodayRegister(ageGroup);
+
+        if (
+            loadedRegister &&
+            loadedRegister.id === register.id
+        ) {
+            loadedRegister.attendance[savedPlayer.player_id] = false;
+        }
     }
+
+    return newPlayer;
 }
 
-return newPlayer;
-
-}
 
 // Senior Set GMS ========================
 

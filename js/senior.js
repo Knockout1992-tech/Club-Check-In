@@ -8,54 +8,21 @@
    ANONYMISE ARCHIVED PLAYER
    ========================================================= */
 
-async function permanentlyRemovePlayer(playerID) {
 
+async function permanentlyRemovePlayer(playerID) {
     const diag = window.clubCheckInDiagnostics;
 
-    diag?.section("ANONYMISE PLAYER");
-    diag?.log("Started. Player ID:", playerID);
-
     if (currentRole !== "senior") {
-
-        diag?.error(
-            "Permission check failed. Current role:",
-            currentRole
-        );
-
         alert("Only Admin can anonymise players.");
         return;
     }
 
     const player = findPlayerByID(playerID);
 
-    if (!player) {
-
-        diag?.error(
-            "Player not found locally:",
-            playerID
-        );
-
-        alert("Player could not be found.");
-        return;
-    }
-
-    if (!player.archived) {
-
-        diag?.error(
-            "Player is not archived:",
-            playerID
-        );
-
+    if (!player || !player.archived) {
         alert("Only archived players can be anonymised.");
         return;
     }
-
-    diag?.log(
-        "Player found:",
-        player.name,
-        "Archived:",
-        player.archived
-    );
 
     if (!confirm(
         "ANONYMISE " + player.name + "?\n\n" +
@@ -63,186 +30,47 @@ async function permanentlyRemovePlayer(playerID) {
         "Their player ID and historical attendance will be retained.\n\n" +
         "This cannot be undone."
     )) {
-
-        diag?.log("Cancelled by user.");
         return;
     }
 
     try {
-
-        /* STEP 1 — READ EXISTING ANONYMOUS NAMES */
-
-        diag?.log(
-            "Step 1: Reading anonymous names from Supabase."
-        );
-
-        const {
-            data: anonymousPlayers,
-            error: readError
-        } = await supabaseClient
-            .from("players")
-            .select("name")
-            .like("name", "Anonymous-%");
-
-        if (readError) {
-
-            diag?.error(
-                "Step 1 failed: Supabase read.",
-                readError
-            );
-
-            throw readError;
-        }
-
-        let highestNumber = 0;
-
-        (anonymousPlayers || []).forEach(item => {
-
-            const match =
-                /^Anonymous-(\d+)$/.exec(item.name);
-
-            if (match) {
-
-                highestNumber = Math.max(
-                    highestNumber,
-                    Number(match[1])
-                );
-
+        const { data, error } = await supabaseClient.rpc(
+            "anonymise_archived_player",
+            {
+                supplied_code: currentSeniorPIN,
+                requested_player_id: playerID
             }
-
-        });
-
-        const anonymousName =
-            "Anonymous-" +
-            String(highestNumber + 1).padStart(3, "0");
-
-        diag?.log(
-            "Step 1 complete. Existing anonymous records:",
-            anonymousPlayers?.length,
-            "New name:",
-            anonymousName
         );
 
+        if (error) throw error;
 
-        /* STEP 2 — UPDATE SUPABASE */
-
-        diag?.log(
-            "Step 2: Updating Supabase player record."
-        );
-
-        const {
-            data: updatedPlayer,
-            error: updateError
-        } = await supabaseClient
-            .from("players")
-            .update({
-                name: anonymousName,
-                gms: false,
-                coach_gms_suggestion: false,
-                active: false,
-                archived: true,
-                last_attendance_date: null
-            })
-            .eq("player_id", playerID)
-            .eq("archived", true)
-            .select("player_id, name, active, archived");
-
-        if (updateError) {
-
-            diag?.error(
-                "Step 2 failed: Supabase update.",
-                updateError
-            );
-
-            throw updateError;
-        }
-
-        diag?.log(
-            "Step 2 response:",
-            updatedPlayer
-        );
-
-        if (
-            !Array.isArray(updatedPlayer) ||
-            updatedPlayer.length !== 1
-        ) {
-
+        if (typeof data !== "string" || !data) {
             throw new Error(
-                "Supabase did not confirm exactly one updated player. " +
-                "Check the player ID, archived status and database permissions."
+                "Supabase did not confirm anonymisation. Check the PIN and archived status."
             );
-
         }
-
-        const confirmedPlayer = updatedPlayer[0];
-
-        if (
-            confirmedPlayer.player_id !== playerID ||
-            confirmedPlayer.name !== anonymousName ||
-            confirmedPlayer.active !== false ||
-            confirmedPlayer.archived !== true
-        ) {
-
-            throw new Error(
-                "The returned player record did not match the expected anonymised values."
-            );
-
-        }
-
-        diag?.log(
-            "Step 2 complete. Supabase confirmed:",
-            anonymousName
-        );
-
-
-        /* STEP 3 — UPDATE LOCAL DATA */
-
-        diag?.log(
-            "Step 3: Removing identifiable local player data."
-        );
 
         ageGroups.forEach(ageGroup => {
-
-            if (!players[ageGroup]) {
-                return;
-            }
-
-            players[ageGroup] =
-                players[ageGroup].filter(
+            if (players[ageGroup]) {
+                players[ageGroup] = players[ageGroup].filter(
                     item => item.id !== playerID
                 );
-
+            }
         });
 
         saveData();
 
-        diag?.log(
-            "SUCCESS: Player anonymised as",
-            anonymousName,
-            "Player ID and historical attendance retained."
-        );
+        diag?.log("Archived player anonymised successfully.");
 
-        alert(
-            "Player anonymised successfully as " +
-            anonymousName + "."
-        );
-
+        alert("Player anonymised successfully as " + data + ".");
         showArchiveList();
 
     } catch (error) {
+        diag?.error("Anonymisation failed:", error.message);
+        console.error("Anonymisation failed:", error.message);
 
-        diag?.error(
-            "ANONYMISATION FAILED:",
-            error
-        );
-
-        alert(
-            "Anonymisation failed. Check the on-screen " +
-            "diagnostics for the exact error."
-        );
-
+        alert("Anonymisation failed. No local player data was removed.");
     }
-
 }
 
 /* =========================================================

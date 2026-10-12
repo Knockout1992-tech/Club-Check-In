@@ -209,88 +209,67 @@ function saveData() {
    LOAD PLAYERS FROM SUPABASE
    ========================================================= */
 
+
 async function loadPlayersFromSupabase() {
-
     try {
+        const suppliedRole = currentRole;
 
-        const { data, error } =
-            await supabaseClient
-                .from("players")
-                .select("*");
+        const suppliedCode =
+            suppliedRole === "senior"
+                ? currentSeniorPIN
+                : suppliedRole === "coach"
+                    ? currentAccessPIN
+                    : null;
 
-        if (error) {
-            throw error;
+        if (!suppliedCode || !suppliedRole) {
+            console.error("Player load requires an authorised role.");
+            return false;
         }
 
+        const { data, error } = await supabaseClient.rpc(
+            "load_players",
+            {
+                supplied_code: suppliedCode,
+                supplied_role: suppliedRole
+            }
+        );
+
+        if (error) throw error;
+
         if (!Array.isArray(data)) {
-            throw new Error(
-                "Supabase returned an invalid players result."
-            );
+            throw new Error("Invalid players result.");
         }
 
         players = {};
 
         data.forEach(player => {
-
             if (!players[player.age_group]) {
                 players[player.age_group] = [];
             }
 
             players[player.age_group].push({
-
-                id:
-                    player.player_id,
-
-                name:
-                    player.name,
-
-                ageGroup:
-                    player.age_group,
-
-                gms:
-                    player.gms,
-
-                coachGmsSuggestion:
-                    player.coach_gms_suggestion,
-
-                active:
-                    player.active,
-
-                archived:
-                    player.archived,
-
-                lastAttendanceDate:
-                    player.last_attendance_date
-
+                id: player.player_id,
+                name: player.name,
+                ageGroup: player.age_group,
+                gms: player.gms,
+                coachGmsSuggestion: player.coach_gms_suggestion,
+                active: player.active,
+                archived: player.archived,
+                lastAttendanceDate: player.last_attendance_date
             });
-
         });
 
-        // Ensure configured age groups exist.
         ageGroups.forEach(ageGroup => {
-
             if (!Array.isArray(players[ageGroup])) {
                 players[ageGroup] = [];
             }
-
         });
 
-        console.log(
-            "Supabase players loaded successfully:",
-            players
-        );
-
+        console.log("Player records loaded successfully.");
         return true;
 
     } catch (error) {
-
-        console.error(
-            "Supabase player load failed:",
-            error
-        );
-
+        console.error("Player load failed:", error.message);
         return false;
-
     }
-
 }

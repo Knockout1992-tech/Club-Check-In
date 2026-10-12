@@ -385,16 +385,31 @@ async function setAttendance(
    ADD PLAYER TO TODAY'S REGISTER
    ========================================================= */
 
+
 async function addPlayerToTodayAttendance(
     ageGroup,
     playerID
 ) {
+
+    if (currentRole !== "coach" || !currentAccessPIN) {
+
+        alert("Please log in as Coach again.");
+        return false;
+
+    }
 
     const register =
         getTodayRegister(ageGroup);
 
     if (!register) {
 
+        return false;
+
+    }
+
+    if (register.submitted || register.closedAutomatically) {
+
+        alert("This register is closed.");
         return false;
 
     }
@@ -407,7 +422,10 @@ async function addPlayerToTodayAttendance(
                     register.id,
 
                 requested_player_id:
-                    playerID
+                    playerID,
+
+                supplied_code:
+                    currentAccessPIN
             }
         );
 
@@ -447,7 +465,6 @@ async function addPlayerToTodayAttendance(
     return true;
 
 }
-
 
 /* =========================================================
    SAVE / LEAVE REGISTER

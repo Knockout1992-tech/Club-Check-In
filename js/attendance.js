@@ -39,7 +39,13 @@ async function autoClosePreviousAttendanceRegisters() {
    LOAD TODAY'S REGISTER
    ========================================================= */
 
+
 async function loadTodayAttendanceRegister(ageGroup) {
+
+    if (currentRole !== "coach" || !currentAccessPIN) {
+        alert("Please log in as Coach again.");
+        return null;
+    }
 
     const todayKey = getTodayKey();
 
@@ -48,7 +54,8 @@ async function loadTodayAttendanceRegister(ageGroup) {
             "open_attendance_register",
             {
                 requested_date: todayKey,
-                requested_age_group: ageGroup
+                requested_age_group: ageGroup,
+                supplied_code: currentAccessPIN
             }
         );
 
@@ -77,8 +84,7 @@ async function loadTodayAttendanceRegister(ageGroup) {
         );
 
         alert(
-            ageGroup +
-           " is not active."
+            ageGroup + " is not active."
         );
 
         return null;

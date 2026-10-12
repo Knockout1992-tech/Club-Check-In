@@ -3734,14 +3734,14 @@ function getInstallationID() {
 
 }
 
+
 /* =========================================================
    CHECK PWA ACCESS
    ========================================================= */
 
 async function checkInstallationAccess() {
 
-    const installationID =
-        getInstallationID();
+    const installationID = getInstallationID();
 
     const { data, error } =
         await supabaseClient.rpc(
@@ -3759,14 +3759,69 @@ async function checkInstallationAccess() {
             error
         );
 
-        return false;
+        // An RPC error does not prove access has been revoked.
+        return null;
     }
 
-    if (!data) {
-        return false;
+    // A user ID means access is authorised.
+    // Null means the installation or user is inactive.
+    return typeof data === "string" && data.length > 0;
+}
+
+
+/* =========================================================
+   AUTOMATIC INSTALLATION ACCESS MONITOR
+   ========================================================= */
+
+let installationAccessInterval = null;
+let installationAccessCheckRunning = false;
+
+function startInstallationAccessMonitoring() {
+    if (installationAccessInterval !== null) {
+        return;
     }
 
-    return true;
+    installationAccessInterval = setInterval(async () => {
+        // Avoid overlapping checks.
+        if (installationAccessCheckRunning) {
+            return;
+        }
+
+        // Only revoke an active Coach or Senior session.
+        if (
+            !currentRole ||
+            (!currentAccessPIN && !currentSeniorPIN)
+        ) {
+            return;
+        }
+
+        installationAccessCheckRunning = true;
+
+        try {
+            const authorised = await checkInstallationAccess();
+
+            // A temporary error is unknown, not confirmed revocation.
+            if (authorised === null) {
+                return;
+            }
+
+            // Only a confirmed denial ends the current session.
+            if (authorised === false) {
+                showWelcome();
+                alert(
+                    "Your access has been revoked or your account " +
+                    "deactivated. You have been logged out."
+                );
+            }
+        } catch (error) {
+            console.error(
+                "Automatic access monitoring failed:",
+                error
+            );
+        } finally {
+            installationAccessCheckRunning = false;
+        }
+    }, 30000);
 }
 
 /* =========================================================
@@ -3852,8 +3907,9 @@ async function completeAuthorisedStartup() {
 
     }
 
-    // 6. Display the welcome screen
+    // 6. Display the welcome screen & monitor active or inactive sessions
     showWelcome();
+startInstallationAccessMonitoring();
 
     return true;
 }
@@ -3995,31 +4051,37 @@ async function initialisePWA() {
    START
    ========================================================= */
 
-(async function () {
 
-    // Check installation access before loading saved data
+(async function () {
     const installationAuthorised =
         await checkInstallationAccess();
 
-    if (!installationAuthorised) {
-
+    // Confirmed access denial: show the activation screen.
+    if (installationAuthorised === false) {
         showInitialAccess();
         return;
-
     }
 
-    // Shared setup for authorised installations
+    // Temporary connection/RPC error: do not treat it as revocation.
+    // Protected startup remains blocked until access can be verified.
+    if (installationAuthorised === null) {
+        showWelcome();
+        alert(
+            "Unable to verify this device's access. " +
+            "Check your connection and refresh the app."
+        );
+        return;
+    }
+
+    // Access confirmed: continue normal startup.
     const startupCompleted =
         await completeAuthorisedStartup();
 
     if (!startupCompleted) {
-
         console.error(
             "Authorised startup could not be completed."
         );
-
     }
-
 })();
 
 

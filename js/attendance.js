@@ -275,10 +275,24 @@ async function openAgeGroupRegister(ageGroup) {
    UPDATE ATTENDANCE
    ========================================================= */
 
+
 async function setAttendance(
     playerID,
     present
 ) {
+
+    // Require an active Coach session.
+    if (
+        currentRole !== "coach" ||
+        !currentAccessPIN
+    ) {
+
+        alert(
+            "Please log in as Coach again."
+        );
+
+        return;
+    }
 
     const player =
         findPlayerByID(playerID);
@@ -296,6 +310,7 @@ async function setAttendance(
         return;
     }
 
+    // Do not allow changes to locked registers.
     if (
         register.submitted ||
         register.closedAutomatically
@@ -303,6 +318,7 @@ async function setAttendance(
         return;
     }
 
+    // Update attendance through the protected RPC.
     const { data, error } =
         await supabaseClient.rpc(
             "update_attendance",
@@ -314,7 +330,10 @@ async function setAttendance(
                     playerID,
 
                 requested_present:
-                    present
+                    present,
+
+                supplied_code:
+                    currentAccessPIN
             }
         );
 
@@ -335,12 +354,14 @@ async function setAttendance(
     if (data !== true) {
 
         alert(
-            "Attendance could not be updated."
+            "Attendance could not be updated. Please check your access and try again."
         );
 
         return;
     }
 
+    // Update the local register only after
+    // Supabase confirms the change succeeded.
     register.attendance[playerID] =
         present;
 
@@ -353,6 +374,7 @@ async function setAttendance(
 
     showRegister();
 }
+
 /* =========================================================
    ADD PLAYER TO TODAY'S REGISTER
    ========================================================= */

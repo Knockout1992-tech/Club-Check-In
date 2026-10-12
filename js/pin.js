@@ -1,8 +1,22 @@
+
  // PIN Screen =======================================
+
+// Keep the verified PIN in memory for authorised
+// database operations. Do not put it in localStorage.
+let currentAccessPIN = null;
+
+
+// ===================================================
+// PIN SCREEN
+// ===================================================
 
 function showPIN(role) {
 
     currentRole = role;
+
+    // Clear any previous session credentials when
+    // returning to the PIN screen.
+    currentAccessPIN = null;
 
     const roleName =
         role === "coach"
@@ -68,6 +82,11 @@ function showPIN(role) {
 
 }
 
+
+// ===================================================
+// VERIFY PIN
+// ===================================================
+
 async function checkPIN() {
 
     const entered =
@@ -98,11 +117,8 @@ async function checkPIN() {
         await supabaseClient.rpc(
             "verify_access_code",
             {
-                supplied_code:
-                    entered,
-
-                code_type:
-                    currentRole
+                supplied_code: entered,
+                code_type: currentRole
             }
         );
 
@@ -121,6 +137,10 @@ async function checkPIN() {
     }
 
     if (data === true) {
+
+        // Retain the verified credential in memory
+        // for subsequent database authorisation.
+        currentAccessPIN = entered;
 
         if (currentRole === "coach") {
 
@@ -141,6 +161,8 @@ async function checkPIN() {
         }
 
     }
+
+    currentAccessPIN = null;
 
     error.textContent =
         "Incorrect PIN.";

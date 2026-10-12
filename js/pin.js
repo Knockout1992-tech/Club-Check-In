@@ -87,43 +87,39 @@ function showPIN(role) {
 // VERIFY PIN
 // ===================================================
 
+
 async function checkPIN() {
 
     const entered =
-        document.getElementById(
-            "pinInput"
-        ).value;
+        document.getElementById("pinInput").value;
 
     const error =
-        document.getElementById(
-            "pinError"
-        );
+        document.getElementById("pinError");
 
     error.textContent = "";
 
     if (!entered) {
-
-        error.textContent =
-            "Please enter your PIN.";
-
+        error.textContent = "Please enter your PIN.";
         return;
-
     }
 
+    // Do not retain credentials from an earlier attempt.
+    currentAccessPIN = null;
+    currentSeniorPIN = null;
+
+    // Step 1: Verify the supplied PIN.
     const {
         data,
         error: supabaseError
-    } =
-        await supabaseClient.rpc(
-            "verify_access_code",
-            {
-                supplied_code: entered,
-                code_type: currentRole
-            }
-        );
+    } = await supabaseClient.rpc(
+        "verify_access_code",
+        {
+            supplied_code: entered,
+            code_type: currentRole
+        }
+    );
 
     if (supabaseError) {
-
         console.error(
             "PIN verification error:",
             supabaseError
@@ -133,38 +129,50 @@ async function checkPIN() {
             "Unable to verify PIN. Please try again.";
 
         return;
-
     }
 
-    if (data === true) {
-
-        // Retain the verified credential in memory
-        // for subsequent database authorisation.
-        currentAccessPIN = entered;
-
-        if (currentRole === "coach") {
-
-            showCoachAgeGroups();
-
-            return;
-
-        }
-
-        if (currentRole === "senior") {
-
-            currentSeniorPIN = entered;
-
-            showSeniorDashboard();
-
-            return;
-
-        }
-
+    if (data !== true) {
+        error.textContent = "Incorrect PIN.";
+        return;
     }
 
+    // Step 2: Check that this installation and its user
+    // are still authorised by Supabase.
+    const installationAuthorised =
+        await checkInstallationAccess();
+
+    if (installationAuthorised === null) {
+        error.textContent =
+            "Unable to verify device access. Check your connection and try again.";
+
+        return;
+    }
+
+    if (installationAuthorised === false) {
+        error.textContent =
+            "Access has been revoked or this user is inactive. Contact an Admin.";
+
+        return;
+    }
+
+    // Step 3: Grant the session only after both checks pass.
+    currentAccessPIN = entered;
+
+    if (currentRole === "coach") {
+        showCoachAgeGroups();
+        return;
+    }
+
+    if (currentRole === "senior") {
+        currentSeniorPIN = entered;
+        showSeniorDashboard();
+        return;
+    }
+
+    // Unexpected role: do not retain the credential.
     currentAccessPIN = null;
+    currentSeniorPIN = null;
 
     error.textContent =
-        "Incorrect PIN.";
-
+        "Invalid access role. Please start again.";
 }

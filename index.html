@@ -274,183 +274,178 @@ function openSelectedCoachAgeGroups() {
 // Coach Dashboard ==========================================
 async function showCoachDashboard() {
 
-    const groups =
-        selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
+const groups =
+    selectedAgeGroups.length
+    ? selectedAgeGroups
+    : [currentAgeGroup];
 
-    let activeCount = 0;
-    let presentCount = 0;
+if (
+    currentRole !== "coach" ||
+    !currentAccessPIN
+) {
+    alert("Please log in as Coach again.");
+    return;
+}
 
-    /*
-     * Read today's registers without creating them.
-     * Only count attendance where a register already exists.
-     */
+let activeCount = 0;
+let presentCount = 0;
 
-    const todayKey = getTodayKey();
+const todayKey = getTodayKey();
 
-    const { data: registers, error } =
-        await supabaseClient
-            .from("attendance_registers")
-            .select(`
-                id,
-                age_group,
-                submitted,
-                closed_automatically
-            `)
-            .eq("register_date", todayKey)
-            .in("age_group", groups);
+const { data: registers, error } =
+    await supabaseClient.rpc(
+        "get_today_attendance_dashboard",
+        {
+            requested_date: todayKey,
+            requested_age_groups: groups,
+            supplied_code: currentAccessPIN,
+            supplied_role: "coach"
+        }
+    );
 
-    if (error) {
-        console.error(
-            "Dashboard register load failed:",
-            error
+if (error) {
+    console.error(
+        "Dashboard attendance load failed:",
+        error
+    );
+
+    alert(
+        "Unable to load today's attendance. Please try again."
+    );
+
+    return;
+}
+
+if (!Array.isArray(registers)) {
+    console.error(
+        "Dashboard RPC returned invalid data."
+    );
+
+    alert(
+        "Unable to load today's attendance. Please try again."
+    );
+
+    return;
+}
+
+for (const ageGroup of groups) {
+
+    const active =
+        getActivePlayers(ageGroup);
+
+    activeCount += active.length;
+
+    const registerRow =
+        registers.find(
+            register =>
+                register.age_group === ageGroup
         );
 
-        alert(
-            "Unable to load today's attendance. Please try again."
-        );
-
-        return;
+    if (!registerRow) {
+        continue;
     }
 
-    for (const ageGroup of groups) {
+    const attendance = {};
 
-        const active =
-            getActivePlayers(ageGroup);
+    (registerRow.attendance || []).forEach(record => {
+        attendance[record.player_id] =
+            record.present === true;
+    });
 
-        activeCount += active.length;
+    attendanceRegisters[todayKey] =
+        attendanceRegisters[todayKey] || {};
 
-        const registerRow =
-            registers.find(
-                register =>
-                    register.age_group === ageGroup
-            );
+    attendanceRegisters[todayKey][ageGroup] = {
+        id: registerRow.id,
+        submitted: registerRow.submitted,
+        closedAutomatically:
+            registerRow.closed_automatically,
+        attendance
+    };
 
-        if (!registerRow) {
-            continue;
-        }
+    presentCount += active.filter(
+        player =>
+            attendance[player.id] === true
+    ).length;
+}
 
-        const { data: records, error: recordsError } =
-            await supabaseClient
-                .from("attendance_records")
-                .select("player_id, present")
-                .eq("register_id", registerRow.id);
+const absentCount =
+    activeCount - presentCount;
 
-        if (recordsError) {
-            console.error(
-                "Dashboard attendance load failed:",
-                recordsError
-            );
+renderShell(`
 
-            alert(
-                "Unable to load today's attendance. Please try again."
-            );
+    <div class="card">
 
-            return;
-        }
+        <button
+            class="back-button"
+            onclick="showCoachAgeGroups()">
 
-        const attendance = {};
+            ← Age Groups
 
-        (records || []).forEach(record => {
-            attendance[record.player_id] =
-                record.present === true;
-        });
+        </button>
 
-        attendanceRegisters[todayKey] =
-            attendanceRegisters[todayKey] || {};
+        <h2>
+            ${
+                groups.length === 1
+                ? groups[0]
+                : "Multiple Age Groups"
+            }
+        </h2>
 
-        attendanceRegisters[todayKey][ageGroup] = {
-            id: registerRow.id,
-            submitted: registerRow.submitted,
-            closedAutomatically:
-                registerRow.closed_automatically,
-            attendance
-        };
+        <div class="subtitle">
 
-        presentCount += active.filter(
-            player =>
-                attendance[player.id] === true
-        ).length;
-    }
+            ${groups.join(" + ")}
 
-    const absentCount =
-        activeCount - presentCount;
+            <br>
 
-    renderShell(`
+            Coach Dashboard
 
-        <div class="card">
+        </div>
 
-            <button
-                class="back-button"
-                onclick="showCoachAgeGroups()">
+        <div class="stats">
 
-                ← Age Groups
-
-            </button>
-
-            <h2>
-                ${
-                    groups.length === 1
-                    ? groups[0]
-                    : "Multiple Age Groups"
-                }
-            </h2>
-
-            <div class="subtitle">
-
-                ${groups.join(" + ")}
-
-                <br>
-
-                Coach Dashboard
-
+            <div class="stat">
+                <div class="stat-number">${activeCount}</div>
+                <div class="stat-label">Players</div>
             </div>
 
-            <div class="stats">
-
-                <div class="stat">
-                    <div class="stat-number">${activeCount}</div>
-                    <div class="stat-label">Players</div>
-                </div>
-
-                <div class="stat">
-                    <div class="stat-number">${presentCount}</div>
-                    <div class="stat-label">Present</div>
-                </div>
-
-                <div class="stat">
-                    <div class="stat-number">${absentCount}</div>
-                    <div class="stat-label">Absent</div>
-                </div>
-
+            <div class="stat">
+                <div class="stat-number">${presentCount}</div>
+                <div class="stat-label">Present</div>
             </div>
 
-            <div class="menu-grid">
-
-                <button
-                    class="menu-button"
-                    onclick="showRegister()">
-                    Today's<br>Register
-                </button>
-
-                <button
-                    class="menu-button"
-                    onclick="showRoster()">
-                    Roster
-                </button>
-
-                <button
-                    class="menu-button"
-                    onclick="showSessionHistory()">
-                    Session<br>History
-                </button>
-
+            <div class="stat">
+                <div class="stat-number">${absentCount}</div>
+                <div class="stat-label">Absent</div>
             </div>
 
         </div>
 
-    `);
+        <div class="menu-grid">
+
+            <button
+                class="menu-button"
+                onclick="showRegister()">
+                Today's<br>Register
+            </button>
+
+            <button
+                class="menu-button"
+                onclick="showRoster()">
+                Roster
+            </button>
+
+            <button
+                class="menu-button"
+                onclick="showSessionHistory()">
+                Session<br>History
+            </button>
+
+        </div>
+
+    </div>
+
+`);
 
 }
 
@@ -1519,315 +1514,189 @@ ${
 
 async function showSessionHistory() {
 
-    const groups =
-        selectedAgeGroups.length
-        ? selectedAgeGroups
-        : [currentAgeGroup];
+const groups =
+    selectedAgeGroups.length
+    ? selectedAgeGroups
+    : [currentAgeGroup];
 
+if (
+    currentRole !== "coach" ||
+    !currentAccessPIN
+) {
+    alert("Please log in as Coach again.");
+    return;
+}
 
-    /* -----------------------------------------------------
-       LOAD REGISTERS
-       ----------------------------------------------------- */
-
-    const { data: registers, error } =
-        await supabaseClient
-            .from("attendance_registers")
-            .select(`
-                id,
-                register_date,
-                age_group,
-                submitted,
-                closed_automatically
-            `)
-            .in(
-                "age_group",
-                groups
-            )
-            .order(
-                "register_date",
-                {
-                    ascending: false
-                }
-            );
-
-    if (error) {
-
-        console.error(
-            "Supabase session history load failed:",
-            error
-        );
-
-        alert(
-            "Unable to load session history. Please try again."
-        );
-
-        return;
-    }
-
-
-    /* -----------------------------------------------------
-       LOAD ATTENDANCE RECORDS
-       ----------------------------------------------------- */
-
-    let attendanceRecords = [];
-
-    if (registers.length) {
-
-        const registerIDs =
-            registers.map(
-                register => register.id
-            );
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("attendance_records")
-                .select(`
-                    register_id,
-                    player_id,
-                    present
-                `)
-                .in(
-                    "register_id",
-                    registerIDs
-                );
-
-        if (error) {
-
-            console.error(
-                "Supabase session attendance load failed:",
-                error
-            );
-
-            alert(
-                "Unable to load session attendance. Please try again."
-            );
-
-            return;
+const { data: registers, error } =
+    await supabaseClient.rpc(
+        "get_session_history",
+        {
+            requested_age_groups: groups,
+            supplied_code: currentAccessPIN,
+            supplied_role: "coach"
         }
+    );
 
-        attendanceRecords =
-            data || [];
-    }
+if (error) {
 
+    console.error(
+        "Supabase session history load failed:",
+        error
+    );
 
-    /* -----------------------------------------------------
-       RENDER
-       ----------------------------------------------------- */
+    alert(
+        "Unable to load session history. Please try again."
+    );
 
-    renderShell(`
+    return;
+}
 
-        <div class="card">
+if (!Array.isArray(registers)) {
 
-            <button
-                class="back-button"
-                onclick="showCoachDashboard()">
+    console.error(
+        "Session history RPC returned invalid data."
+    );
 
-                ← Back
+    alert(
+        "Unable to load session history. Please try again."
+    );
 
-            </button>
+    return;
+}
 
-            <h2>
-                Session History
-            </h2>
+renderShell(`
 
-            <div class="subtitle">
+    <div class="card">
 
-                ${groups.join(" + ")}
+        <button
+            class="back-button"
+            onclick="showCoachDashboard()">
 
-            </div>
+            ← Back
 
-            ${
-                groups.map(
-                    ageGroup => {
+        </button>
 
-                    const groupRegisters =
-                        registers.filter(
-                            register =>
-                                register.age_group ===
-                                ageGroup
-                        );
+        <h2>
+            Session History
+        </h2>
 
-                    if (
-                        groupRegisters.length === 0
-                    ) {
+        <div class="subtitle">
+            ${groups.join(" + ")}
+        </div>
 
-                        return `
+        ${
+            groups.map(ageGroup => {
 
-                            <div class="info-box">
+                const groupRegisters =
+                    registers.filter(
+                        register =>
+                            register.age_group === ageGroup
+                    );
 
-                                No session history
-                                available.
-
-                            </div>
-
-                        `;
-
-                    }
+                if (groupRegisters.length === 0) {
 
                     return `
 
-                        <h3>
-                            ${ageGroup}
-                        </h3>
-
-                        ${
-                            groupRegisters.map(
-                                register => {
-
-                                /* -------------------------------------------------
-                                   CURRENT ACTIVE ROSTER
-                                   ------------------------------------------------- */
-
-                                const activePlayers =
-                                    getActivePlayers(
-                                        register.age_group
-                                    );
-
-
-                                /* -------------------------------------------------
-                                   ATTENDANCE RECORDS FOR THIS REGISTER
-                                   ------------------------------------------------- */
-
-                                const records =
-                                    attendanceRecords.filter(
-                                        record =>
-                                            record.register_id ===
-                                            register.id
-                                    );
-
-
-                                /* -------------------------------------------------
-                                   BUILD ACTIVE PLAYER ID SET
-                                   ------------------------------------------------- */
-
-                                const activePlayerIDs =
-                                    new Set(
-                                        activePlayers.map(
-                                            player =>
-                                                String(
-                                                    player.id
-                                                )
-                                        )
-                                    );
-
-
-                                /* -------------------------------------------------
-                                   ONLY RECORDS BELONGING TO ACTIVE PLAYERS
-                                   ------------------------------------------------- */
-
-                                const activeRecords =
-                                    records.filter(
-                                        record =>
-                                            activePlayerIDs.has(
-                                                String(
-                                                    record.player_id
-                                                )
-                                            )
-                                    );
-
-
-                                /* -------------------------------------------------
-                                   PRESENT COUNT
-                                   ------------------------------------------------- */
-
-                                const presentCount =
-                                    activeRecords.filter(
-                                        record =>
-                                            record.present === true
-                                    ).length;
-
-
-                                /* -------------------------------------------------
-                                   TOTAL = CURRENT ACTIVE ROSTER
-                                   ------------------------------------------------- */
-
-                                const totalCount =
-                                    activePlayers.length;
-
-
-                                /* -------------------------------------------------
-                                   STATUS
-                                   ------------------------------------------------- */
-
-                                let status =
-                                    "In Progress";
-
-                                if (
-                                    register.closed_automatically
-                                ) {
-
-                                    status =
-                                        "Closed";
-
-                                } else if (
-                                    register.submitted
-                                ) {
-
-                                    status =
-                                        "Closed";
-
-                                }
-
-
-                                /* -------------------------------------------------
-                                   DATE
-                                   ------------------------------------------------- */
-
-                                const date =
-                                    new Date(
-                                        register.register_date
-                                    ).toLocaleDateString(
-                                        "en-GB"
-                                    );
-
-
-                                return `
-
-                                    <div
-                                        class="
-                                            promotion-row
-                                        ">
-
-                                        <span>
-
-                                            ${date}
-
-                                            <br>
-
-                                            ${presentCount}
-                                            of
-                                            ${totalCount}
-                                            present
-
-                                        </span>
-
-                                        <strong>
-
-                                            ${status}
-
-                                        </strong>
-
-                                    </div>
-
-                                `;
-
-                            }).join("")
-                        }
+                        <div class="info-box">
+                            No session history available.
+                        </div>
 
                     `;
+                }
 
-                }).join("")
-            }
+                return `
 
-        </div>
+                    <h3>${escapeHTML(ageGroup)}</h3>
 
-    `);
+                    ${
+                        groupRegisters.map(register => {
+
+                            const activePlayers =
+                                getActivePlayers(
+                                    register.age_group
+                                );
+
+                            const activePlayerIDs =
+                                new Set(
+                                    activePlayers.map(
+                                        player =>
+                                            String(player.id)
+                                    )
+                                );
+
+                            const records =
+                                register.attendance || [];
+
+                            const activeRecords =
+                                records.filter(
+                                    record =>
+                                        activePlayerIDs.has(
+                                            String(record.player_id)
+                                        )
+                                );
+
+                            const presentCount =
+                                activeRecords.filter(
+                                    record =>
+                                        record.present === true
+                                ).length;
+
+                            const totalCount =
+                                activePlayers.length;
+
+                            let status = "In Progress";
+
+                            if (
+                                register.closed_automatically ||
+                                register.submitted
+                            ) {
+                                status = "Closed";
+                            }
+
+                            const date =
+                                new Date(
+                                    register.register_date +
+                                    "T00:00:00"
+                                ).toLocaleDateString("en-GB");
+
+                            return `
+
+                                <div class="promotion-row">
+
+                                    <span>
+
+                                        ${date}
+
+                                        <br>
+
+                                        ${presentCount}
+                                        of
+                                        ${totalCount}
+                                        present
+
+                                    </span>
+
+                                    <strong>
+                                        ${status}
+                                    </strong>
+
+                                </div>
+
+                            `;
+
+                        }).join("")
+                    }
+
+                `;
+
+            }).join("")
+        }
+
+    </div>
+
+`);
 
 }
-
 // Senior Dashboard ===========================
 
 function getArchiveReviewCount() {

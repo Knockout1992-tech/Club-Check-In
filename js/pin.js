@@ -90,89 +90,119 @@ function showPIN(role) {
 
 async function checkPIN() {
 
-    const entered =
-        document.getElementById("pinInput").value;
+const entered =
+    document.getElementById("pinInput").value;
 
-    const error =
-        document.getElementById("pinError");
+const error =
+    document.getElementById("pinError");
 
-    error.textContent = "";
+error.textContent = "";
 
-    if (!entered) {
-        error.textContent = "Please enter your PIN.";
-        return;
+if (!entered) {
+    error.textContent = "Please enter your PIN.";
+    return;
+}
+
+// Clear credentials from any previous attempt.
+currentAccessPIN = null;
+currentSeniorPIN = null;
+
+// Step 1: Verify the supplied PIN.
+const {
+    data,
+    error: supabaseError
+} = await supabaseClient.rpc(
+    "verify_access_code",
+    {
+        supplied_code: entered,
+        code_type: currentRole
     }
+);
 
-    // Do not retain credentials from an earlier attempt.
-    currentAccessPIN = null;
-    currentSeniorPIN = null;
-
-    // Step 1: Verify the supplied PIN.
-    const {
-        data,
-        error: supabaseError
-    } = await supabaseClient.rpc(
-        "verify_access_code",
-        {
-            supplied_code: entered,
-            code_type: currentRole
-        }
+if (supabaseError) {
+    console.error(
+        "PIN verification error:",
+        supabaseError
     );
 
-    if (supabaseError) {
-        console.error(
-            "PIN verification error:",
-            supabaseError
-        );
+    error.textContent =
+        "Unable to verify PIN. Please try again.";
 
-        error.textContent =
-            "Unable to verify PIN. Please try again.";
+    return;
+}
 
-        return;
-    }
+if (data !== true) {
+    error.textContent = "Incorrect PIN.";
+    return;
+}
 
-    if (data !== true) {
-        error.textContent = "Incorrect PIN.";
-        return;
-    }
+// Step 2: Verify installation and user authorisation.
+const installationAuthorised =
+    await checkInstallationAccess();
 
-    // Step 2: Check that this installation and its user
-    // are still authorised by Supabase.
-    const installationAuthorised =
-        await checkInstallationAccess();
+if (installationAuthorised === null) {
+    error.textContent =
+        "Unable to verify device access. Check your connection and try again.";
 
-    if (installationAuthorised === null) {
-        error.textContent =
-            "Unable to verify device access. Check your connection and try again.";
+    return;
+}
 
-        return;
-    }
+if (installationAuthorised === false) {
+    error.textContent =
+        "Access has been revoked or this user is inactive. Contact an Admin.";
 
-    if (installationAuthorised === false) {
-        error.textContent =
-            "Access has been revoked or this user is inactive. Contact an Admin.";
+    return;
+}
 
-        return;
-    }
-
-    // Step 3: Grant the session only after both checks pass.
+// Step 3: Retain credentials after both checks pass.
+if (currentRole === "coach") {
     currentAccessPIN = entered;
+} else if (currentRole === "senior") {
+    currentSeniorPIN = entered;
+    currentAccessPIN = entered;
+} else {
+    error.textContent =
+        "Invalid access role. Please start again.";
 
-    if (currentRole === "coach") {
-        showCoachAgeGroups();
-        return;
-    }
+    return;
+}
 
-    if (currentRole === "senior") {
-        currentSeniorPIN = entered;
-        showSeniorDashboard();
-        return;
-    }
+// Step 4: Load players using the verified role and PIN.
+let playersLoaded = false;
 
-    // Unexpected role: do not retain the credential.
+try {
+    playersLoaded =
+        await loadPlayersFromSupabase();
+} catch (loadError) {
+    console.error(
+        "Player loading error:",
+        loadError
+    );
+}
+
+if (!playersLoaded) {
     currentAccessPIN = null;
     currentSeniorPIN = null;
 
     error.textContent =
-        "Invalid access role. Please start again.";
+        "Unable to load players from Supabase. Please try again.";
+
+    console.error(
+        "Login stopped because players could not be loaded."
+    );
+
+    return;
+}
+
+// Step 5: Open the correct screen.
+if (currentRole === "coach") {
+    showCoachAgeGroups();
+    return;
+}
+
+if (currentRole === "senior") {
+    showSeniorDashboard();
+    return;
+}
+
 }

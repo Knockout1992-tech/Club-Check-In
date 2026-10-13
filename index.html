@@ -3874,59 +3874,45 @@ function showInitialAccess() {
    AUTHORISED STARTUP
    ========================================================= */
 
-
 let autoCloseInterval = null;
 
 async function completeAuthorisedStartup() {
 
-    // 1. Load age groups
-    const ageGroupsLoaded =
-        await loadAgeGroupsFromSupabase();
+// 1. Load age groups before restoring saved data
+const ageGroupsLoaded =
+    await loadAgeGroupsFromSupabase();
 
-    if (!ageGroupsLoaded) {
-        return false;
-    }
+if (!ageGroupsLoaded) {
+    return false;
+}
 
-    // 2. Restore locally saved data
-    loadSavedData();
+// 2. Restore local data only after authorisation
+loadSavedData();
 
-    // 3. Refresh players from Supabase
-    const playersLoaded =
-        await loadPlayersFromSupabase();
+// 3. Load the current season
+await loadCurrentSeasonFromSupabase();
 
-    if (!playersLoaded) {
-        console.error(
-            "Startup stopped: players could not be loaded from Supabase."
-        );
+// 4. Run the existing register housekeeping
+await autoClosePreviousAttendanceRegisters();
 
-        alert(
-            "Unable to load players from Supabase. Please check your connection and refresh the app."
-        );
+// 5. Start the periodic housekeeping once
+if (autoCloseInterval === null) {
 
-        return false;
-    }
+    autoCloseInterval = setInterval(
+        async () => {
+            await autoClosePreviousAttendanceRegisters();
+        },
+        60000
+    );
 
-    // 4. Load the current season
-    await loadCurrentSeasonFromSupabase();
+}
 
-    // 5. Run existing register housekeeping
-    await autoClosePreviousAttendanceRegisters();
+// 6. Display the welcome screen and monitor access
+showWelcome();
+startInstallationAccessMonitoring();
 
-    // 6. Start periodic housekeeping once
-    if (autoCloseInterval === null) {
-        autoCloseInterval = setInterval(
-            async () => {
-                await autoClosePreviousAttendanceRegisters();
-            },
-            60000
-        );
-    }
+return true;
 
-    // 7. Display welcome screen and monitor access
-    showWelcome();
-    startInstallationAccessMonitoring();
-
-    return true;
 }
 
 /* =========================================================

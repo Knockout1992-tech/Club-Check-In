@@ -5,6 +5,7 @@
 const APP_VERSION = "V0.5.0";
 
 let ageGroups = [];
+let players = {};
 
 /* =========================================================
    SEASON

@@ -823,6 +823,22 @@ async function showChangePlayerName(playerID) {
 
 async function savePlayerName(playerID) {
 
+    const nameInput =
+        document.getElementById("updatedPlayerName");
+
+    if (!nameInput) {
+        alert("Unable to find the player name input.");
+        return;
+    }
+
+    const name = nameInput.value.trim();
+
+    if (!name) {
+        alert("Player name cannot be blank.");
+        nameInput.focus();
+        return;
+    }
+
     const player = findPlayerByID(playerID);
 
     if (!player) {
@@ -830,17 +846,12 @@ async function savePlayerName(playerID) {
         return;
     }
 
-    const nameInput =
-        document.getElementById("updatedPlayerName");
-
-    const name = nameInput.value.trim();
-
-    if (!name) {
-        alert("Player name cannot be blank.");
-        return;
-    }
-
     if (name === player.name) {
+        if (currentRole === "senior") {
+            showPlayerManagement(player.ageGroup);
+        } else {
+            showRoster();
+        }
         return;
     }
 
@@ -856,7 +867,7 @@ async function savePlayerName(playerID) {
         const data = await managePlayerRecord(
             "rename",
             playerID,
-            { name }
+            { name: name }
         );
 
         player.name = data.name;
@@ -864,9 +875,9 @@ async function savePlayerName(playerID) {
         saveData();
 
         if (currentRole === "senior") {
-            showPlayerManagement(player.ageGroup);
+            await showPlayerManagement(player.ageGroup);
         } else {
-            showRoster();
+            await showRoster();
         }
 
     } catch (error) {
@@ -874,7 +885,8 @@ async function savePlayerName(playerID) {
         console.error("Player rename failed:", error);
 
         alert(
-            "Unable to change the player name. Please try again."
+            "Unable to change the player name. " +
+            (error.message || "Please try again.")
         );
 
     }

@@ -631,7 +631,7 @@ async function showChangeUserName(personID) {
             >
 
             <button
-                class="menu-button blue"
+                class="small-button"
                 onclick="saveUserName(
                     '${personID}'
                 )">

@@ -699,62 +699,9 @@ async function movePlayer(playerID) {
 
 async function renamePlayer(playerID) {
 
-    const player = findPlayerByID(playerID);
-
-    if (!player) {
-        alert("Player could not be found.");
-        return;
-    }
-
-    const newName = prompt(
-        "Enter the new player name:",
-        player.name
-    );
-
-    if (newName === null) return;
-
-    const name = newName.trim();
-
-    if (!name) {
-        alert("Player name cannot be blank.");
-        return;
-    }
-
-    if (name === player.name) return;
-
-    if (!confirm(
-        "Change the player name from:\n\n" +
-        player.name + "\n\nto:\n\n" + name + "?"
-    )) return;
-
-    try {
-
-        const data = await managePlayerRecord(
-            "rename",
-            playerID,
-            { name }
-        );
-
-        player.name = data.name;
-
-        saveData();
-
-        if (currentRole === "senior") {
-            showPlayerManagement(player.ageGroup);
-        } else {
-            showRoster();
-        }
-
-    } catch (error) {
-
-        console.error("Player rename failed:", error);
-
-        alert("Unable to change the player name. Please try again.");
-
-    }
+    showChangePlayerName(playerID);
 
 }
-
 
 // Helper =============================================
 
@@ -800,5 +747,136 @@ async function managePlayerRecord(
     }
 
     return data[0];
+
+}
+
+// Show Change Player Name ===================================
+
+async function showChangePlayerName(playerID) {
+
+    const player = findPlayerByID(playerID);
+
+    if (!player) {
+        alert("Player could not be found.");
+        return;
+    }
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showPlayerManagement(
+                    ${JSON.stringify(player.ageGroup)}
+                )">
+
+                ← Player Management
+
+            </button>
+
+            <h2>Change Player Name</h2>
+
+            <label for="updatedPlayerName">
+                Player name
+            </label>
+
+            <input
+                type="text"
+                id="updatedPlayerName"
+                maxlength="100"
+                autocomplete="off"
+                placeholder="Enter player name"
+            >
+
+            <button
+                class="blue-button small-button"
+                onclick="savePlayerName(
+                    ${JSON.stringify(playerID)}
+                )">
+
+                Save Name
+
+            </button>
+
+            <div
+                id="changePlayerNameMessage"
+                class="info-box">
+            </div>
+
+        </div>
+
+    `);
+
+    const nameInput =
+        document.getElementById("updatedPlayerName");
+
+    if (nameInput) {
+        nameInput.value = player.name;
+        nameInput.focus();
+        nameInput.select();
+    }
+
+}
+
+// Save Player Name =====≈=======================================
+
+async function savePlayerName(playerID) {
+
+    const player = findPlayerByID(playerID);
+
+    if (!player) {
+        alert("Player could not be found.");
+        return;
+    }
+
+    const nameInput =
+        document.getElementById("updatedPlayerName");
+
+    const name = nameInput.value.trim();
+
+    if (!name) {
+        alert("Player name cannot be blank.");
+        return;
+    }
+
+    if (name === player.name) {
+        return;
+    }
+
+    if (!confirm(
+        "Change the player name from:\n\n" +
+        player.name + "\n\nto:\n\n" + name + "?"
+    )) {
+        return;
+    }
+
+    try {
+
+        const data = await managePlayerRecord(
+            "rename",
+            playerID,
+            { name }
+        );
+
+        player.name = data.name;
+
+        saveData();
+
+        if (currentRole === "senior") {
+            showPlayerManagement(player.ageGroup);
+        } else {
+            showRoster();
+        }
+
+    } catch (error) {
+
+        console.error("Player rename failed:", error);
+
+        alert(
+            "Unable to change the player name. Please try again."
+        );
+
+    }
 
 }

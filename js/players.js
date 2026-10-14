@@ -766,14 +766,14 @@ async function showChangePlayerName(playerID) {
         <div class="card">
 
             <button
-                class="back-button"
-                onclick='showPlayerManagement(
-                    ${JSON.stringify(player.ageGroup)}
-                )'>
+    class="back-button"
+    onclick='${currentRole === "senior"
+        ? `showPlayerManagement(${JSON.stringify(player.ageGroup)})`
+        : "showRoster()"}'>
 
-                ← Player Management
+    ← Back
 
-            </button>
+</button>
 
             <h2>Change Player Name</h2>
 

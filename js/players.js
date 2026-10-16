@@ -563,7 +563,7 @@ async function seniorRestorePlayer(playerID) {
 
     const confirmed = await appConfirm(
         "Restore " + player.name + " to " + targetAgeGroup + "?\n\n" +
-        "Their Player ID and historical attendance will be retained.\n\n" +
+        "Their historical attendance will be retained.\n\n" +
         "They will NOT be marked as attending today.",
         "Restore player?",
         "Restore player"
@@ -648,7 +648,7 @@ async function movePlayer(playerID) {
     const confirmed = await appConfirm(
         "Move " + player.name + " from " + player.ageGroup +
         " to " + targetAgeGroup + "?\n\n" +
-        "Their Player ID and attendance history will be retained.",
+        "Their attendance history will be retained.",
         "Move player?",
         "Move player"
     );

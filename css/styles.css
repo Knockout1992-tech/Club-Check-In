@@ -818,3 +818,106 @@ h2 {
         font-size: 21px;
     }
 }
+
+
+/* Club Check-In custom dialog */
+.cc-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.cc-dialog {
+    width: 100%;
+    max-width: 380px;
+    padding: 24px;
+    border-radius: 18px;
+    background: var(--card-bg, #ffffff);
+    color: var(--text-color, #222222);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    animation: ccDialogIn 0.18s ease-out;
+}
+
+.cc-dialog-icon {
+    font-size: 34px;
+    margin-bottom: 12px;
+}
+
+.cc-dialog h2 {
+    margin: 0 0 12px;
+    font-size: 21px;
+}
+
+.cc-dialog-message {
+    white-space: pre-line;
+    line-height: 1.6;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.cc-dialog-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.cc-dialog-actions button {
+    flex: 1;
+    min-height: 48px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cc-dialog-cancel {
+    background: #e9edf2;
+    color: #222222;
+}
+
+.cc-dialog-confirm {
+    background: #b42318;
+    color: #ffffff;
+}
+
+.cc-dialog-ok {
+    background: #245cba;
+    color: #ffffff;
+}
+
+.cc-dialog-warning {
+    color: #d97706;
+}
+
+.cc-dialog-danger {
+    color: #dc2626;
+}
+
+.cc-dialog-success {
+    color: #16803c;
+}
+
+@keyframes ccDialogIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cc-dialog {
+        animation: none;
+    }
+}
+

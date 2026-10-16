@@ -35,7 +35,7 @@ async function permanentlyRemovePlayer(playerID) {
     const confirmed = await appConfirm(
         "Anonymise " + player.name + "?\n\n" +
         "Their name will be replaced with an anonymous ID.\n" +
-        "Their player ID and historical attendance will be retained.\n\n" +
+        "Their historical attendance will be retained.\n\n" +
         "This cannot be undone.",
         "Anonymise player?",
         "Anonymise player"

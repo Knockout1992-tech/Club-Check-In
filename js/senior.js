@@ -13,23 +13,35 @@ async function permanentlyRemovePlayer(playerID) {
     const diag = window.clubCheckInDiagnostics;
 
     if (currentRole !== "senior") {
-        alert("Only Admin can anonymise players.");
+        await appAlert(
+            "Only Admin can anonymise players.",
+            "Access denied",
+            "danger"
+        );
         return;
     }
 
     const player = findPlayerByID(playerID);
 
     if (!player || !player.archived) {
-        alert("Only archived players can be anonymised.");
+        await appAlert(
+            "Only archived players can be anonymised.",
+            "Action not allowed",
+            "warning"
+        );
         return;
     }
 
-    if (!confirm(
-        "ANONYMISE " + player.name + "?\n\n" +
+    const confirmed = await appConfirm(
+        "Anonymise " + player.name + "?\n\n" +
         "Their name will be replaced with an anonymous ID.\n" +
         "Their player ID and historical attendance will be retained.\n\n" +
-        "This cannot be undone."
-    )) {
+        "This cannot be undone.",
+        "Anonymise player?",
+        "Anonymise player"
+    );
+
+    if (!confirmed) {
         return;
     }
 
@@ -62,23 +74,27 @@ async function permanentlyRemovePlayer(playerID) {
 
         diag?.log("Archived player anonymised successfully.");
 
-        alert("Player anonymised successfully as " + data + ".");
+        await appAlert(
+            "Player anonymised successfully as " + data + ".",
+            "Anonymisation complete",
+            "success"
+        );
+
         showArchiveList();
 
     } catch (error) {
         diag?.error("Anonymisation failed:", error.message);
         console.error("Anonymisation failed:", error.message);
 
-        alert("Anonymisation failed. No local player data was removed.");
+        await appAlert(
+            "Anonymisation failed. No local player data was removed.",
+            "Anonymisation failed",
+            "danger"
+        );
     }
 }
 
-/* =========================================================
-USER MANAGEMENT
-========================================================= */
-
-
-
+// USER MANAGEMENT =======================================
 
 async function showUserManagement() {
 
@@ -373,7 +389,11 @@ async function showUserManagement() {
 
                 if (!selectedUser) {
 
-                    alert("User could not be found.");
+                    await appAlert(
+                        "User could not be found.",
+                        "User not found",
+                        "danger"
+                    );
 
                     return;
                 }
@@ -401,7 +421,11 @@ async function showUserManagement() {
 
                 if (!selectedUser) {
 
-                    alert("User could not be found.");
+                    await appAlert(
+                        "User could not be found.",
+                        "User not found",
+                        "danger"
+                    );
 
                     return;
                 }
@@ -421,14 +445,18 @@ async function showUserManagement() {
         .querySelectorAll(".change-user-name-button")
         .forEach(button => {
 
-            button.addEventListener("click", () => {
+            button.addEventListener("click", async () => {
 
                 const selectedUser =
                     users[Number(button.dataset.userIndex)];
 
                 if (!selectedUser) {
 
-                    alert("User could not be found.");
+                    await appAlert(
+                        "User could not be found.",
+                        "User not found",
+                        "danger"
+                    );
 
                     return;
                 }
@@ -443,9 +471,7 @@ async function showUserManagement() {
 
 }
 
-/* =========================================================
-   ADD COACH
-   ========================================================= */
+// ADD COACH ===========================================
 
 function showAddCoach() {
 
@@ -488,7 +514,6 @@ function showAddCoach() {
 
     `);
 }
-
 
 async function addCoach() {
 
@@ -558,10 +583,7 @@ async function addCoach() {
     await showUserManagement();
 }
 
-
-/* =========================================================
-   CHANGE USER NAME
-   ========================================================= */
+// CHANGE USER NAME =========================================
 
 async function showChangeUserName(personID) {
 
@@ -583,8 +605,10 @@ async function showChangeUserName(personID) {
             error
         );
 
-        alert(
-            "Unable to load the user's details."
+        await appAlert(
+            "Unable to load the user's details.",
+            "Unable to load user",
+            "danger"
         );
 
         return;
@@ -597,8 +621,10 @@ async function showChangeUserName(personID) {
 
     if (!user) {
 
-        alert(
-            "User could not be found."
+        await appAlert(
+            "User could not be found.",
+            "User not found",
+            "danger"
         );
 
         return;
@@ -661,7 +687,6 @@ async function showChangeUserName(personID) {
         nameInput.select();
     }
 }
-
 
 async function saveUserName(personID) {
 
@@ -734,21 +759,20 @@ async function saveUserName(personID) {
     await showUserManagement();
 }
 
-
-/* =========================================================
-   ACTIVATE / DEACTIVATE USER
-   ========================================================= */
+// ACTIVATE / DEACTIVATE USER ===============================
 
 async function setUserActive(personID, active) {
 
     const action =
         active ? "activate" : "deactivate";
 
-    if (
-        !confirm(
-            `Are you sure you want to ${action} this user?`
-        )
-    ) {
+    const confirmed = await appConfirm(
+        `Are you sure you want to ${action} this user?`,
+        `${active ? "Activate" : "Deactivate"} user`,
+        active ? "Activate user" : "Deactivate user"
+    );
+
+    if (!confirmed) {
         return;
     }
 
@@ -776,8 +800,10 @@ async function setUserActive(personID, active) {
             error
         );
 
-        alert(
-            "Unable to update user status."
+        await appAlert(
+            "Unable to update user status.",
+            "Update failed",
+            "danger"
         );
 
         return;
@@ -785,8 +811,10 @@ async function setUserActive(personID, active) {
 
     if (!data) {
 
-        alert(
-            "User status could not be changed."
+        await appAlert(
+            "User status could not be changed.",
+            "Update unsuccessful",
+            "danger"
         );
 
         return;
@@ -795,18 +823,19 @@ async function setUserActive(personID, active) {
     await showUserManagement();
 }
 
-
-/* =========================================================
-   RESET USER INSTALLATION
-   ========================================================= */
+// RESET USER INSTALLATION ==================================
 
 async function resetUserInstallation(personID) {
 
-    if (
-        !confirm(
-            "Reset this user's installation? Their current device registration will be revoked, and they will need to activate the replacement device."
-        )
-    ) {
+    const confirmed = await appConfirm(
+        "Reset this user's installation?\n\n" +
+        "Their current device registration will be revoked, " +
+        "and they will need to activate the replacement device.",
+        "Reset installation?",
+        "Reset installation"
+    );
+
+    if (!confirmed) {
         return;
     }
 
@@ -831,8 +860,10 @@ async function resetUserInstallation(personID) {
             error
         );
 
-        alert(
-            "Unable to reset installation."
+        await appAlert(
+            "Unable to reset installation.",
+            "Reset failed",
+            "danger"
         );
 
         return;
@@ -840,15 +871,19 @@ async function resetUserInstallation(personID) {
 
     if (!data) {
 
-        alert(
-            "Installation could not be reset."
+        await appAlert(
+            "Installation could not be reset.",
+            "Reset unsuccessful",
+            "danger"
         );
 
         return;
     }
 
-    alert(
-        "Installation reset successfully."
+    await appAlert(
+        "Installation reset successfully.",
+        "Installation reset",
+        "success"
     );
 
     await showUserManagement();

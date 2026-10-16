@@ -54,7 +54,7 @@
 <script src="js/pin.js"></script>
 <script src="js/diagnostics.js"></script>
 <script src="js/connection.js"></script>
-    
+
 <script>
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
@@ -250,14 +250,16 @@ function selectCoachAgeGroups(
 
 }
 
-function openSelectedCoachAgeGroups() {
+async function openSelectedCoachAgeGroups() {
 
     if (
         selectedAgeGroups.length === 0
     ) {
 
-        alert(
-            "Please select at least one age group."
+        await appAlert(
+            "Please select at least one age group.",
+            "Select an age group",
+            "warning"
         );
 
         return;
@@ -272,180 +274,189 @@ function openSelectedCoachAgeGroups() {
 }
 
 // Coach Dashboard ==========================================
+
 async function showCoachDashboard() {
 
-const groups =
-    selectedAgeGroups.length
-    ? selectedAgeGroups
-    : [currentAgeGroup];
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
 
-if (
-    currentRole !== "coach" ||
-    !currentAccessPIN
-) {
-    alert("Please log in as Coach again.");
-    return;
-}
-
-let activeCount = 0;
-let presentCount = 0;
-
-const todayKey = getTodayKey();
-
-const { data: registers, error } =
-    await supabaseClient.rpc(
-        "get_today_attendance_dashboard",
-        {
-            requested_date: todayKey,
-            requested_age_groups: groups,
-            supplied_code: currentAccessPIN,
-            supplied_role: "coach"
-        }
-    );
-
-if (error) {
-    console.error(
-        "Dashboard attendance load failed:",
-        error
-    );
-
-    alert(
-        "Unable to load today's attendance. Please try again."
-    );
-
-    return;
-}
-
-if (!Array.isArray(registers)) {
-    console.error(
-        "Dashboard RPC returned invalid data."
-    );
-
-    alert(
-        "Unable to load today's attendance. Please try again."
-    );
-
-    return;
-}
-
-for (const ageGroup of groups) {
-
-    const active =
-        getActivePlayers(ageGroup);
-
-    activeCount += active.length;
-
-    const registerRow =
-        registers.find(
-            register =>
-                register.age_group === ageGroup
+    if (
+        currentRole !== "coach" ||
+        !currentAccessPIN
+    ) {
+        await appAlert(
+            "Please log in as Coach again.",
+            "Login required",
+            "warning"
         );
-
-    if (!registerRow) {
-        continue;
+        return;
     }
 
-    const attendance = {};
+    let activeCount = 0;
+    let presentCount = 0;
 
-    (registerRow.attendance || []).forEach(record => {
-        attendance[record.player_id] =
-            record.present === true;
-    });
+    const todayKey = getTodayKey();
 
-    attendanceRegisters[todayKey] =
-        attendanceRegisters[todayKey] || {};
-
-    attendanceRegisters[todayKey][ageGroup] = {
-        id: registerRow.id,
-        submitted: registerRow.submitted,
-        closedAutomatically:
-            registerRow.closed_automatically,
-        attendance
-    };
-
-    presentCount += active.filter(
-        player =>
-            attendance[player.id] === true
-    ).length;
-}
-
-const absentCount =
-    activeCount - presentCount;
-
-renderShell(`
-
-    <div class="card">
-
-        <button
-            class="back-button"
-            onclick="showCoachAgeGroups()">
-
-            ← Age Groups
-
-        </button>
-
-        <h2>
-            ${
-                groups.length === 1
-                ? groups[0]
-                : "Multiple Age Groups"
+    const { data: registers, error } =
+        await supabaseClient.rpc(
+            "get_today_attendance_dashboard",
+            {
+                requested_date: todayKey,
+                requested_age_groups: groups,
+                supplied_code: currentAccessPIN,
+                supplied_role: "coach"
             }
-        </h2>
+        );
 
-        <div class="subtitle">
+    if (error) {
+        console.error(
+            "Dashboard attendance load failed:",
+            error
+        );
 
-            ${groups.join(" + ")}
+        await appAlert(
+            "Unable to load today's attendance. Please try again.",
+            "Attendance unavailable",
+            "danger"
+        );
 
-            <br>
+        return;
+    }
 
-            Coach Dashboard
+    if (!Array.isArray(registers)) {
+        console.error(
+            "Dashboard RPC returned invalid data."
+        );
+
+        await appAlert(
+            "Unable to load today's attendance. Please try again.",
+            "Attendance unavailable",
+            "danger"
+        );
+
+        return;
+    }
+
+    for (const ageGroup of groups) {
+
+        const active =
+            getActivePlayers(ageGroup);
+
+        activeCount += active.length;
+
+        const registerRow =
+            registers.find(
+                register =>
+                    register.age_group === ageGroup
+            );
+
+        if (!registerRow) {
+            continue;
+        }
+
+        const attendance = {};
+
+        (registerRow.attendance || []).forEach(record => {
+            attendance[record.player_id] =
+                record.present === true;
+        });
+
+        attendanceRegisters[todayKey] =
+            attendanceRegisters[todayKey] || {};
+
+        attendanceRegisters[todayKey][ageGroup] = {
+            id: registerRow.id,
+            submitted: registerRow.submitted,
+            closedAutomatically:
+                registerRow.closed_automatically,
+            attendance
+        };
+
+        presentCount += active.filter(
+            player =>
+                attendance[player.id] === true
+        ).length;
+    }
+
+    const absentCount =
+        activeCount - presentCount;
+
+    renderShell(`
+
+        <div class="card">
+
+            <button
+                class="back-button"
+                onclick="showCoachAgeGroups()">
+
+                ← Age Groups
+
+            </button>
+
+            <h2>
+                ${
+                    groups.length === 1
+                    ? groups[0]
+                    : "Multiple Age Groups"
+                }
+            </h2>
+
+            <div class="subtitle">
+
+                ${groups.join(" + ")}
+
+                <br>
+
+                Coach Dashboard
+
+            </div>
+
+            <div class="stats">
+
+                <div class="stat">
+                    <div class="stat-number">${activeCount}</div>
+                    <div class="stat-label">Players</div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-number">${presentCount}</div>
+                    <div class="stat-label">Present</div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-number">${absentCount}</div>
+                    <div class="stat-label">Absent</div>
+                </div>
+
+            </div>
+
+            <div class="menu-grid">
+
+                <button
+                    class="menu-button"
+                    onclick="showRegister()">
+                    Today's<br>Register
+                </button>
+
+                <button
+                    class="menu-button"
+                    onclick="showRoster()">
+                    Roster
+                </button>
+
+                <button
+                    class="menu-button"
+                    onclick="showSessionHistory()">
+                    Session<br>History
+                </button>
+
+            </div>
 
         </div>
 
-        <div class="stats">
-
-            <div class="stat">
-                <div class="stat-number">${activeCount}</div>
-                <div class="stat-label">Players</div>
-            </div>
-
-            <div class="stat">
-                <div class="stat-number">${presentCount}</div>
-                <div class="stat-label">Present</div>
-            </div>
-
-            <div class="stat">
-                <div class="stat-number">${absentCount}</div>
-                <div class="stat-label">Absent</div>
-            </div>
-
-        </div>
-
-        <div class="menu-grid">
-
-            <button
-                class="menu-button"
-                onclick="showRegister()">
-                Today's<br>Register
-            </button>
-
-            <button
-                class="menu-button"
-                onclick="showRoster()">
-                Roster
-            </button>
-
-            <button
-                class="menu-button"
-                onclick="showSessionHistory()">
-                Session<br>History
-            </button>
-
-        </div>
-
-    </div>
-
-`);
+    `);
 
 }
 
@@ -681,16 +692,16 @@ async function showRegister() {
                                                                     }
                                                                 ">
 
-                                                               <input
-    type="checkbox"
-    data-player-id="${escapeHTML(player.id)}"
-    ${
-        present
-        ? "checked"
-        : ""
-    }
-    onchange="setAttendance(this.dataset.playerId, this.checked)"
->
+                                                                <input
+                                                                    type="checkbox"
+                                                                    data-player-id="${escapeHTML(player.id)}"
+                                                                    ${
+                                                                        present
+                                                                        ? "checked"
+                                                                        : ""
+                                                                    }
+                                                                    onchange="setAttendance(this.dataset.playerId, this.checked)"
+                                                                >
 
                                                                 <span
                                                                     class="
@@ -762,8 +773,8 @@ async function showRegister() {
     `);
 
 }
-// Roster ===========================
 
+// Roster ===========================
 
 function showRoster() {
 
@@ -928,21 +939,21 @@ function showCoachAddPlayer(
 
         <div class="card">
 
-                <button
-                    class="back-button"
-                    onclick="
-                        ${
-                            fromRoster
-                            ? "showRoster()"
-                            : "showRegister()"
-                        }
-                    ">
-                
-                    ← ${
+            <button
+                class="back-button"
+                onclick="
+                    ${
                         fromRoster
-                        ? "Roster"
-                        : "Register"
+                        ? "showRoster()"
+                        : "showRegister()"
                     }
+                ">
+
+                ← ${
+                    fromRoster
+                    ? "Roster"
+                    : "Register"
+                }
             </button>
 
             <h2>
@@ -1027,8 +1038,10 @@ async function coachAddPlayer(
 
     if (!name) {
 
-        alert(
-            "Please enter a player name."
+        await appAlert(
+            "Please enter a player name.",
+            "Player name required",
+            "warning"
         );
 
         return;
@@ -1045,8 +1058,10 @@ async function coachAddPlayer(
 
     if (!groups.length) {
 
-        alert(
-            "Please select an age group first."
+        await appAlert(
+            "Please select an age group first.",
+            "Age group required",
+            "warning"
         );
 
         return;
@@ -1064,8 +1079,10 @@ async function coachAddPlayer(
 
         if (!select || !select.value) {
 
-            alert(
-                "Please select an age group."
+            await appAlert(
+                "Please select an age group.",
+                "Age group required",
+                "warning"
             );
 
             return;
@@ -1125,7 +1142,7 @@ async function coachAddPlayer(
     if (archivedMatch) {
 
         const restore =
-            confirm(
+            await appConfirm(
                 name +
                 " is already recorded as an archived player " +
                 "in " +
@@ -1134,7 +1151,9 @@ async function coachAddPlayer(
                 "Would you like to restore their existing record " +
                 "to " +
                 targetAgeGroup +
-                "?"
+                "?",
+                "Archived player found",
+                "Restore player"
             );
 
         if (restore) {
@@ -1167,19 +1186,21 @@ async function coachAddPlayer(
             targetAgeGroup
         ) {
 
-            alert(
+            await appAlert(
                 name +
                 " is already registered in " +
                 targetAgeGroup +
                 ".\n\n" +
-                "A duplicate player has not been created."
+                "A duplicate player has not been created.",
+                "Player already registered",
+                "warning"
             );
 
             return;
         }
 
         const differentPlayer =
-            confirm(
+            await appConfirm(
                 name +
                 " is already registered in " +
                 activeMatch.ageGroup +
@@ -1189,7 +1210,9 @@ async function coachAddPlayer(
                 ".\n\n" +
                 "If this is the same player, cancel.\n\n" +
                 "If this is a different player with the same name, " +
-                "press OK to continue."
+                "press Confirm to continue.",
+                "Name match found",
+                "Add different player"
             );
 
         if (!differentPlayer) {
@@ -1237,10 +1260,12 @@ async function coachAddPlayer(
         register.submitted
     ) {
 
-        alert(
-            "Today's register is not open for "
-            + targetAgeGroup
-            + "."
+        await appAlert(
+            "Today's register is not open for " +
+            targetAgeGroup +
+            ".",
+            "Register not open",
+            "warning"
         );
 
         return;
@@ -1270,23 +1295,23 @@ async function coachAddPlayer(
     */
 
     const addedToRegister =
-    await addPlayerToTodayAttendance(
-        targetAgeGroup,
-        newPlayer.id
+        await addPlayerToTodayAttendance(
+            targetAgeGroup,
+            newPlayer.id
+        );
+
+    if (!addedToRegister) {
+        return;
+    }
+
+    await setAttendance(
+        newPlayer.id,
+        true
     );
 
-if (!addedToRegister) {
-    return;
+    showRegister();
 }
 
-await setAttendance(
-    newPlayer.id,
-    true
-);
-
-showRegister();
-}
-   
 function searchArchivedPlayers(
     fromRoster = false
 ) {
@@ -1468,34 +1493,34 @@ function searchArchivedPlayers(
                             `
                             : `
                                 <button
-    class="blue-button"
-    onclick='
-        restoreArchivedPlayer(
-            ${JSON.stringify(match.player.id)}
-        )
-    '>
+                                    class="blue-button"
+                                    onclick='
+                                        restoreArchivedPlayer(
+                                            ${JSON.stringify(match.player.id)}
+                                        )
+                                    '>
 
-    Restore Player
+                                    Restore Player
 
-</button>
+                                </button>
 
-${
-    currentRole === "senior"
-    ? `
-        <button
-            class="red-button"
-            onclick='
-        permanentlyRemovePlayer(
-            ${JSON.stringify(player.id)}
-        )
-    '>
+                                ${
+                                    currentRole === "senior"
+                                    ? `
+                                        <button
+                                            class="red-button"
+                                            onclick='
+                                                permanentlyRemovePlayer(
+                                                    ${JSON.stringify(match.player.id)}
+                                                )
+                                            '>
 
-            Permanently Remove
+                                            Permanently Remove
 
-        </button>
-    `
-    : ""
-}
+                                        </button>
+                                    `
+                                    : ""
+                                }
                             `
                         }
 
@@ -1511,192 +1536,200 @@ ${
 
 // Session History ===========================
 
-
 async function showSessionHistory() {
 
-const groups =
-    selectedAgeGroups.length
-    ? selectedAgeGroups
-    : [currentAgeGroup];
+    const groups =
+        selectedAgeGroups.length
+        ? selectedAgeGroups
+        : [currentAgeGroup];
 
-if (
-    currentRole !== "coach" ||
-    !currentAccessPIN
-) {
-    alert("Please log in as Coach again.");
-    return;
-}
+    if (
+        currentRole !== "coach" ||
+        !currentAccessPIN
+    ) {
+        await appAlert(
+            "Please log in as Coach again.",
+            "Login required",
+            "warning"
+        );
+        return;
+    }
 
-const { data: registers, error } =
-    await supabaseClient.rpc(
-        "get_session_history",
-        {
-            requested_age_groups: groups,
-            supplied_code: currentAccessPIN,
-            supplied_role: "coach"
-        }
-    );
+    const { data: registers, error } =
+        await supabaseClient.rpc(
+            "get_session_history",
+            {
+                requested_age_groups: groups,
+                supplied_code: currentAccessPIN,
+                supplied_role: "coach"
+            }
+        );
 
-if (error) {
+    if (error) {
 
-    console.error(
-        "Supabase session history load failed:",
-        error
-    );
+        console.error(
+            "Supabase session history load failed:",
+            error
+        );
 
-    alert(
-        "Unable to load session history. Please try again."
-    );
+        await appAlert(
+            "Unable to load session history. Please try again.",
+            "History unavailable",
+            "danger"
+        );
 
-    return;
-}
+        return;
+    }
 
-if (!Array.isArray(registers)) {
+    if (!Array.isArray(registers)) {
 
-    console.error(
-        "Session history RPC returned invalid data."
-    );
+        console.error(
+            "Session history RPC returned invalid data."
+        );
 
-    alert(
-        "Unable to load session history. Please try again."
-    );
+        await appAlert(
+            "Unable to load session history. Please try again.",
+            "History unavailable",
+            "danger"
+        );
 
-    return;
-}
+        return;
+    }
 
-renderShell(`
+    renderShell(`
 
-    <div class="card">
+        <div class="card">
 
-        <button
-            class="back-button"
-            onclick="showCoachDashboard()">
+            <button
+                class="back-button"
+                onclick="showCoachDashboard()">
 
-            ← Back
+                ← Back
 
-        </button>
+            </button>
 
-        <h2>
-            Session History
-        </h2>
+            <h2>
+                Session History
+            </h2>
 
-        <div class="subtitle">
-            ${groups.join(" + ")}
-        </div>
+            <div class="subtitle">
+                ${groups.join(" + ")}
+            </div>
 
-        ${
-            groups.map(ageGroup => {
+            ${
+                groups.map(ageGroup => {
 
-                const groupRegisters =
-                    registers.filter(
-                        register =>
-                            register.age_group === ageGroup
-                    );
+                    const groupRegisters =
+                        registers.filter(
+                            register =>
+                                register.age_group === ageGroup
+                        );
 
-                if (groupRegisters.length === 0) {
+                    if (groupRegisters.length === 0) {
+
+                        return `
+
+                            <div class="info-box">
+                                No session history available.
+                            </div>
+
+                        `;
+                    }
 
                     return `
 
-                        <div class="info-box">
-                            No session history available.
-                        </div>
+                        <h3>${escapeHTML(ageGroup)}</h3>
+
+                        ${
+                            groupRegisters.map(register => {
+
+                                const activePlayers =
+                                    getActivePlayers(
+                                        register.age_group
+                                    );
+
+                                const activePlayerIDs =
+                                    new Set(
+                                        activePlayers.map(
+                                            player =>
+                                                String(player.id)
+                                        )
+                                    );
+
+                                const records =
+                                    register.attendance || [];
+
+                                const activeRecords =
+                                    records.filter(
+                                        record =>
+                                            activePlayerIDs.has(
+                                                String(record.player_id)
+                                            )
+                                    );
+
+                                const presentCount =
+                                    activeRecords.filter(
+                                        record =>
+                                            record.present === true
+                                    ).length;
+
+                                const totalCount =
+                                    activePlayers.length;
+
+                                let status = "In Progress";
+
+                                if (
+                                    register.closed_automatically ||
+                                    register.submitted
+                                ) {
+                                    status = "Closed";
+                                }
+
+                                const date =
+                                    new Date(
+                                        register.register_date +
+                                        "T00:00:00"
+                                    ).toLocaleDateString("en-GB");
+
+                                return `
+
+                                    <div class="promotion-row">
+
+                                        <span>
+
+                                            ${date}
+
+                                            <br>
+
+                                            ${presentCount}
+                                            of
+                                            ${totalCount}
+                                            present
+
+                                        </span>
+
+                                        <strong>
+                                            ${status}
+                                        </strong>
+
+                                    </div>
+
+                                `;
+
+                            }).join("")
+                        }
 
                     `;
-                }
 
-                return `
+                }).join("")
+            }
 
-                    <h3>${escapeHTML(ageGroup)}</h3>
+        </div>
 
-                    ${
-                        groupRegisters.map(register => {
-
-                            const activePlayers =
-                                getActivePlayers(
-                                    register.age_group
-                                );
-
-                            const activePlayerIDs =
-                                new Set(
-                                    activePlayers.map(
-                                        player =>
-                                            String(player.id)
-                                    )
-                                );
-
-                            const records =
-                                register.attendance || [];
-
-                            const activeRecords =
-                                records.filter(
-                                    record =>
-                                        activePlayerIDs.has(
-                                            String(record.player_id)
-                                        )
-                                );
-
-                            const presentCount =
-                                activeRecords.filter(
-                                    record =>
-                                        record.present === true
-                                ).length;
-
-                            const totalCount =
-                                activePlayers.length;
-
-                            let status = "In Progress";
-
-                            if (
-                                register.closed_automatically ||
-                                register.submitted
-                            ) {
-                                status = "Closed";
-                            }
-
-                            const date =
-                                new Date(
-                                    register.register_date +
-                                    "T00:00:00"
-                                ).toLocaleDateString("en-GB");
-
-                            return `
-
-                                <div class="promotion-row">
-
-                                    <span>
-
-                                        ${date}
-
-                                        <br>
-
-                                        ${presentCount}
-                                        of
-                                        ${totalCount}
-                                        present
-
-                                    </span>
-
-                                    <strong>
-                                        ${status}
-                                    </strong>
-
-                                </div>
-
-                            `;
-
-                        }).join("")
-                    }
-
-                `;
-
-            }).join("")
-        }
-
-    </div>
-
-`);
+    `);
 
 }
+
 // Senior Dashboard ===========================
 
 function getArchiveReviewCount() {
@@ -1823,56 +1856,57 @@ function showSeniorDashboard() {
 
                     Player<br>
                     Management
+                </button>
 
                 <button
-    class="menu-button"
-    onclick="showArchiveReview()">
+                    class="menu-button"
+                    onclick="showArchiveReview()">
 
-    Archive<br>
-    Review
-    ${
-        archiveReviewCount > 0
-        ? `<br>(${archiveReviewCount})`
-        : ""
-    }
+                    Archive<br>
+                    Review
+                    ${
+                        archiveReviewCount > 0
+                        ? `<br>(${archiveReviewCount})`
+                        : ""
+                    }
 
-</button>
+                </button>
 
-<button
-    class="menu-button"
-    onclick="showArchiveList()">
+                <button
+                    class="menu-button"
+                    onclick="showArchiveList()">
 
-    Archived<br>
-    Players
+                    Archived<br>
+                    Players
 
-</button>
+                </button>
 
-<button
-    class="menu-button"
-    onclick="showUserManagement()">
+                <button
+                    class="menu-button"
+                    onclick="showUserManagement()">
 
-    User<br>
-    Management
+                    User<br>
+                    Management
 
-</button>
+                </button>
 
-<button
-    class="menu-button"
-    onclick="showPINManagement()">
+                <button
+                    class="menu-button"
+                    onclick="showPINManagement()">
 
-    Manage<br>
-    PINs
+                    Manage<br>
+                    PINs
 
-</button>
+                </button>
 
-<button
-    class="menu-button blue"
-    onclick="showNewSeason()">
+                <button
+                    class="menu-button blue"
+                    onclick="showNewSeason()">
 
-    New<br>
-    Season
+                    New<br>
+                    Season
 
-</button>
+                </button>
 
             </div>
 
@@ -2111,11 +2145,8 @@ function showArchiveReview() {
                                     ${ageGroup}
                                 </span>
 
-                                <span
-                                    class="age-section-count">
-
+                                <span class="age-section-count">
                                     ${groupPlayers.length}
-
                                 </span>
 
                             </div>
@@ -2136,20 +2167,11 @@ function showArchiveReview() {
 
                                     return `
 
-                                        <div
-                                            class="
-                                                player-row
-                                            ">
+                                        <div class="player-row">
 
-                                            <div
-                                                class="
-                                                    player-info
-                                                ">
+                                            <div class="player-info">
 
-                                                <div
-                                                    class="
-                                                        player-name
-                                                    ">
+                                                <div class="player-name">
 
                                                     ${escapeHTML(
                                                         player.name
@@ -2157,10 +2179,7 @@ function showArchiveReview() {
 
                                                 </div>
 
-                                                <div
-                                                    class="
-                                                        player-small
-                                                    ">
+                                                <div class="player-small">
 
                                                     Last attended:
                                                     ${
@@ -2170,9 +2189,7 @@ function showArchiveReview() {
                                                     }
 
                                                     ·
-                                                    ${
-                                                        weeks
-                                                    }
+                                                    ${weeks}
                                                     week${
                                                         weeks === 1
                                                         ? ""
@@ -2190,10 +2207,7 @@ function showArchiveReview() {
                                             </div>
 
                                             <button
-                                                class="
-                                                    red-button
-                                                    small-button
-                                                "
+                                                class="red-button small-button"
                                                 onclick='
                                                     archivePlayer(
                                                         ${JSON.stringify(player.id)},
@@ -2224,8 +2238,9 @@ function showArchiveReview() {
     `);
 
 }
-// Archived plater list ===========================
-    
+
+// Archived player list ===========================
+
 function getAllArchivedPlayers() {
 
     let result = [];
@@ -2250,7 +2265,7 @@ function getAllArchivedPlayers() {
     return result;
 
 }
-    
+
 function showArchiveList() {
 
     const archived =
@@ -2321,11 +2336,8 @@ function showArchiveList() {
                                     ${ageGroup}
                                 </span>
 
-                                <span
-                                    class="age-section-count">
-
+                                <span class="age-section-count">
                                     ${groupPlayers.length}
-
                                 </span>
 
                             </div>
@@ -2334,11 +2346,9 @@ function showArchiveList() {
                                 groupPlayers.map(
                                     player => `
 
-                                    <div
-                                        class="list-row">
+                                    <div class="list-row">
 
-                                        <div
-                                            class="list-title">
+                                        <div class="list-title">
 
                                             ${escapeHTML(
                                                 player.name
@@ -2346,8 +2356,7 @@ function showArchiveList() {
 
                                         </div>
 
-                                        <div
-                                            class="list-sub">
+                                        <div class="list-sub">
 
                                             Last attended:
 
@@ -2364,34 +2373,28 @@ function showArchiveList() {
                                         <br>
 
                                         <button
-    class="
-        green-button
-        small-button
-    "
-    onclick='
-    showSeniorRestorePlayer(
-        ${JSON.stringify(player.id)}
-    )
-'>
+                                            class="green-button small-button"
+                                            onclick='
+                                                showSeniorRestorePlayer(
+                                                    ${JSON.stringify(player.id)}
+                                                )
+                                            '>
 
-    Restore
+                                            Restore
 
-</button>
+                                        </button>
 
-<button
-    class="
-        red-button
-        small-button
-    "
-    onclick='
-        permanentlyRemovePlayer(
-            ${JSON.stringify(player.id)}
-        )
-    '>
+                                        <button
+                                            class="red-button small-button"
+                                            onclick='
+                                                permanentlyRemovePlayer(
+                                                    ${JSON.stringify(player.id)}
+                                                )
+                                            '>
 
-    Permanently Remove
+                                            Permanently Remove
 
-</button>
+                                        </button>
 
                                     </div>
 
@@ -2425,6 +2428,7 @@ function showArchiveList() {
     `);
 
 }
+
 function showSeniorRestorePlayer(
     playerID
 ) {
@@ -2436,13 +2440,14 @@ function showSeniorRestorePlayer(
 
     if (!player) {
 
-    alert(
-        "Player not found: "
-        + playerID
-    );
+        appAlert(
+            "Player not found: " + playerID,
+            "Player not found",
+            "danger"
+        );
 
-    return;
-}
+        return;
+    }
 
     const availableGroups =
         ageGroups;
@@ -2557,10 +2562,10 @@ function showSeniorRestorePlayer(
             <button
                 class="green-button"
                 onclick='
-    seniorRestorePlayer(
-        ${JSON.stringify(player.id)}
-    )
-'>
+                    seniorRestorePlayer(
+                        ${JSON.stringify(player.id)}
+                    )
+                '>
 
                 Restore Player
 
@@ -2656,10 +2661,10 @@ function showPlayerManagement(
                                 ">
 
                                 ${age}${
-    gmsCount > 0
-    ? ` <span style="font-size:12px; font-weight:600; opacity:0.7;">(${gmsCount})</span>`
-    : ""
-}
+                                    gmsCount > 0
+                                    ? ` <span style="font-size:12px; font-weight:600; opacity:0.7;">(${gmsCount})</span>`
+                                    : ""
+                                }
 
                             </button>
 
@@ -2713,16 +2718,11 @@ function renderPlayerManagementList(ageGroup) {
                 : active.map(
                     player => `
 
-                    <div class="
-                        player-row
-                        player-management-row
-                    ">
+                    <div class="player-row player-management-row">
 
-                        <div
-                            class="player-info">
+                        <div class="player-info">
 
-                            <div
-                                class="player-name">
+                            <div class="player-name">
 
                                 ${escapeHTML(
                                     player.name
@@ -2733,18 +2733,14 @@ function renderPlayerManagementList(ageGroup) {
                             ${
                                 player.coachGmsSuggestion && !player.gms
                                 ? `
-                                    <div
-                                        class="player-small">
-
+                                    <div class="player-small">
                                         Coach has suggested GMS
-
                                     </div>
                                 `
                                 : ""
                             }
 
-                            <div
-                                class="player-small">
+                            <div class="player-small">
 
                                 Last attended:
                                 ${
@@ -2761,19 +2757,17 @@ function renderPlayerManagementList(ageGroup) {
 
                         </div>
 
-                        <div
-                            class="row-actions">
+                        <div class="row-actions">
 
-                            <label
-                                class="
-                                    toggle
-                                    gms-toggle
-                                    ${
-                                        player.gms
-                                        ? "confirmed"
-                                        : "not-confirmed"
-                                    }
-                                ">
+                            <label class="
+                                toggle
+                                gms-toggle
+                                ${
+                                    player.gms
+                                    ? "confirmed"
+                                    : "not-confirmed"
+                                }
+                            ">
 
                                 <input
                                     type="checkbox"
@@ -2789,21 +2783,13 @@ function renderPlayerManagementList(ageGroup) {
                                         )
                                     '>
 
-                                <span
-                                    class="toggle-knob">
-                                </span>
-
-                                <span
-                                    class="toggle-label">
-                                </span>
+                                <span class="toggle-knob"></span>
+                                <span class="toggle-label"></span>
 
                             </label>
 
                             <button
-                                class="
-                                    secondary-button
-                                    small-button
-                                "
+                                class="secondary-button small-button"
                                 onclick='
                                     renamePlayer(
                                         ${JSON.stringify(player.id)}
@@ -2815,10 +2801,7 @@ function renderPlayerManagementList(ageGroup) {
                             </button>
 
                             <button
-                                class="
-                                    secondary-button
-                                    small-button
-                                "
+                                class="secondary-button small-button"
                                 onclick='
                                     showMovePlayer(
                                         ${JSON.stringify(player.id)}
@@ -2830,10 +2813,7 @@ function renderPlayerManagementList(ageGroup) {
                             </button>
 
                             <button
-                                class="
-                                    red-button
-                                    small-button
-                                "
+                                class="red-button small-button"
                                 onclick='
                                     archivePlayer(
                                         ${JSON.stringify(player.id)},
@@ -2872,6 +2852,7 @@ function renderPlayerManagementList(ageGroup) {
     `;
 
 }
+
 function showMovePlayer(
     playerID
 ) {
@@ -2971,10 +2952,10 @@ function showMovePlayer(
             <button
                 class="green-button"
                 onclick='
-    movePlayer(
-        ${JSON.stringify(player.id)}
-    )
-'>
+                    movePlayer(
+                        ${JSON.stringify(player.id)}
+                    )
+                '>
 
                 Move Player
 
@@ -2985,7 +2966,7 @@ function showMovePlayer(
     `);
 
 }
-   
+
 /* =========================================================
    SENIOR ADD PLAYER
    ========================================================= */
@@ -3043,11 +3024,7 @@ function showSeniorAddPlayer(
 
                 <label
                     id="newGMSToggle"
-                    class="
-                        toggle
-                        gms-toggle
-                        not-confirmed
-                    ">
+                    class="toggle gms-toggle not-confirmed">
 
                     <input
                         id="newGMS"
@@ -3056,13 +3033,8 @@ function showSeniorAddPlayer(
                             updateNewGMSToggle()
                         ">
 
-                    <span
-                        class="toggle-knob">
-                    </span>
-
-                    <span
-                        class="toggle-label">
-                    </span>
+                    <span class="toggle-knob"></span>
+                    <span class="toggle-label"></span>
 
                 </label>
 
@@ -3142,8 +3114,10 @@ async function seniorAddPlayer(
 
     if (!name) {
 
-        alert(
-            "Please enter a player name."
+        await appAlert(
+            "Please enter a player name.",
+            "Player name required",
+            "warning"
         );
 
         return;
@@ -3201,22 +3175,15 @@ function showNewSeason() {
 
             </div>
 
-            <div class="
-                info-box
-                warning-box
-            ">
+            <div class="info-box warning-box">
 
-                <strong>
-                    Current season:
-                </strong>
+                <strong>Current season:</strong>
 
                 ${currentSeason}
 
                 <br><br>
 
-                <strong>
-                    New season:
-                </strong>
+                <strong>New season:</strong>
 
                 ${nextSeason}
 
@@ -3249,22 +3216,15 @@ function showNewSeason() {
 
                             return `
 
-                                <div
-                                    class="
-                                        promotion-row
-                                    ">
+                                <div class="promotion-row">
 
                                     <span>
-
                                         ${ageGroup}
                                         →
                                         Leaving Active Register
-
                                     </span>
 
-                                    <strong>
-                                        ${count}
-                                    </strong>
+                                    <strong>${count}</strong>
 
                                 </div>
 
@@ -3275,8 +3235,7 @@ function showNewSeason() {
                         const nextGroup =
                             ageGroupData.find(
                                 group =>
-                                    group.age_group ===
-                                    next
+                                    group.age_group === next
                             );
 
                         const nextActive =
@@ -3285,15 +3244,14 @@ function showNewSeason() {
 
                         return `
 
-                            <div
-                                class="
-                                    promotion-row
-                                    ${
-                                        !nextActive
-                                        ? "warning-box"
-                                        : ""
-                                    }
-                                ">
+                            <div class="
+                                promotion-row
+                                ${
+                                    !nextActive
+                                    ? "warning-box"
+                                    : ""
+                                }
+                            ">
 
                                 <span>
 
@@ -3308,9 +3266,7 @@ function showNewSeason() {
 
                                 </span>
 
-                                <strong>
-                                    ${count}
-                                </strong>
+                                <strong>${count}</strong>
 
                             </div>
 
@@ -3321,14 +3277,9 @@ function showNewSeason() {
 
             <br>
 
-            <div class="
-                info-box
-                danger-box
-            ">
+            <div class="info-box danger-box">
 
-                <strong>
-                    Important
-                </strong>
+                <strong>Important</strong>
 
                 <br><br>
 
@@ -3364,8 +3315,7 @@ function showNewSeason() {
 
 }
 
-
-function confirmNewSeason() {
+async function confirmNewSeason() {
 
     const nextSeason =
         getNextSeason(
@@ -3373,14 +3323,16 @@ function confirmNewSeason() {
         );
 
     const confirmed =
-        confirm(
-            "Start season "
-            + nextSeason
-            + "?\n\n"
-            + "Players will move to the next active age group.\n"
-            + "Those without one will leave the active register.\n\n"
-            + "Player records and history will be retained."
-                    );
+        await appConfirm(
+            "Start season " +
+            nextSeason +
+            "?\n\n" +
+            "Players will move to the next active age group.\n" +
+            "Those without one will leave the active register.\n\n" +
+            "Player records and history will be retained.",
+            "Start new season?",
+            "Start new season"
+        );
 
     if (!confirmed) {
         return;
@@ -3427,20 +3379,14 @@ function showPINManagement() {
                 </div>
 
                 <div class="list-sub">
-
                     Used by coaches to access registers.
-
                 </div>
 
                 <br>
 
                 <button
                     class="secondary-button"
-                    onclick="
-                        showChangePIN(
-                            'coach'
-                        )
-                    ">
+                    onclick="showChangePIN('coach')">
 
                     Change Coach PIN
 
@@ -3455,20 +3401,14 @@ function showPINManagement() {
                 </div>
 
                 <div class="list-sub">
-
                     Used for full club access.
-
                 </div>
 
                 <br>
 
                 <button
                     class="secondary-button"
-                    onclick="
-                        showChangePIN(
-                            'senior'
-                        )
-                    ">
+                    onclick="showChangePIN('senior')">
 
                     Change Admin PIN
 
@@ -3552,18 +3492,11 @@ function showChangePIN(
 
             </div>
 
-            <div
-                id="changePINError"
-                class="error">
-            </div>
+            <div id="changePINError" class="error"></div>
 
             <button
                 class="green-button"
-                onclick="
-                    changePIN(
-                        '${type}'
-                    )
-                ">
+                onclick="changePIN('${type}')">
 
                 Save New PIN
 
@@ -3694,10 +3627,12 @@ async function changePIN(
 
     }
 
-    alert(
+    await appAlert(
         type === "coach"
             ? "Coach PIN changed successfully."
-            : "Admin PIN changed successfully."
+            : "Admin PIN changed successfully.",
+        "PIN changed",
+        "success"
     );
 
     showPINManagement();
@@ -3732,7 +3667,6 @@ function getInstallationID() {
 
 }
 
-
 /* =========================================================
    CHECK PWA ACCESS
    ========================================================= */
@@ -3765,7 +3699,6 @@ async function checkInstallationAccess() {
     // Null means the installation or user is inactive.
     return typeof data === "string" && data.length > 0;
 }
-
 
 /* =========================================================
    AUTOMATIC INSTALLATION ACCESS MONITOR
@@ -3806,9 +3739,12 @@ function startInstallationAccessMonitoring() {
             // Only a confirmed denial ends the current session.
             if (authorised === false) {
                 showWelcome();
-                alert(
+
+                await appAlert(
                     "Your access has been revoked or your account " +
-                    "deactivated. You have been logged out."
+                    "deactivated. You have been logged out.",
+                    "Access revoked",
+                    "danger"
                 );
             }
         } catch (error) {
@@ -3855,8 +3791,7 @@ function showInitialAccess() {
                 autocomplete="off"
             >
 
-            <button
-                onclick="initialisePWA()">
+            <button onclick="initialisePWA()">
                 Activate Device
             </button>
 
@@ -3867,7 +3802,6 @@ function showInitialAccess() {
     `;
 }
 
-
 /* =========================================================
    AUTHORISED STARTUP
    ========================================================= */
@@ -3876,48 +3810,45 @@ let autoCloseInterval = null;
 
 async function completeAuthorisedStartup() {
 
-// 1. Load age groups before restoring saved data
-const ageGroupsLoaded =
-    await loadAgeGroupsFromSupabase();
+    // 1. Load age groups before restoring saved data
+    const ageGroupsLoaded =
+        await loadAgeGroupsFromSupabase();
 
-if (!ageGroupsLoaded) {
-    return false;
-}
+    if (!ageGroupsLoaded) {
+        return false;
+    }
 
-// 2. Restore local data only after authorisation
-loadSavedData();
+    // 2. Restore local data only after authorisation
+    loadSavedData();
 
-// 3. Load the current season
-await loadCurrentSeasonFromSupabase();
+    // 3. Load the current season
+    await loadCurrentSeasonFromSupabase();
 
-// 4. Run the existing register housekeeping
-await autoClosePreviousAttendanceRegisters();
+    // 4. Run the existing register housekeeping
+    await autoClosePreviousAttendanceRegisters();
 
-// 5. Start the periodic housekeeping once
-if (autoCloseInterval === null) {
+    // 5. Start the periodic housekeeping once
+    if (autoCloseInterval === null) {
 
-    autoCloseInterval = setInterval(
-        async () => {
-            await autoClosePreviousAttendanceRegisters();
-        },
-        60000
-    );
+        autoCloseInterval = setInterval(
+            async () => {
+                await autoClosePreviousAttendanceRegisters();
+            },
+            60000
+        );
 
-}
+    }
 
-// 6. Display the welcome screen and monitor access
-showWelcome();
-startInstallationAccessMonitoring();
+    // 6. Display the welcome screen and monitor access
+    showWelcome();
+    startInstallationAccessMonitoring();
 
-return true;
-
+    return true;
 }
 
 /* =========================================================
    INITIALISE PWA
    ========================================================= */
-
-
 
 async function initialisePWA() {
 
@@ -4045,13 +3976,12 @@ async function initialisePWA() {
     }
 }
 
-
 /* =========================================================
    START
    ========================================================= */
 
-
 (async function () {
+
     const installationAuthorised =
         await checkInstallationAccess();
 
@@ -4065,10 +3995,14 @@ async function initialisePWA() {
     // Protected startup remains blocked until access can be verified.
     if (installationAuthorised === null) {
         showWelcome();
-        alert(
+
+        await appAlert(
             "Unable to verify this device's access. " +
-            "Check your connection and refresh the app."
+            "Check your connection and refresh the app.",
+            "Unable to verify access",
+            "warning"
         );
+
         return;
     }
 
@@ -4081,8 +4015,8 @@ async function initialisePWA() {
             "Authorised startup could not be completed."
         );
     }
-})();
 
+})();
 
 </script>
 
@@ -4102,4 +4036,3 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
-

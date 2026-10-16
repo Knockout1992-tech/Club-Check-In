@@ -1,13 +1,6 @@
-/* =========================================================
-   SENIOR / ADMIN
-   ========================================================= */
+// SENIOR / ADMIN ========================================== 
 
-
-
-/* =========================================================
-   ANONYMISE ARCHIVED PLAYER
-   ========================================================= */
-
+// ANONYMISE ARCHIVED PLAYER ================================
 
 async function permanentlyRemovePlayer(playerID) {
     const diag = window.clubCheckInDiagnostics;

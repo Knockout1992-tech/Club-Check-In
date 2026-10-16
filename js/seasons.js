@@ -30,8 +30,7 @@ async function loadCurrentSeasonFromSupabase() {
 
         }
 
-        currentSeason =
-            data.season_name;
+        currentSeason = data.season_name;
 
         saveData();
 
@@ -62,27 +61,16 @@ async function loadCurrentSeasonFromSupabase() {
 
 function getNextSeason(season) {
 
-    const parts =
-        season.split("/");
+    const parts = season.split("/");
 
-    const start =
-        parseInt(
-            parts[0],
-            10
-        );
+    const start = parseInt(parts[0], 10);
 
-    const end =
-        parseInt(
-            parts[1],
-            10
-        );
+    const end = parseInt(parts[1], 10);
 
     return (
         start + 1
     ) + "/" + (
-        String(
-            end + 1
-        ).slice(-2)
+        String(end + 1).slice(-2)
     );
 
 }
@@ -92,27 +80,19 @@ function getNextSeason(season) {
    START NEW SEASON
    ========================================================= */
 
-async function performNewSeason(
-    nextSeason
-) {
+async function performNewSeason(nextSeason) {
 
     const startDate =
         new Date()
             .toISOString()
             .split("T")[0];
 
-    const {
-        data,
-        error
-    } =
+    const { data, error } =
         await supabaseClient.rpc(
             "rollover_season",
             {
-                new_season_name:
-                    nextSeason,
-
-                new_start_date:
-                    startDate
+                new_season_name: nextSeason,
+                new_start_date: startDate
             }
         );
 
@@ -123,9 +103,11 @@ async function performNewSeason(
             error
         );
 
-        alert(
-            "Unable to start the new season.\n\n"
-            + error.message
+        await appAlert(
+            "Unable to start the new season.\n\n" +
+            error.message,
+            "Season rollover failed",
+            "danger"
         );
 
         return false;
@@ -134,8 +116,10 @@ async function performNewSeason(
 
     if (data !== true) {
 
-        alert(
-            "The new season could not be started."
+        await appAlert(
+            "The new season could not be started.",
+            "Season not started",
+            "danger"
         );
 
         return false;
@@ -152,10 +136,12 @@ async function performNewSeason(
 
     if (!playersLoaded) {
 
-        alert(
-            "The new season was created, "
-            + "but the players could not be refreshed.\n\n"
-            + "Please refresh the app."
+        await appAlert(
+            "The new season was created, " +
+            "but the players could not be refreshed.\n\n" +
+            "Please refresh the app.",
+            "Season created",
+            "warning"
         );
 
         return false;
@@ -167,8 +153,7 @@ async function performNewSeason(
        UPDATE CURRENT SEASON
        ----------------------------------------------------- */
 
-    currentSeason =
-        nextSeason;
+    currentSeason = nextSeason;
 
     saveData();
 

@@ -89,7 +89,11 @@ async function addPlayerToAgeGroup(ageGroup, name, gms) {
     }
 
     if (!suppliedCode) {
-        alert("Please log in again before adding a player.");
+        await appAlert(
+            "Please log in again before adding a player.",
+            "Login required",
+            "warning"
+        );
         return null;
     }
 
@@ -117,7 +121,11 @@ async function addPlayerToAgeGroup(ageGroup, name, gms) {
             error
         );
 
-        alert("Unable to add the player. Please try again.");
+        await appAlert(
+            "Unable to add the player. Please try again.",
+            "Player creation failed",
+            "danger"
+        );
         return null;
     }
 
@@ -128,9 +136,11 @@ async function addPlayerToAgeGroup(ageGroup, name, gms) {
             data
         );
 
-        alert(
-            "The player could not be created. "
-            + "Please check your login and try again."
+        await appAlert(
+            "The player could not be created. " +
+            "Please check your login and try again.",
+            "Player not created",
+            "danger"
         );
 
         return null;
@@ -180,9 +190,11 @@ async function addPlayerToAgeGroup(ageGroup, name, gms) {
             registerError
         );
 
-        alert(
-            "The player was added to the roster, but today's register "
-            + "could not be checked. Please ask the Coach to check attendance."
+        await appAlert(
+            "The player was added to the roster, but today's register " +
+            "could not be checked. Please ask the Coach to check attendance.",
+            "Register check failed",
+            "warning"
         );
 
         return newPlayer;
@@ -194,9 +206,11 @@ async function addPlayerToAgeGroup(ageGroup, name, gms) {
             registerRows
         );
 
-        alert(
-            "The player was added to the roster, but today's register "
-            + "could not be verified."
+        await appAlert(
+            "The player was added to the roster, but today's register " +
+            "could not be verified.",
+            "Register not verified",
+            "warning"
         );
 
         return newPlayer;
@@ -234,10 +248,12 @@ async function addPlayerToAgeGroup(ageGroup, name, gms) {
                 addError || added
             );
 
-            alert(
-                "The player was added to the roster, but could not be "
-                + "added to today's open register. Please check attendance "
-                + "before marking them present."
+            await appAlert(
+                "The player was added to the roster, but could not be " +
+                "added to today's open register. Please check attendance " +
+                "before marking them present.",
+                "Attendance update failed",
+                "warning"
             );
 
             return newPlayer;
@@ -256,7 +272,6 @@ async function addPlayerToAgeGroup(ageGroup, name, gms) {
 
     return newPlayer;
 }
-
 
 // Senior Set GMS ========================
 
@@ -294,7 +309,6 @@ async function setGMS(playerID, confirmed) {
 
 }
 
-
 // Set Coach GMS Suggestion =====================================
 
 async function setCoachGMSSuggestion(playerID, suggested) {
@@ -322,14 +336,15 @@ async function setCoachGMSSuggestion(playerID, suggested) {
 
         console.error("Coach GMS suggestion failed:", error);
 
-        alert(
-            "Unable to update the GMS suggestion. Please check your Coach login and try again."
+        await appAlert(
+            "Unable to update the GMS suggestion. Please check your Coach login and try again.",
+            "GMS suggestion failed",
+            "danger"
         );
 
     }
 
 }
-
 
 // Archive Player =============================================
 
@@ -339,11 +354,15 @@ async function archivePlayer(playerID, returnTo) {
 
     if (!player) return;
 
-    if (!confirm(
+    const confirmed = await appConfirm(
         "Archive " + player.name + "?\n\n" +
         "Their historical attendance will be retained.\n" +
-        "They will disappear from active registers."
-    )) return;
+        "They will disappear from active registers.",
+        "Archive player?",
+        "Archive player"
+    );
+
+    if (!confirmed) return;
 
     try {
 
@@ -368,12 +387,15 @@ async function archivePlayer(playerID, returnTo) {
 
         console.error("Player archive failed:", error);
 
-        alert("Unable to archive the player. Please try again.");
+        await appAlert(
+            "Unable to archive the player. Please try again.",
+            "Archive failed",
+            "danger"
+        );
 
     }
 
 }
-
 
 // Coach Restore Player ====================================
 
@@ -392,7 +414,11 @@ async function restoreArchivedPlayer(
         : (selectedAgeGroups.length ? selectedAgeGroups : [currentAgeGroup]);
 
     if (!groups.length) {
-        alert("Please select an age group first.");
+        await appAlert(
+            "Please select an age group first.",
+            "Age group required",
+            "warning"
+        );
         return;
     }
 
@@ -403,7 +429,11 @@ async function restoreArchivedPlayer(
         const select = document.getElementById("targetAgeGroup");
 
         if (!select || !select.value) {
-            alert("Please select the age group to restore the player to.");
+            await appAlert(
+                "Please select the age group to restore the player to.",
+                "Age group required",
+                "warning"
+            );
             return;
         }
 
@@ -422,24 +452,28 @@ async function restoreArchivedPlayer(
             register.submitted ||
             register.closedAutomatically
         ) {
-            alert(
-                "Today's register is not open for "
-                + targetAgeGroup
-                + "."
+            await appAlert(
+                "Today's register is not open for " + targetAgeGroup + ".",
+                "Register unavailable",
+                "warning"
             );
             return;
         }
 
     }
 
-    if (!confirm(
+    const confirmed = await appConfirm(
         "Restore " + player.name + " to " + targetAgeGroup + "?\n\n" +
         "Their historical attendance will be retained.\n" +
         (fromRoster
             ? "They will be added to the roster but NOT marked as present today.\n"
             : "They will be marked as PRESENT today.\n") +
-        "GMS will be reset and require Senior confirmation."
-    )) return;
+        "GMS will be reset and require Senior confirmation.",
+        "Restore player?",
+        "Restore player"
+    );
+
+    if (!confirmed) return;
 
     try {
 
@@ -489,12 +523,15 @@ async function restoreArchivedPlayer(
 
         console.error("Player restore failed:", error);
 
-        alert("Unable to restore the player. Please try again.");
+        await appAlert(
+            "Unable to restore the player. Please try again.",
+            "Restore failed",
+            "danger"
+        );
 
     }
 
 }
-
 
 // Senior Restore Player ====================================
 
@@ -503,24 +540,36 @@ async function seniorRestorePlayer(playerID) {
     const player = findPlayerByID(playerID);
 
     if (!player) {
-        alert("Player could not be found.");
+        await appAlert(
+            "Player could not be found.",
+            "Player not found",
+            "danger"
+        );
         return;
     }
 
     const select = document.getElementById("seniorRestoreAgeGroup");
 
     if (!select || !select.value) {
-        alert("Please select an age group.");
+        await appAlert(
+            "Please select an age group.",
+            "Age group required",
+            "warning"
+        );
         return;
     }
 
     const targetAgeGroup = select.value;
 
-    if (!confirm(
+    const confirmed = await appConfirm(
         "Restore " + player.name + " to " + targetAgeGroup + "?\n\n" +
         "Their Player ID and historical attendance will be retained.\n\n" +
-        "They will NOT be marked as attending today."
-    )) return;
+        "They will NOT be marked as attending today.",
+        "Restore player?",
+        "Restore player"
+    );
+
+    if (!confirmed) return;
 
     try {
 
@@ -561,19 +610,26 @@ async function seniorRestorePlayer(playerID) {
 
         console.error("Senior player restore failed:", error);
 
-        alert("Unable to restore the player. Please try again.");
+        await appAlert(
+            "Unable to restore the player. Please try again.",
+            "Restore failed",
+            "danger"
+        );
 
     }
 
 }
-
 
 // Move Player =======================================
 
 async function movePlayer(playerID) {
 
     if (currentRole !== "senior" || !currentSeniorPIN) {
-        alert("Please log in as Senior again.");
+        await appAlert(
+            "Please log in as Senior again.",
+            "Senior login required",
+            "warning"
+        );
         return;
     }
 
@@ -589,11 +645,15 @@ async function movePlayer(playerID) {
 
     if (targetAgeGroup === player.ageGroup) return;
 
-    if (!confirm(
+    const confirmed = await appConfirm(
         "Move " + player.name + " from " + player.ageGroup +
         " to " + targetAgeGroup + "?\n\n" +
-        "Their Player ID and attendance history will be retained."
-    )) return;
+        "Their Player ID and attendance history will be retained.",
+        "Move player?",
+        "Move player"
+    );
+
+    if (!confirmed) return;
 
     try {
 
@@ -685,15 +745,16 @@ async function movePlayer(playerID) {
 
         console.error("Player move failed:", error);
 
-        alert(
+        await appAlert(
             "The player may have been moved, but a later register step failed. " +
-            "Check the roster and today's register before retrying."
+            "Check the roster and today's register before retrying.",
+            "Move partially completed",
+            "warning"
         );
 
     }
 
 }
-
 
 // Rename players =======================================
 
@@ -757,7 +818,11 @@ async function showChangePlayerName(playerID) {
     const player = findPlayerByID(playerID);
 
     if (!player) {
-        alert("Player could not be found.");
+        await appAlert(
+            "Player could not be found.",
+            "Player not found",
+            "danger"
+        );
         return;
     }
 
@@ -766,14 +831,14 @@ async function showChangePlayerName(playerID) {
         <div class="card">
 
             <button
-    class="back-button"
-    onclick='${currentRole === "senior"
-        ? `showPlayerManagement(${JSON.stringify(player.ageGroup)})`
-        : "showRoster()"}'>
+                class="back-button"
+                onclick='${currentRole === "senior"
+                    ? `showPlayerManagement(${JSON.stringify(player.ageGroup)})`
+                    : "showRoster()"}'>
 
-    ← Back
+                ← Back
 
-</button>
+            </button>
 
             <h2>Change Player Name</h2>
 
@@ -827,14 +892,22 @@ async function savePlayerName(playerID) {
         document.getElementById("updatedPlayerName");
 
     if (!nameInput) {
-        alert("Unable to find the player name input.");
+        await appAlert(
+            "Unable to find the player name input.",
+            "Input unavailable",
+            "danger"
+        );
         return;
     }
 
     const name = nameInput.value.trim();
 
     if (!name) {
-        alert("Player name cannot be blank.");
+        await appAlert(
+            "Player name cannot be blank.",
+            "Name required",
+            "warning"
+        );
         nameInput.focus();
         return;
     }
@@ -842,7 +915,11 @@ async function savePlayerName(playerID) {
     const player = findPlayerByID(playerID);
 
     if (!player) {
-        alert("Player could not be found.");
+        await appAlert(
+            "Player could not be found.",
+            "Player not found",
+            "danger"
+        );
         return;
     }
 
@@ -855,12 +932,14 @@ async function savePlayerName(playerID) {
         return;
     }
 
-    if (!confirm(
+    const confirmed = await appConfirm(
         "Change the player name from:\n\n" +
-        player.name + "\n\nto:\n\n" + name + "?"
-    )) {
-        return;
-    }
+        player.name + "\n\nto:\n\n" + name + "?",
+        "Change player name?",
+        "Save name"
+    );
+
+    if (!confirmed) return;
 
     try {
 
@@ -884,9 +963,11 @@ async function savePlayerName(playerID) {
 
         console.error("Player rename failed:", error);
 
-        alert(
+        await appAlert(
             "Unable to change the player name. " +
-            (error.message || "Please try again.")
+            (error.message || "Please try again."),
+            "Rename failed",
+            "danger"
         );
 
     }

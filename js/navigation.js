@@ -1,5 +1,62 @@
 // Navigation =====================================
 
+
+let deferredInstallPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+});
+
+function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function installClubCheckIn() {
+    if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+
+        deferredInstallPrompt.userChoice.then(() => {
+            deferredInstallPrompt = null;
+            showWelcome();
+        });
+
+        return;
+    }
+
+    if (isIOSDevice()) {
+        appAlert(
+            "To install Club Check-In:\n\n" +
+            "1. Open this website in Safari.\n" +
+            "2. Tap the Share button.\n" +
+            "3. Select 'Add to Home Screen'.\n" +
+            "4. Tap 'Add'.",
+            "Install Club Check-In",
+            "info"
+        );
+        return;
+    }
+
+    appAlert(
+        "To install Club Check-In, open your browser menu and look for " +
+        "'Install app' or 'Add to Home screen'.",
+        "Install Club Check-In",
+        "info"
+    );
+}
+
+function getInstallButtonHTML() {
+    return `
+        <button
+            class="role-button"
+            onclick="installClubCheckIn()">
+            Install Club Check-In
+        </button>
+    `;
+}
+
+
 function goHome() {
 
     if (
@@ -93,6 +150,7 @@ function showWelcome() {
                     Admin Member
 
                 </button>
+${getInstallButtonHTML()}
 
                 <div class="welcome-version">
                     ${APP_VERSION}

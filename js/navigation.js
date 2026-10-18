@@ -46,7 +46,18 @@ function installClubCheckIn() {
     );
 }
 
+// Get Install Button ==================================
+
 function getInstallButtonHTML() {
+
+    const isInstalledApp =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true;
+
+    if (isInstalledApp) {
+        return "";
+    }
+
     return `
         <button
             class="role-button"
@@ -56,6 +67,7 @@ function getInstallButtonHTML() {
     `;
 }
 
+// Return to dashboard ==============================================
 
 function goHome() {
 

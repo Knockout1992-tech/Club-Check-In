@@ -59,8 +59,11 @@ jobs:
           import re
           import sys
 
+          config_path = "js/config.js"
+          worker_path = "service-worker.js"
+
           # Read config.js
-          with open("config.js", "r", encoding="utf-8") as f:
+          with open(config_path, "r", encoding="utf-8") as f:
               config = f.read()
 
           version_pattern = r'(const\s+APP_VERSION\s*=\s*["\']V)(\d+)\.(\d+)\.(\d+)(["\'];)'
@@ -94,10 +97,10 @@ jobs:
           )
 
           if config_count != 1:
-              sys.exit("ERROR: Could not find APP_VERSION in config.js")
+              sys.exit("ERROR: Could not find APP_VERSION in js/config.js")
 
-          # Read service-worker.js
-          with open("service-worker.js", "r", encoding="utf-8") as f:
+          # Read service worker
+          with open(worker_path, "r", encoding="utf-8") as f:
               worker = f.read()
 
           cache_pattern = r'(const\s+CACHE_NAME\s*=\s*["\']club-check-in-v)(\d+)(["\'];)'
@@ -119,15 +122,15 @@ jobs:
           if worker_count != 1:
               sys.exit("ERROR: Could not find CACHE_NAME in service-worker.js")
 
-          # Save both updated files
-          with open("config.js", "w", encoding="utf-8") as f:
+          # Write both files
+          with open(config_path, "w", encoding="utf-8") as f:
               f.write(config_updated)
 
-          with open("service-worker.js", "w", encoding="utf-8") as f:
+          with open(worker_path, "w", encoding="utf-8") as f:
               f.write(worker_updated)
 
-          print("APP_VERSION:", re.search(version_pattern, config_updated).group(0))
-          print("CACHE_NAME:", re.search(cache_pattern, worker_updated).group(0))
+          print("Updated APP_VERSION:", re.search(version_pattern, config_updated).group(0))
+          print("Updated CACHE_NAME:", re.search(cache_pattern, worker_updated).group(0))
           PY
 
       - name: Commit version updates
@@ -136,7 +139,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add config.js service-worker.js
+          git add js/config.js service-worker.js
 
           if ! git diff --cached --quiet; then
             git commit -m "chore: auto-version PWA [skip ci]"

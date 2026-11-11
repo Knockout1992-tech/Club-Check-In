@@ -1329,6 +1329,7 @@ async function publishMatchFixture(fixtureId) {
    ========================================================= */
 
 
+
 async function viewMatchFixture(fixtureId) {
 
     try {
@@ -1371,6 +1372,13 @@ async function viewMatchFixture(fixtureId) {
             status === "unavailable" ? "user-status-inactive" :
             "user-status";
 
+        // Build the original parent link when a token is available.
+        const parentLink = fixture.parent_token
+            ? MATCH_AVAILABILITY_URL +
+                "?fixture=" +
+                encodeURIComponent(fixture.parent_token)
+            : null;
+
         let html = `
             <div class="card">
 
@@ -1386,6 +1394,34 @@ async function viewMatchFixture(fixtureId) {
                     · ${matchAdminEscape(
                         fixture.fixture_type === "home" ? "Home" : "Away"
                     )}
+                </div>
+
+                <div class="info-box">
+                    <strong>Parent Availability Link</strong>
+
+                    ${
+                        parentLink
+                        ? `
+                            <p>
+                                Share this link with parents to collect
+                                their availability.
+                            </p>
+
+                            <div class="user-management-actions">
+                                <button class="primary-button"
+                                    onclick="copyMatchFixtureLink(${Number(fixture.id)})">
+                                    Copy Parent Link
+                                </button>
+                            </div>
+                        `
+                        : `
+                            <p>
+                                This fixture was created before link
+                                retrieval was enabled. Its original
+                                parent link cannot be recovered.
+                            </p>
+                        `
+                    }
                 </div>
 
                 <div class="info-box">
@@ -1541,9 +1577,7 @@ async function viewMatchFixture(fixtureId) {
 
         });
 
-        html += `
-            </div>
-        `;
+        html += `</div>`;
 
         renderShell(html);
 
@@ -1559,3 +1593,54 @@ async function viewMatchFixture(fixtureId) {
 
     }
 }
+
+
+// =========================================================
+// COPY PARENT FIXTURE LINK
+// =========================================================
+
+async function copyMatchFixtureLink(fixtureId) {
+
+    try {
+
+        const result = await matchAdminCall("admin_fixtures", {
+            installation_id: getInstallationID(),
+            senior_code: currentSeniorPIN,
+            action: "detail",
+            fixture_id: Number(fixtureId)
+        });
+
+        const fixture = result.fixtures?.[0];
+
+        if (!fixture?.parent_token) {
+            throw new Error(
+                "The parent link cannot be retrieved for this fixture."
+            );
+        }
+
+        const url =
+            MATCH_AVAILABILITY_URL +
+            "?fixture=" +
+            encodeURIComponent(fixture.parent_token);
+
+        await navigator.clipboard.writeText(url);
+
+        await appAlert(
+            "Parent availability link copied to clipboard.",
+            "Link copied",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error("Unable to copy parent fixture link:", error);
+
+        await appAlert(
+            error.message || "Unable to copy parent link.",
+            "Unable to copy link",
+            "danger"
+        );
+
+    }
+}
+

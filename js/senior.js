@@ -1650,7 +1650,7 @@ async function returnToMatchAdminFixtures() {
         matchFixtureRefreshTimer = null;
     }
 
-    await loadMatchAdminFixtures();
+    await showMatchAvailabilityAdmin();
 }
 
 

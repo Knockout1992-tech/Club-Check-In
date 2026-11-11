@@ -1376,8 +1376,6 @@ async function publishMatchFixture(fixtureId) {
    MATCH FIXTURE - VIEW RESPONSES
    ========================================================= */
 
-
-
 async function viewMatchFixture(fixtureId, silentRefresh = false) {
 
     try {
@@ -1521,7 +1519,9 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                         : ""
                     }
 
-                    <small>Responses refresh automatically every 15 seconds.</small>
+                    <small>
+                        Responses refresh automatically every 15 seconds.
+                    </small>
                 </div>
 
                 <h3>Age Group Responses</h3>
@@ -1584,6 +1584,8 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                             const duplicate =
                                 child.duplicate_review_status === "pending";
 
+                            const childID = Number(child.id);
+
                             return `
                                 <div style="
                                     padding:12px 0;
@@ -1621,13 +1623,63 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                                         }
                                     </small>
 
+                                    <div style="margin-top:10px;">
+
+                                        <label for="matchAvailability-${childID}">
+                                            Change availability
+                                        </label>
+
+                                        <select
+                                            id="matchAvailability-${childID}"
+                                            style="width:100%;padding:10px;margin-top:5px;"
+                                            onchange="updateMatchChildAvailability(
+                                                ${childID},
+                                                this.value,
+                                                ${Number(fixture.id)}
+                                            )">
+
+                                            <option value="available"
+                                                ${child.availability === "available" ? "selected" : ""}>
+                                                Available
+                                            </option>
+
+                                            <option value="unavailable"
+                                                ${child.availability === "unavailable" ? "selected" : ""}>
+                                                Unavailable
+                                            </option>
+
+                                            <option value="unsure"
+                                                ${child.availability === "unsure" ? "selected" : ""}>
+                                                Unsure
+                                            </option>
+
+                                        </select>
+
+                                    </div>
+
                                     ${
                                         duplicate
                                         ? `
-                                            <br>
-                                            <span class="user-status user-status-inactive">
-                                                Potential duplicate - review
-                                            </span>
+                                            <div style="margin-top:10px;">
+
+                                                <span class="user-status user-status-inactive">
+                                                    Potential duplicate - review
+                                                </span>
+
+                                                <br><br>
+
+                                                <button
+                                                    class="user-action-button user-action-danger"
+                                                    onclick="deleteMatchDuplicate(
+                                                        ${childID},
+                                                        ${Number(fixture.id)}
+                                                    )">
+
+                                                    Delete Duplicate
+
+                                                </button>
+
+                                            </div>
                                         `
                                         : ""
                                     }
@@ -1674,6 +1726,90 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                 "danger"
             );
         }
+    }
+}
+
+// =========================================================
+// UPDATE CHILD AVAILABILITY
+// =========================================================
+
+async function updateMatchChildAvailability(
+    childId,
+    availability,
+    fixtureId
+) {
+
+    const select = document.getElementById(
+        `matchAvailability-${childId}`
+    );
+
+    if (select) select.disabled = true;
+
+    try {
+
+        await matchAdminCall("manage_match_child", {
+            action: "update_availability",
+            child_id: Number(childId),
+            availability: availability
+        });
+
+        await viewMatchFixture(fixtureId, false);
+
+    } catch (error) {
+
+        console.error("Availability update failed:", error);
+
+        await appAlert(
+            error.message || "Unable to update availability.",
+            "Update failed",
+            "danger"
+        );
+
+        await viewMatchFixture(fixtureId, false);
+    }
+}
+
+
+// =========================================================
+// DELETE POTENTIAL DUPLICATE
+// =========================================================
+
+async function deleteMatchDuplicate(childId, fixtureId) {
+
+    const confirmed = await appConfirm(
+        "Are you sure you want to delete this child entry?\n\n" +
+        "This will permanently remove this individual entry. " +
+        "The parent's other children and submission will remain.",
+        "Delete duplicate?",
+        "Delete duplicate"
+    );
+
+    if (!confirmed) return;
+
+    try {
+
+        await matchAdminCall("manage_match_child", {
+            action: "delete_duplicate",
+            child_id: Number(childId)
+        });
+
+        await appAlert(
+            "The duplicate child entry has been deleted.",
+            "Duplicate deleted",
+            "success"
+        );
+
+        await viewMatchFixture(fixtureId, false);
+
+    } catch (error) {
+
+        console.error("Duplicate deletion failed:", error);
+
+        await appAlert(
+            error.message || "Unable to delete duplicate.",
+            "Deletion failed",
+            "danger"
+        );
     }
 }
 

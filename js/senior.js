@@ -1324,14 +1324,10 @@ async function publishMatchFixture(fixtureId) {
     }
 }
 
-
-// =========================================================
-// VIEW FIXTURE RESPONSES
-// =========================================================
-
 /* =========================================================
    MATCH FIXTURE - VIEW RESPONSES
    ========================================================= */
+
 
 async function viewMatchFixture(fixtureId) {
 
@@ -1350,41 +1346,92 @@ async function viewMatchFixture(fixtureId) {
             throw new Error("Fixture details could not be found.");
         }
 
-        const ageGroups = fixture.age_groups || [];
         const submissions = fixture.submissions || [];
+        const ageGroups = fixture.age_groups || [];
+
+        const totalAvailable = ageGroups.reduce(
+            (sum, group) => sum + Number(group.available || 0), 0
+        );
+
+        const totalUnavailable = ageGroups.reduce(
+            (sum, group) => sum + Number(group.unavailable || 0), 0
+        );
+
+        const totalUnsure = ageGroups.reduce(
+            (sum, group) => sum + Number(group.unsure || 0), 0
+        );
+
+        const statusLabel = status =>
+            status === "available" ? "Available" :
+            status === "unavailable" ? "Unavailable" :
+            status === "unsure" ? "Unsure" : "Unknown";
+
+        const statusClass = status =>
+            status === "available" ? "user-status-active" :
+            status === "unavailable" ? "user-status-inactive" :
+            "user-status";
 
         let html = `
-            <div class="section-card">
+            <div class="card">
+
+                <button class="back-button"
+                    onclick="loadMatchAdminFixtures()">
+                    ← Back to Fixtures
+                </button>
 
                 <h2>${matchAdminEscape(fixture.opposition)}</h2>
 
-                <p>
-                    ${matchAdminDate(fixture.fixture_date)}
-                    ${matchAdminEscape(fixture.fixture_type || "")}
-                </p>
-
-                <div class="dashboard-grid">
-
-                    <div class="stat-card">
-                        <strong>${fixture.response_count}</strong>
-                        <span>Parent Responses</span>
-                    </div>
-
-                    <div class="stat-card">
-                        <strong>${fixture.children_count}</strong>
-                        <span>Children Registered</span>
-                    </div>
-
-                    <div class="stat-card">
-                        <strong>${fixture.duplicate_review_count}</strong>
-                        <span>Potential Duplicates</span>
-                    </div>
-
+                <div class="subtitle">
+                    ${matchAdminEscape(matchAdminDate(fixture.fixture_date))}
+                    · ${matchAdminEscape(
+                        fixture.fixture_type === "home" ? "Home" : "Away"
+                    )}
                 </div>
-            </div>
+
+                <div class="info-box">
+                    <strong>Fixture Summary</strong>
+
+                    <p>
+                        ${Number(fixture.response_count || 0)}
+                        parent responses ·
+                        ${Number(fixture.children_count || 0)}
+                        children registered
+                    </p>
+
+                    <div class="user-management-actions">
+
+                        <span class="user-status user-status-active">
+                            ${totalAvailable} Available
+                        </span>
+
+                        <span class="user-status user-status-inactive">
+                            ${totalUnavailable} Unavailable
+                        </span>
+
+                        <span class="user-status">
+                            ${totalUnsure} Unsure
+                        </span>
+
+                    </div>
+
+                    ${
+                        Number(fixture.duplicate_review_count || 0) > 0
+                        ? `
+                            <p>
+                                <span class="user-status user-status-inactive">
+                                    ${Number(fixture.duplicate_review_count)}
+                                    Potential duplicates to review
+                                </span>
+                            </p>
+                        `
+                        : ""
+                    }
+                </div>
+
+                <h3>Age Group Responses</h3>
         `;
 
-        ageGroups.forEach(group => {
+        ageGroups.forEach((group, index) => {
 
             const children = submissions.flatMap(submission =>
                 (submission.children || [])
@@ -1398,106 +1445,114 @@ async function viewMatchFixture(fixtureId) {
                     }))
             );
 
-            const available = children.filter(
-                child => child.availability === "available"
-            ).length;
-
-            const unavailable = children.filter(
-                child => child.availability === "unavailable"
-            ).length;
-
-            const unsure = children.filter(
-                child => child.availability === "unsure"
-            ).length;
-
             html += `
-                <div class="section-card">
+                <details class="info-box"
+                    ${index === 0 ? "open" : ""}>
 
-                    <h3>${matchAdminEscape(group.display_name || group.age_group)}</h3>
+                    <summary style="cursor:pointer;font-weight:bold;">
+                        ${matchAdminEscape(
+                            group.display_name || group.age_group
+                        )}
 
-                    <div class="dashboard-grid">
+                        (${children.length})
+                    </summary>
 
-                        <div class="stat-card">
-                            <strong>${available}</strong>
-                            <span>Available</span>
-                        </div>
+                    <div class="user-management-actions"
+                        style="margin:12px 0;">
 
-                        <div class="stat-card">
-                            <strong>${unavailable}</strong>
-                            <span>Unavailable</span>
-                        </div>
+                        <span class="user-status user-status-active">
+                            ${group.available} Available
+                        </span>
 
-                        <div class="stat-card">
-                            <strong>${unsure}</strong>
-                            <span>Unsure</span>
-                        </div>
+                        <span class="user-status user-status-inactive">
+                            ${group.unavailable} Unavailable
+                        </span>
 
-                        <div class="stat-card">
-                            <strong>${children.length}</strong>
-                            <span>Total</span>
-                        </div>
+                        <span class="user-status">
+                            ${group.unsure} Unsure
+                        </span>
 
                     </div>
 
-                    <div class="player-list">
-
-                        ${children.length ? children.map(child => {
-
-                            const status = child.availability;
+                    ${
+                        children.length
+                        ? children.map(child => {
 
                             const duplicate =
                                 child.duplicate_review_status === "pending";
 
                             return `
-                                <div class="player-row">
+                                <div style="
+                                    padding:12px 0;
+                                    border-top:1px solid var(--border-color, #ddd);
+                                ">
 
-                                    <div>
-                                        <strong>${matchAdminEscape(child.child_name)}</strong>
+                                    <div style="
+                                        display:flex;
+                                        justify-content:space-between;
+                                        align-items:center;
+                                        gap:10px;
+                                        flex-wrap:wrap;
+                                    ">
 
-                                        <small>
-                                            Parent:
-                                            ${matchAdminEscape(child.parent_name || "")}
-                                            ${child.school_year
-                                                ? ` | Year ${matchAdminEscape(child.school_year)}`
-                                                : ""}
-                                        </small>
+                                        <strong>
+                                            ${matchAdminEscape(child.child_name)}
+                                        </strong>
 
-                                        ${duplicate
-                                            ? `<small class="text-warning">Potential duplicate - review</small>`
-                                            : ""}
+                                        <span class="user-status ${
+                                            statusClass(child.availability)
+                                        }">
+                                            ${statusLabel(child.availability)}
+                                        </span>
+
                                     </div>
 
-                                    <span class="availability-${matchAdminEscape(status)}">
-                                        ${matchAdminEscape(status)}
-                                    </span>
+                                    <small>
+                                        Parent:
+                                        ${matchAdminEscape(child.parent_name || "Not provided")}
+                                        ${
+                                            child.school_year
+                                            ? " · School Year " +
+                                                matchAdminEscape(child.school_year)
+                                            : ""
+                                        }
+                                    </small>
+
+                                    ${
+                                        duplicate
+                                        ? `
+                                            <br>
+                                            <span class="user-status user-status-inactive">
+                                                Potential duplicate - review
+                                            </span>
+                                        `
+                                        : ""
+                                    }
 
                                 </div>
                             `;
 
-                        }).join("") : "<p>No responses yet.</p>"}
+                        }).join("")
+                        : "<p>No responses yet.</p>"
+                    }
 
-                    </div>
-
-                </div>
+                </details>
             `;
 
         });
 
         html += `
-            <button class="btn btn-secondary"
-                onclick="loadMatchAdminFixtures()">
-                Back to Fixtures
-            </button>
+            </div>
         `;
 
-        document.getElementById("app").innerHTML = html;
+        renderShell(html);
 
     } catch (error) {
 
         console.error("Unable to load fixture responses:", error);
 
         await appAlert(
-            error.message,
+            error.message || "Unable to load responses.",
             "Unable to load responses",
             "danger"
         );

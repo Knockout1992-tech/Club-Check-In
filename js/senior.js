@@ -721,6 +721,8 @@ async function resetUserInstallation(personID) {
 // MATCH AVAILABILITY - ADMIN
 // =========================================================
 
+let matchFixtureRefreshTimer = null;
+
 let matchAdminAgeGroups = [];
 let latestCreatedFixtureLink = null;
 
@@ -1329,10 +1331,25 @@ async function publishMatchFixture(fixtureId) {
    ========================================================= */
 
 
-
-async function viewMatchFixture(fixtureId) {
+async function viewMatchFixture(fixtureId, silentRefresh = false) {
 
     try {
+
+        if (!silentRefresh && matchFixtureRefreshTimer) {
+            clearInterval(matchFixtureRefreshTimer);
+            matchFixtureRefreshTimer = null;
+        }
+
+        // Remember which age groups are expanded.
+        const previouslyOpen = new Set(
+            Array.from(
+                document.querySelectorAll(
+                    "#matchFixtureDetailScreen details[data-age-group-id]"
+                )
+            )
+            .filter(details => details.open)
+            .map(details => details.dataset.ageGroupId)
+        );
 
         const result = await matchAdminCall("admin_fixtures", {
             installation_id: getInstallationID(),
@@ -1372,7 +1389,6 @@ async function viewMatchFixture(fixtureId) {
             status === "unavailable" ? "user-status-inactive" :
             "user-status";
 
-        // Build the original parent link when a token is available.
         const parentLink = fixture.parent_token
             ? MATCH_AVAILABILITY_URL +
                 "?fixture=" +
@@ -1380,10 +1396,10 @@ async function viewMatchFixture(fixtureId) {
             : null;
 
         let html = `
-            <div class="card">
+            <div class="card" id="matchFixtureDetailScreen">
 
                 <button class="back-button"
-                    onclick="loadMatchAdminFixtures()">
+                    onclick="returnToMatchAdminFixtures()">
                     ← Back to Fixtures
                 </button>
 
@@ -1462,12 +1478,16 @@ async function viewMatchFixture(fixtureId) {
                         `
                         : ""
                     }
+
+                    <small>Responses refresh automatically every 15 seconds.</small>
                 </div>
 
                 <h3>Age Group Responses</h3>
         `;
 
         ageGroups.forEach((group, index) => {
+
+            const groupID = String(group.age_group_id);
 
             const children = submissions.flatMap(submission =>
                 (submission.children || [])
@@ -1481,9 +1501,14 @@ async function viewMatchFixture(fixtureId) {
                     }))
             );
 
+            const isOpen = silentRefresh
+                ? previouslyOpen.has(groupID)
+                : index === 0;
+
             html += `
                 <details class="info-box"
-                    ${index === 0 ? "open" : ""}>
+                    data-age-group-id="${matchAdminEscape(groupID)}"
+                    ${isOpen ? "open" : ""}>
 
                     <summary style="cursor:pointer;font-weight:bold;">
                         ${matchAdminEscape(
@@ -1581,17 +1606,51 @@ async function viewMatchFixture(fixtureId) {
 
         renderShell(html);
 
+        // Start the automatic refresh only on initial entry.
+        if (!silentRefresh) {
+
+            matchFixtureRefreshTimer = setInterval(() => {
+
+                // Stop refreshing if the detail screen is no longer visible.
+                if (!document.getElementById("matchFixtureDetailScreen")) {
+
+                    clearInterval(matchFixtureRefreshTimer);
+                    matchFixtureRefreshTimer = null;
+                    return;
+                }
+
+                viewMatchFixture(fixtureId, true);
+
+            }, 15000);
+        }
+
     } catch (error) {
 
         console.error("Unable to load fixture responses:", error);
 
-        await appAlert(
-            error.message || "Unable to load responses.",
-            "Unable to load responses",
-            "danger"
-        );
-
+        if (!silentRefresh) {
+            await appAlert(
+                error.message || "Unable to load responses.",
+                "Unable to load responses",
+                "danger"
+            );
+        }
     }
+}
+
+
+// =========================================================
+// BACK TO ADMIN FIXTURES
+// =========================================================
+
+async function returnToMatchAdminFixtures() {
+
+    if (matchFixtureRefreshTimer) {
+        clearInterval(matchFixtureRefreshTimer);
+        matchFixtureRefreshTimer = null;
+    }
+
+    await loadMatchAdminFixtures();
 }
 
 
@@ -1640,7 +1699,5 @@ async function copyMatchFixtureLink(fixtureId) {
             "Unable to copy link",
             "danger"
         );
-
     }
 }
-

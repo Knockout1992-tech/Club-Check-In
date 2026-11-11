@@ -275,6 +275,7 @@ async function openSelectedCoachAgeGroups() {
 
 // Coach Dashboard ==========================================
 
+
 async function showCoachDashboard() {
 
     const groups =
@@ -390,9 +391,7 @@ async function showCoachDashboard() {
             <button
                 class="back-button"
                 onclick="showCoachAgeGroups()">
-
                 ← Age Groups
-
             </button>
 
             <h2>
@@ -450,6 +449,12 @@ async function showCoachDashboard() {
                     class="menu-button"
                     onclick="showSessionHistory()">
                     Session<br>History
+                </button>
+
+                <button
+                    class="menu-button blue"
+                    onclick="showMatchAvailabilityCoach()">
+                    Match<br>Availability
                 </button>
 
             </div>
@@ -1743,6 +1748,7 @@ function getArchiveReviewCount() {
 
 }
 
+
 function showSeniorDashboard() {
 
     const active =
@@ -1810,9 +1816,7 @@ function showSeniorDashboard() {
 
             ${
                 archiveReviewCount > 0
-
                 ? `
-
                     <div class="
                         info-box
                         archive-due
@@ -1833,9 +1837,7 @@ function showSeniorDashboard() {
                         for 12 weeks or more.
 
                     </div>
-
                 `
-
                 : ""
             }
 
@@ -1844,68 +1846,54 @@ function showSeniorDashboard() {
                 <button
                     class="menu-button"
                     onclick="showSeniorAgeGroups()">
-
-                    All Age<br>
-                    Groups
-
+                    All Age<br>Groups
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showPlayerManagement()">
-
-                    Player<br>
-                    Management
+                    Player<br>Management
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showArchiveReview()">
-
-                    Archive<br>
-                    Review
+                    Archive<br>Review
                     ${
                         archiveReviewCount > 0
                         ? `<br>(${archiveReviewCount})`
                         : ""
                     }
-
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showArchiveList()">
-
-                    Archived<br>
-                    Players
-
+                    Archived<br>Players
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showUserManagement()">
-
-                    User<br>
-                    Management
-
+                    User<br>Management
                 </button>
 
                 <button
                     class="menu-button"
                     onclick="showPINManagement()">
-
-                    Manage<br>
-                    PINs
-
+                    Manage<br>PINs
                 </button>
 
                 <button
                     class="menu-button blue"
                     onclick="showNewSeason()">
+                    New<br>Season
+                </button>
 
-                    New<br>
-                    Season
-
+                <button
+                    class="menu-button blue"
+                    onclick="showMatchAvailabilityAdmin()">
+                    Match<br>Availability
                 </button>
 
             </div>
@@ -1915,6 +1903,7 @@ function showSeniorDashboard() {
     `);
 
 }
+
 
 // Senior all age groups ===========================
 

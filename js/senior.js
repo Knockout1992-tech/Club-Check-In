@@ -1,6 +1,12 @@
-// SENIOR / ADMIN ========================================== 
 
-// ANONYMISE ARCHIVED PLAYER ================================
+// =========================================================
+// ADMIN / SENIOR FUNCTIONS
+// =========================================================
+
+
+// =========================================================
+// ANONYMISE ARCHIVED PLAYER
+// =========================================================
 
 async function permanentlyRemovePlayer(playerID) {
     const diag = window.clubCheckInDiagnostics;
@@ -34,9 +40,7 @@ async function permanentlyRemovePlayer(playerID) {
         "Anonymise player"
     );
 
-    if (!confirmed) {
-        return;
-    }
+    if (!confirmed) return;
 
     try {
         const { data, error } = await supabaseClient.rpc(
@@ -87,11 +91,12 @@ async function permanentlyRemovePlayer(playerID) {
     }
 }
 
-// USER MANAGEMENT =======================================
+
+// =========================================================
+// USER MANAGEMENT
+// =========================================================
 
 async function showUserManagement() {
-
-    /* LOAD USERS */
 
     const {
         data: users,
@@ -105,10 +110,7 @@ async function showUserManagement() {
 
     if (error || !Array.isArray(users)) {
 
-        console.error(
-            "User management load failed:",
-            error
-        );
+        console.error("User management load failed:", error);
 
         if (window.clubCheckInDiagnostics) {
             window.clubCheckInDiagnostics.error(
@@ -120,8 +122,7 @@ async function showUserManagement() {
         renderShell(`
             <div class="card">
 
-                <button
-                    class="back-button"
+                <button class="back-button"
                     onclick="showSeniorDashboard()">
                     ← Admin Dashboard
                 </button>
@@ -137,9 +138,6 @@ async function showUserManagement() {
 
         return;
     }
-
-
-    /* LOAD REGISTERED INSTALLATIONS */
 
     const {
         data: installations,
@@ -181,8 +179,7 @@ async function showUserManagement() {
         renderShell(`
             <div class="card">
 
-                <button
-                    class="back-button"
+                <button class="back-button"
                     onclick="showSeniorDashboard()">
                     ← Admin Dashboard
                 </button>
@@ -200,30 +197,20 @@ async function showUserManagement() {
         return;
     }
 
-
-    /* BUILD INSTALLATION SUMMARY */
-
     const installationSummary = {};
 
     installations.forEach(installation => {
-
         installationSummary[installation.person_id] = {
             activeCount: Number(
                 installation.active_installations || 0
             ),
             lastSeen: installation.last_seen_at || null
         };
-
     });
-
-
-    /* FORMAT LAST-SEEN DATE */
 
     function formatDeviceLastSeen(value) {
 
-        if (!value) {
-            return "Not available";
-        }
+        if (!value) return "Not available";
 
         const date = new Date(value);
 
@@ -237,22 +224,17 @@ async function showUserManagement() {
         });
     }
 
-
-    /* DISPLAY USER MANAGEMENT */
-
     renderShell(`
         <div class="card">
 
-            <button
-                class="back-button"
+            <button class="back-button"
                 onclick="showSeniorDashboard()">
                 ← Admin Dashboard
             </button>
 
             <h2>User Management</h2>
 
-            <button
-                class="primary-button"
+            <button class="primary-button"
                 onclick="showAddCoach()">
                 + Add Coach
             </button>
@@ -285,14 +267,13 @@ async function showUserManagement() {
                         : "user-status-inactive";
 
                     return `
-
                         <div class="info-box user-management-card">
 
                             <div class="user-management-header">
 
                                 <strong>${escapeHTML(user.name)}</strong>
 
-                                <div style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
 
                                     <span class="user-status ${
                                         user.active
@@ -312,7 +293,6 @@ async function showUserManagement() {
                                     device.activeCount > 1
                                     ? `
                                         <br>
-
                                         <span class="user-status user-status-inactive">
                                             Warning: ${device.activeCount} active installations
                                         </span>
@@ -331,8 +311,7 @@ async function showUserManagement() {
 
                             <div class="user-management-actions">
 
-                                <button
-                                    type="button"
+                                <button type="button"
                                     class="user-action-button ${
                                         user.active
                                         ? "user-action-danger"
@@ -342,15 +321,13 @@ async function showUserManagement() {
                                     ${user.active ? "Deactivate" : "Activate"}
                                 </button>
 
-                                <button
-                                    type="button"
+                                <button type="button"
                                     class="user-action-button user-action-neutral reset-installation-button"
                                     data-user-index="${index}">
                                     Reset Installation
                                 </button>
 
-                                <button
-                                    type="button"
+                                <button type="button"
                                     class="user-action-button user-action-neutral change-user-name-button"
                                     data-user-index="${index}">
                                     Change Name
@@ -359,7 +336,6 @@ async function showUserManagement() {
                             </div>
 
                         </div>
-
                     `;
 
                 }).join("")
@@ -367,9 +343,6 @@ async function showUserManagement() {
 
         </div>
     `);
-
-
-    /* ACTIVATE / DEACTIVATE */
 
     document
         .querySelectorAll(".user-active-button")
@@ -381,13 +354,11 @@ async function showUserManagement() {
                     users[Number(button.dataset.userIndex)];
 
                 if (!selectedUser) {
-
                     await appAlert(
                         "User could not be found.",
                         "User not found",
                         "danger"
                     );
-
                     return;
                 }
 
@@ -395,13 +366,8 @@ async function showUserManagement() {
                     selectedUser.person_id,
                     !selectedUser.active
                 );
-
             });
-
         });
-
-
-    /* RESET INSTALLATION */
 
     document
         .querySelectorAll(".reset-installation-button")
@@ -413,26 +379,19 @@ async function showUserManagement() {
                     users[Number(button.dataset.userIndex)];
 
                 if (!selectedUser) {
-
                     await appAlert(
                         "User could not be found.",
                         "User not found",
                         "danger"
                     );
-
                     return;
                 }
 
                 await resetUserInstallation(
                     selectedUser.person_id
                 );
-
             });
-
         });
-
-
-    /* CHANGE NAME */
 
     document
         .querySelectorAll(".change-user-name-button")
@@ -444,40 +403,32 @@ async function showUserManagement() {
                     users[Number(button.dataset.userIndex)];
 
                 if (!selectedUser) {
-
                     await appAlert(
                         "User could not be found.",
                         "User not found",
                         "danger"
                     );
-
                     return;
                 }
 
-                showChangeUserName(
-                    selectedUser.person_id
-                );
-
+                showChangeUserName(selectedUser.person_id);
             });
-
         });
-
 }
 
-// ADD COACH ===========================================
+
+// =========================================================
+// ADD COACH
+// =========================================================
 
 function showAddCoach() {
 
     renderShell(`
-
         <div class="card">
 
-            <button
-                class="back-button"
+            <button class="back-button"
                 onclick="showUserManagement()">
-
                 ← User Management
-
             </button>
 
             <h2>Add Coach</h2>
@@ -487,116 +438,78 @@ function showAddCoach() {
                 id="newCoachName"
                 placeholder="Coach Name"
                 maxlength="100"
-                autocomplete="off"
-            >
+                autocomplete="off">
 
-            <button
-                class="menu-button blue"
+            <button class="menu-button blue"
                 onclick="addCoach()">
-
                 Add Coach
-
             </button>
 
-            <div
-                id="addCoachMessage"
-                class="info-box">
-            </div>
+            <div id="addCoachMessage" class="info-box"></div>
 
         </div>
-
     `);
 }
 
+
 async function addCoach() {
 
-    const input =
-        document.getElementById("newCoachName");
+    const input = document.getElementById("newCoachName");
+    const message = document.getElementById("addCoachMessage");
 
-    const message =
-        document.getElementById("addCoachMessage");
-
-    if (!input || !message) {
-        return;
-    }
+    if (!input || !message) return;
 
     const name = input.value.trim();
 
     if (!name) {
-
-        message.textContent =
-            "Please enter the coach's name.";
-
+        message.textContent = "Please enter the coach's name.";
         return;
     }
 
     if (name.length > 100) {
-
-        message.textContent =
-            "The name cannot exceed 100 characters.";
-
+        message.textContent = "The name cannot exceed 100 characters.";
         return;
     }
 
-    const {
-        data,
-        error
-    } = await supabaseClient.rpc(
+    const { data, error } = await supabaseClient.rpc(
         "add_manageable_user",
         {
-            current_senior_code:
-                currentSeniorPIN,
-
-            requested_name:
-                name
+            current_senior_code: currentSeniorPIN,
+            requested_name: name
         }
     );
 
     if (error) {
-
-        console.error(
-            "Add coach failed:",
-            error
-        );
-
-        message.textContent =
-            "Unable to add coach. Please try again.";
-
+        console.error("Add coach failed:", error);
+        message.textContent = "Unable to add coach. Please try again.";
         return;
     }
 
     if (!data) {
-
         message.textContent =
             "A user with that name may already exist. Check the name and try again.";
-
         return;
     }
 
     await showUserManagement();
 }
 
-// CHANGE USER NAME =========================================
+
+// =========================================================
+// CHANGE USER NAME
+// =========================================================
 
 async function showChangeUserName(personID) {
 
-    const {
-        data: users,
-        error
-    } = await supabaseClient.rpc(
+    const { data: users, error } = await supabaseClient.rpc(
         "get_manageable_users",
         {
-            current_senior_code:
-                currentSeniorPIN
+            current_senior_code: currentSeniorPIN
         }
     );
 
     if (error || !Array.isArray(users)) {
-
-        console.error(
-            "Unable to load user for renaming:",
-            error
-        );
+        console.error("Unable to load user for renaming:", error);
 
         await appAlert(
             "Unable to load the user's details.",
@@ -607,157 +520,107 @@ async function showChangeUserName(personID) {
         return;
     }
 
-    const user =
-        users.find(
-            item => item.person_id === personID
-        );
+    const user = users.find(item => item.person_id === personID);
 
     if (!user) {
-
         await appAlert(
             "User could not be found.",
             "User not found",
             "danger"
         );
-
         return;
     }
 
     renderShell(`
-
         <div class="card">
 
-            <button
-                class="back-button"
+            <button class="back-button"
                 onclick="showUserManagement()">
-
                 ← User Management
-
             </button>
 
             <h2>Change Name</h2>
 
-            <label for="updatedUserName">
-                User name
-            </label>
+            <label for="updatedUserName">User name</label>
 
             <input
                 type="text"
                 id="updatedUserName"
                 maxlength="100"
                 autocomplete="off"
-                placeholder="Enter user name"
-            >
+                placeholder="Enter user name">
 
-            <button
-                class="blue-button small-button"
-                onclick="saveUserName(
-                    '${personID}'
-                )">
-
+            <button class="blue-button small-button"
+                onclick="saveUserName('${personID}')">
                 Save Name
-
             </button>
 
-            <div
-                id="changeUserNameMessage"
-                class="info-box">
-            </div>
+            <div id="changeUserNameMessage" class="info-box"></div>
 
         </div>
-
     `);
 
-    const nameInput =
-        document.getElementById("updatedUserName");
+    const nameInput = document.getElementById("updatedUserName");
 
     if (nameInput) {
-
         nameInput.value = user.name;
-
         nameInput.focus();
-
         nameInput.select();
     }
 }
 
+
 async function saveUserName(personID) {
 
-    const input =
-        document.getElementById("updatedUserName");
+    const input = document.getElementById("updatedUserName");
+    const message = document.getElementById("changeUserNameMessage");
 
-    const message =
-        document.getElementById("changeUserNameMessage");
-
-    if (!input || !message) {
-        return;
-    }
+    if (!input || !message) return;
 
     const name = input.value.trim();
 
     if (!name) {
-
-        message.textContent =
-            "Please enter a name.";
-
+        message.textContent = "Please enter a name.";
         return;
     }
 
     if (name.length > 100) {
-
-        message.textContent =
-            "The name cannot exceed 100 characters.";
-
+        message.textContent = "The name cannot exceed 100 characters.";
         return;
     }
 
-    const {
-        data,
-        error
-    } = await supabaseClient.rpc(
+    const { data, error } = await supabaseClient.rpc(
         "rename_manageable_user",
         {
-            current_senior_code:
-                currentSeniorPIN,
-
-            requested_person_id:
-                personID,
-
-            requested_name:
-                name
+            current_senior_code: currentSeniorPIN,
+            requested_person_id: personID,
+            requested_name: name
         }
     );
 
     if (error) {
-
-        console.error(
-            "Rename user failed:",
-            error
-        );
-
-        message.textContent =
-            "Unable to change the name. Please try again.";
-
+        console.error("Rename user failed:", error);
+        message.textContent = "Unable to change the name. Please try again.";
         return;
     }
 
     if (!data) {
-
         message.textContent =
             "A user with that name may already exist, or the name could not be changed.";
-
         return;
     }
 
     await showUserManagement();
 }
 
-// ACTIVATE / DEACTIVATE USER ===============================
+
+// =========================================================
+// ACTIVATE / DEACTIVATE USER
+// =========================================================
 
 async function setUserActive(personID, active) {
 
-    const action =
-        active ? "activate" : "deactivate";
+    const action = active ? "activate" : "deactivate";
 
     const confirmed = await appConfirm(
         `Are you sure you want to ${action} this user?`,
@@ -765,58 +628,44 @@ async function setUserActive(personID, active) {
         active ? "Activate user" : "Deactivate user"
     );
 
-    if (!confirmed) {
-        return;
-    }
+    if (!confirmed) return;
 
-    const {
-        data,
-        error
-    } = await supabaseClient.rpc(
+    const { data, error } = await supabaseClient.rpc(
         "set_manageable_user_active",
         {
-            current_senior_code:
-                currentSeniorPIN,
-
-            requested_person_id:
-                personID,
-
-            requested_active:
-                active
+            current_senior_code: currentSeniorPIN,
+            requested_person_id: personID,
+            requested_active: active
         }
     );
 
     if (error) {
-
-        console.error(
-            "User status update failed:",
-            error
-        );
+        console.error("User status update failed:", error);
 
         await appAlert(
             "Unable to update user status.",
             "Update failed",
             "danger"
         );
-
         return;
     }
 
     if (!data) {
-
         await appAlert(
             "User status could not be changed.",
             "Update unsuccessful",
             "danger"
         );
-
         return;
     }
 
     await showUserManagement();
 }
 
-// RESET USER INSTALLATION ==================================
+
+// =========================================================
+// RESET USER INSTALLATION
+// =========================================================
 
 async function resetUserInstallation(personID) {
 
@@ -828,48 +677,33 @@ async function resetUserInstallation(personID) {
         "Reset installation"
     );
 
-    if (!confirmed) {
-        return;
-    }
+    if (!confirmed) return;
 
-    const {
-        data,
-        error
-    } = await supabaseClient.rpc(
+    const { data, error } = await supabaseClient.rpc(
         "reset_installation",
         {
-            current_senior_code:
-                currentSeniorPIN,
-
-            requested_person_id:
-                personID
+            current_senior_code: currentSeniorPIN,
+            requested_person_id: personID
         }
     );
 
     if (error) {
-
-        console.error(
-            "Installation reset failed:",
-            error
-        );
+        console.error("Installation reset failed:", error);
 
         await appAlert(
             "Unable to reset installation.",
             "Reset failed",
             "danger"
         );
-
         return;
     }
 
     if (!data) {
-
         await appAlert(
             "Installation could not be reset.",
             "Reset unsuccessful",
             "danger"
         );
-
         return;
     }
 
@@ -880,4 +714,626 @@ async function resetUserInstallation(personID) {
     );
 
     await showUserManagement();
+}
+
+
+// =========================================================
+// MATCH AVAILABILITY - ADMIN
+// =========================================================
+
+let matchAdminAgeGroups = [];
+let latestCreatedFixtureLink = null;
+
+const MATCH_AVAILABILITY_URL =
+    "https://knockout1992-tech.github.io/Club-Match-Availability/";
+
+
+function matchAdminEscape(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+
+function matchAdminDate(value) {
+    if (!value) return "";
+
+    const parts = String(value).split("-");
+
+    if (parts.length !== 3) return value;
+
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+
+async function matchAdminCall(functionName, body) {
+
+    const { data, error } =
+        await supabaseClient.functions.invoke(
+            functionName,
+            { body }
+        );
+
+    if (error) {
+        console.error(
+            `Match Availability ${functionName} error:`,
+            error
+        );
+
+        throw new Error(
+            error.message || "Unable to contact the server."
+        );
+    }
+
+    if (!data?.success) {
+        throw new Error(
+            data?.error || "The request could not be completed."
+        );
+    }
+
+    return data;
+}
+
+
+// =========================================================
+// OPEN ADMIN FIXTURE SCREEN
+// =========================================================
+
+async function showMatchAvailabilityAdmin() {
+
+    if (currentRole !== "senior" || !currentSeniorPIN) {
+        await appAlert(
+            "Admin access is required to manage fixtures.",
+            "Access required",
+            "danger"
+        );
+        return;
+    }
+
+    renderShell(`
+        <div class="card">
+
+            <button class="back-button"
+                onclick="showSeniorDashboard()">
+                ← Back to Dashboard
+            </button>
+
+            <h2>Match Availability</h2>
+
+            <div class="subtitle">
+                Manage fixtures and parent responses.
+            </div>
+
+            <div id="matchAdminMessage"></div>
+
+            <div style="margin-top:20px;">
+                <button class="primary-button"
+                    onclick="showMatchFixtureForm()">
+                    + Create Fixture
+                </button>
+            </div>
+
+            <h3 style="margin-top:25px;">Fixtures</h3>
+
+            <div id="matchAdminFixtures">
+                Loading fixtures...
+            </div>
+
+        </div>
+    `);
+
+    try {
+        await loadMatchAdminAgeGroups();
+        await loadMatchAdminFixtures();
+    } catch (error) {
+        console.error("Match Availability initialisation failed:", error);
+
+        const container = document.getElementById("matchAdminFixtures");
+
+        if (container) {
+            container.innerHTML = `
+                <p class="error">
+                    ${matchAdminEscape(error.message)}
+                </p>
+                <button class="secondary-button"
+                    onclick="showMatchAvailabilityAdmin()">
+                    Try Again
+                </button>
+            `;
+        }
+    }
+}
+
+
+// =========================================================
+// LOAD ACTIVE AGE GROUPS
+// =========================================================
+
+async function loadMatchAdminAgeGroups() {
+
+    const { data, error } = await supabaseClient
+        .from("age_groups")
+        .select("id, age_group, display_name, sort_order")
+        .eq("active", true)
+        .order("sort_order");
+
+    if (error) {
+        console.error("Age group loading failed:", error);
+        throw new Error("Unable to load age groups.");
+    }
+
+    matchAdminAgeGroups = data || [];
+}
+
+
+// =========================================================
+// LOAD FIXTURES
+// =========================================================
+
+async function loadMatchAdminFixtures() {
+
+    const container = document.getElementById("matchAdminFixtures");
+
+    if (!container) return;
+
+    container.innerHTML = "Loading fixtures...";
+
+    try {
+        const result = await matchAdminCall(
+            "admin_fixtures",
+            {
+                installation_id: getInstallationID(),
+                senior_code: currentSeniorPIN,
+                action: "list"
+            }
+        );
+
+        const fixtures = result.fixtures || [];
+
+        if (!fixtures.length) {
+            container.innerHTML = `
+                <p>No fixtures have been created yet.</p>
+            `;
+            return;
+        }
+
+        container.innerHTML = fixtures.map(fixture => {
+
+            const groups = (fixture.age_groups || [])
+                .map(group => group.display_name || group.age_group)
+                .join(", ");
+
+            const status = String(fixture.status || "").toLowerCase();
+
+            const statusLabel =
+                status.charAt(0).toUpperCase() + status.slice(1);
+
+            return `
+                <div class="card" style="margin:12px 0;">
+
+                    <h3>${matchAdminEscape(fixture.opposition)}</h3>
+
+                    <p>
+                        <strong>Date:</strong>
+                        ${matchAdminEscape(matchAdminDate(fixture.fixture_date))}
+                    </p>
+
+                    <p>
+                        <strong>Type:</strong>
+                        ${
+                            status === "cancelled"
+                            ? "Cancelled"
+                            : fixture.fixture_type === "home"
+                                ? "Home"
+                                : "Away"
+                        }
+                    </p>
+
+                    <p>
+                        <strong>Age groups:</strong>
+                        ${matchAdminEscape(groups || "None")}
+                    </p>
+
+                    <p>
+                        <strong>Status:</strong>
+                        ${matchAdminEscape(statusLabel)}
+                    </p>
+
+                    <p>
+                        <strong>Responses:</strong>
+                        ${Number(fixture.response_count || 0)}
+                        parents /
+                        ${Number(fixture.children_count || 0)}
+                        children
+                    </p>
+
+                    ${
+                        status === "draft"
+                        ? `
+                            <button class="primary-button"
+                                onclick="publishMatchFixture(${Number(fixture.id)})">
+                                Publish Fixture
+                            </button>
+                        `
+                        : ""
+                    }
+
+                    ${
+                        status === "open"
+                        ? `
+                            <button class="secondary-button"
+                                onclick="viewMatchFixture(${Number(fixture.id)})">
+                                View Responses
+                            </button>
+                        `
+                        : ""
+                    }
+
+                </div>
+            `;
+
+        }).join("");
+
+    } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML = `
+            <p class="error">
+                ${matchAdminEscape(error.message)}
+            </p>
+
+            <button class="secondary-button"
+                onclick="loadMatchAdminFixtures()">
+                Try Again
+            </button>
+        `;
+    }
+}
+
+
+// =========================================================
+// CREATE FIXTURE FORM
+// =========================================================
+
+function showMatchFixtureForm() {
+
+    const container = document.getElementById("matchAdminFixtures");
+
+    if (!container) return;
+
+    const ageGroupHTML = matchAdminAgeGroups.map(group => `
+        <label style="
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin:10px 0;
+        ">
+            <input
+                type="checkbox"
+                class="matchFixtureAgeGroup"
+                value="${Number(group.id)}">
+
+            ${matchAdminEscape(group.display_name || group.age_group)}
+        </label>
+    `).join("");
+
+    container.innerHTML = `
+        <div class="card">
+
+            <h3>Create Fixture</h3>
+
+            <form onsubmit="
+                event.preventDefault();
+                createMatchFixtureFromForm();
+            ">
+
+                <label>Opposition</label>
+                <input
+                    id="matchOpposition"
+                    type="text"
+                    required
+                    maxlength="150"
+                    placeholder="e.g. Northampton RFC">
+
+                <label style="display:block;margin-top:15px;">
+                    Fixture date
+                </label>
+                <input
+                    id="matchFixtureDate"
+                    type="date"
+                    required>
+
+                <label style="display:block;margin-top:15px;">
+                    Fixture type
+                </label>
+                <select id="matchFixtureType">
+                    <option value="home">Home</option>
+                    <option value="away">Away</option>
+                </select>
+
+                <label style="display:block;margin-top:15px;">
+                    Kick-off time
+                </label>
+                <input id="matchKickOff" type="time">
+
+                <label style="display:block;margin-top:15px;">
+                    Venue
+                </label>
+                <input
+                    id="matchVenue"
+                    type="text"
+                    maxlength="150"
+                    placeholder="e.g. Rushden & Higham RFC">
+
+                <label style="display:block;margin-top:15px;">
+                    Venue address
+                </label>
+                <input
+                    id="matchVenueAddress"
+                    type="text"
+                    maxlength="300">
+
+                <label style="display:block;margin-top:15px;">
+                    Response deadline
+                </label>
+                <input
+                    id="matchResponseDeadline"
+                    type="datetime-local">
+
+                <h3 style="margin-top:20px;">Age Groups</h3>
+
+                ${ageGroupHTML}
+
+                <div style="margin-top:25px;">
+
+                    <button class="primary-button" type="submit">
+                        Create Draft Fixture
+                    </button>
+
+                    <button class="secondary-button"
+                        type="button"
+                        onclick="loadMatchAdminFixtures()">
+                        Cancel
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    `;
+}
+
+
+// =========================================================
+// CREATE FIXTURE
+// =========================================================
+
+async function createMatchFixtureFromForm() {
+
+    if (currentRole !== "senior" || !currentSeniorPIN) {
+        await appAlert(
+            "Admin access is required.",
+            "Access required",
+            "danger"
+        );
+        return;
+    }
+
+    const opposition =
+        document.getElementById("matchOpposition").value.trim();
+
+    const fixtureDate =
+        document.getElementById("matchFixtureDate").value;
+
+    const fixtureType =
+        document.getElementById("matchFixtureType").value;
+
+    const ageGroupIds = Array.from(
+        document.querySelectorAll(".matchFixtureAgeGroup:checked")
+    ).map(input => Number(input.value));
+
+    if (!ageGroupIds.length) {
+        await appAlert(
+            "Please select at least one age group.",
+            "Age groups required",
+            "warning"
+        );
+        return;
+    }
+
+    const deadlineValue =
+        document.getElementById("matchResponseDeadline").value;
+
+    let deadline = null;
+
+    if (deadlineValue) {
+        const deadlineDate = new Date(deadlineValue);
+
+        if (Number.isNaN(deadlineDate.getTime())) {
+            await appAlert(
+                "Please enter a valid response deadline.",
+                "Invalid deadline",
+                "warning"
+            );
+            return;
+        }
+
+        deadline = deadlineDate.toISOString();
+    }
+
+    try {
+        const result = await matchAdminCall(
+            "create_fixture",
+            {
+                installation_id: getInstallationID(),
+                senior_code: currentSeniorPIN,
+                opposition,
+                fixture_date: fixtureDate,
+                fixture_type: fixtureType,
+                age_group_ids: ageGroupIds,
+                kick_off_time:
+                    document.getElementById("matchKickOff").value || null,
+                venue:
+                    document.getElementById("matchVenue").value.trim(),
+                venue_address:
+                    document.getElementById("matchVenueAddress").value.trim(),
+                response_deadline: deadline
+            }
+        );
+
+        latestCreatedFixtureLink =
+            MATCH_AVAILABILITY_URL +
+            "?fixture=" +
+            encodeURIComponent(result.parent_token);
+
+        const container =
+            document.getElementById("matchAdminFixtures");
+
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="card">
+
+                <h3>Fixture Created</h3>
+
+                <p>
+                    ${matchAdminEscape(opposition)}
+                    has been saved as a draft.
+                </p>
+
+                <p>
+                    The parent link is ready to copy.
+                    It will become available when the fixture is published.
+                </p>
+
+                <button class="primary-button"
+                    onclick="copyLatestMatchFixtureLink()">
+                    Copy Parent Link
+                </button>
+
+                <button class="secondary-button"
+                    onclick="publishMatchFixture(${Number(result.fixture_id)})">
+                    Publish Fixture
+                </button>
+
+                <button class="secondary-button"
+                    onclick="loadMatchAdminFixtures()">
+                    Back to Fixtures
+                </button>
+
+            </div>
+        `;
+
+    } catch (error) {
+        console.error("Fixture creation failed:", error);
+
+        await appAlert(
+            error.message || "Unable to create fixture.",
+            "Fixture creation failed",
+            "danger"
+        );
+    }
+}
+
+
+// =========================================================
+// COPY PARENT LINK
+// =========================================================
+
+async function copyLatestMatchFixtureLink() {
+
+    if (!latestCreatedFixtureLink) return;
+
+    try {
+        await navigator.clipboard.writeText(
+            latestCreatedFixtureLink
+        );
+
+        await appAlert(
+            "The parent availability link has been copied. You can now share it with parents.",
+            "Link copied",
+            "success"
+        );
+
+    } catch (error) {
+        console.error("Copy link failed:", error);
+
+        await appAlert(
+            "Unable to copy the link on this device.",
+            "Copy failed",
+            "danger"
+        );
+    }
+}
+
+
+// =========================================================
+// PUBLISH FIXTURE
+// =========================================================
+
+async function publishMatchFixture(fixtureId) {
+
+    if (currentRole !== "senior" || !currentSeniorPIN) {
+        await appAlert(
+            "Admin access is required.",
+            "Access required",
+            "danger"
+        );
+        return;
+    }
+
+    const confirmed = await appConfirm(
+        "Publish this fixture? Parents will be able to submit availability.",
+        "Publish fixture"
+    );
+
+    if (!confirmed) return;
+
+    try {
+        await matchAdminCall(
+            "publish_fixture",
+            {
+                installation_id: getInstallationID(),
+                senior_code: currentSeniorPIN,
+                fixture_id: Number(fixtureId)
+            }
+        );
+
+        await appAlert(
+            "The fixture has been published.",
+            "Fixture published",
+            "success"
+        );
+
+        await loadMatchAdminFixtures();
+
+    } catch (error) {
+        console.error("Fixture publishing failed:", error);
+
+        await appAlert(
+            error.message || "Unable to publish fixture.",
+            "Publish failed",
+            "danger"
+        );
+    }
+}
+
+
+// =========================================================
+// VIEW FIXTURE RESPONSES - PLACEHOLDER
+// =========================================================
+
+async function viewMatchFixture(fixtureId) {
+
+    await appAlert(
+        "The response detail screen is the next part we will build.",
+        "Match responses",
+        "info"
+    );
 }

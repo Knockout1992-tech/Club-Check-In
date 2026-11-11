@@ -1326,14 +1326,35 @@ async function publishMatchFixture(fixtureId) {
 
 
 // =========================================================
-// VIEW FIXTURE RESPONSES - PLACEHOLDER
+// VIEW FIXTURE RESPONSES
 // =========================================================
 
 async function viewMatchFixture(fixtureId) {
 
-    await appAlert(
-        "The response detail screen is the next part we will build.",
-        "Match responses",
-        "info"
-    );
+    try {
+        const result = await matchAdminCall("admin_fixtures", {
+            installation_id: getInstallationID(),
+            senior_code: currentSeniorPIN,
+            action: "responses",
+            fixture_id: Number(fixtureId)
+        });
+
+        console.log("MATCH RESPONSES TEST:", result);
+
+        await appAlert(
+            "Response data returned. Check the console for the results.",
+            "Test successful",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error("MATCH RESPONSES TEST FAILED:", error);
+
+        await appAlert(
+            error.message,
+            "Response test failed",
+            "danger"
+        );
+    }
 }

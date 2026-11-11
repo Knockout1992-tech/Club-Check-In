@@ -1329,32 +1329,178 @@ async function publishMatchFixture(fixtureId) {
 // VIEW FIXTURE RESPONSES
 // =========================================================
 
+/* =========================================================
+   MATCH FIXTURE - VIEW RESPONSES
+   ========================================================= */
+
 async function viewMatchFixture(fixtureId) {
 
     try {
+
         const result = await matchAdminCall("admin_fixtures", {
             installation_id: getInstallationID(),
             senior_code: currentSeniorPIN,
-            action: "responses",
+            action: "detail",
             fixture_id: Number(fixtureId)
         });
 
-        console.log("MATCH RESPONSES TEST:", result);
+        const fixture = result.fixtures?.[0];
 
-        await appAlert(
-            "Response data returned. Check the console for the results.",
-            "Test successful",
-            "success"
-        );
+        if (!fixture) {
+            throw new Error("Fixture details could not be found.");
+        }
+
+        const ageGroups = fixture.age_groups || [];
+        const submissions = fixture.submissions || [];
+
+        let html = `
+            <div class="section-card">
+
+                <h2>${matchAdminEscape(fixture.opposition)}</h2>
+
+                <p>
+                    ${matchAdminDate(fixture.fixture_date)}
+                    ${matchAdminEscape(fixture.fixture_type || "")}
+                </p>
+
+                <div class="dashboard-grid">
+
+                    <div class="stat-card">
+                        <strong>${fixture.response_count}</strong>
+                        <span>Parent Responses</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <strong>${fixture.children_count}</strong>
+                        <span>Children Registered</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <strong>${fixture.duplicate_review_count}</strong>
+                        <span>Potential Duplicates</span>
+                    </div>
+
+                </div>
+            </div>
+        `;
+
+        ageGroups.forEach(group => {
+
+            const children = submissions.flatMap(submission =>
+                (submission.children || [])
+                    .filter(child =>
+                        Number(child.age_group_id) ===
+                        Number(group.age_group_id)
+                    )
+                    .map(child => ({
+                        ...child,
+                        parent_name: submission.parent_name
+                    }))
+            );
+
+            const available = children.filter(
+                child => child.availability === "available"
+            ).length;
+
+            const unavailable = children.filter(
+                child => child.availability === "unavailable"
+            ).length;
+
+            const unsure = children.filter(
+                child => child.availability === "unsure"
+            ).length;
+
+            html += `
+                <div class="section-card">
+
+                    <h3>${matchAdminEscape(group.display_name || group.age_group)}</h3>
+
+                    <div class="dashboard-grid">
+
+                        <div class="stat-card">
+                            <strong>${available}</strong>
+                            <span>Available</span>
+                        </div>
+
+                        <div class="stat-card">
+                            <strong>${unavailable}</strong>
+                            <span>Unavailable</span>
+                        </div>
+
+                        <div class="stat-card">
+                            <strong>${unsure}</strong>
+                            <span>Unsure</span>
+                        </div>
+
+                        <div class="stat-card">
+                            <strong>${children.length}</strong>
+                            <span>Total</span>
+                        </div>
+
+                    </div>
+
+                    <div class="player-list">
+
+                        ${children.length ? children.map(child => {
+
+                            const status = child.availability;
+
+                            const duplicate =
+                                child.duplicate_review_status === "pending";
+
+                            return `
+                                <div class="player-row">
+
+                                    <div>
+                                        <strong>${matchAdminEscape(child.child_name)}</strong>
+
+                                        <small>
+                                            Parent:
+                                            ${matchAdminEscape(child.parent_name || "")}
+                                            ${child.school_year
+                                                ? ` | Year ${matchAdminEscape(child.school_year)}`
+                                                : ""}
+                                        </small>
+
+                                        ${duplicate
+                                            ? `<small class="text-warning">Potential duplicate - review</small>`
+                                            : ""}
+                                    </div>
+
+                                    <span class="availability-${matchAdminEscape(status)}">
+                                        ${matchAdminEscape(status)}
+                                    </span>
+
+                                </div>
+                            `;
+
+                        }).join("") : "<p>No responses yet.</p>"}
+
+                    </div>
+
+                </div>
+            `;
+
+        });
+
+        html += `
+            <button class="btn btn-secondary"
+                onclick="loadMatchAdminFixtures()">
+                Back to Fixtures
+            </button>
+        `;
+
+        document.getElementById("app").innerHTML = html;
 
     } catch (error) {
 
-        console.error("MATCH RESPONSES TEST FAILED:", error);
+        console.error("Unable to load fixture responses:", error);
 
         await appAlert(
             error.message,
-            "Response test failed",
+            "Unable to load responses",
             "danger"
         );
+
     }
 }

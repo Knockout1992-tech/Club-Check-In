@@ -752,12 +752,24 @@ function matchAdminDate(value) {
 }
 
 
+
 async function matchAdminCall(functionName, body) {
+
+    const credentials =
+        currentRole === "senior"
+        ? { senior_code: currentSeniorPIN }
+        : { coach_code: currentAccessPIN };
 
     const { data, error } =
         await supabaseClient.functions.invoke(
             functionName,
-            { body }
+            {
+                body: {
+                    installation_id: getInstallationID(),
+                    ...credentials,
+                    ...body
+                }
+            }
         );
 
     if (error) {
@@ -780,27 +792,34 @@ async function matchAdminCall(functionName, body) {
     return data;
 }
 
-
 // =========================================================
 // OPEN ADMIN FIXTURE SCREEN
 // =========================================================
 
+
 async function showMatchAvailabilityAdmin() {
 
-    if (currentRole !== "senior" || !currentSeniorPIN) {
+    if (
+        !(
+            (currentRole === "senior" && currentSeniorPIN) ||
+            (currentRole === "coach" && currentAccessPIN)
+        )
+    ) {
         await appAlert(
-            "Admin access is required to manage fixtures.",
+            "Please log in to access Match Availability.",
             "Access required",
             "danger"
         );
         return;
     }
 
+    const isSenior = currentRole === "senior";
+
     renderShell(`
         <div class="card">
 
             <button class="back-button"
-                onclick="showSeniorDashboard()">
+                onclick="${isSenior ? "showSeniorDashboard()" : "showCoachDashboard()"}">
                 ← Back to Dashboard
             </button>
 
@@ -812,12 +831,18 @@ async function showMatchAvailabilityAdmin() {
 
             <div id="matchAdminMessage"></div>
 
-            <div style="margin-top:20px;">
-                <button class="primary-button"
-                    onclick="showMatchFixtureForm()">
-                    + Create Fixture
-                </button>
-            </div>
+            ${
+                isSenior
+                ? `
+                    <div style="margin-top:20px;">
+                        <button class="primary-button"
+                            onclick="showMatchFixtureForm()">
+                            + Create Fixture
+                        </button>
+                    </div>
+                `
+                : ""
+            }
 
             <h3 style="margin-top:25px;">Fixtures</h3>
 
@@ -829,18 +854,29 @@ async function showMatchAvailabilityAdmin() {
     `);
 
     try {
-        await loadMatchAdminAgeGroups();
-        await loadMatchAdminFixtures();
-    } catch (error) {
-        console.error("Match Availability initialisation failed:", error);
+        if (isSenior) {
+            await loadMatchAdminAgeGroups();
+        }
 
-        const container = document.getElementById("matchAdminFixtures");
+        await loadMatchAdminFixtures();
+
+    } catch (error) {
+
+        console.error(
+            "Match Availability initialisation failed:",
+            error
+        );
+
+        const container = document.getElementById(
+            "matchAdminFixtures"
+        );
 
         if (container) {
             container.innerHTML = `
                 <p class="error">
                     ${matchAdminEscape(error.message)}
                 </p>
+
                 <button class="secondary-button"
                     onclick="showMatchAvailabilityAdmin()">
                     Try Again
@@ -878,23 +914,25 @@ async function loadMatchAdminAgeGroups() {
 
 async function loadMatchAdminFixtures() {
 
-    const container = document.getElementById("matchAdminFixtures");
+    const container = document.getElementById(
+        "matchAdminFixtures"
+    );
 
     if (!container) return;
 
     container.innerHTML = "Loading fixtures...";
 
     try {
+
         const result = await matchAdminCall(
             "admin_fixtures",
             {
-                installation_id: getInstallationID(),
-                senior_code: currentSeniorPIN,
                 action: "list"
             }
         );
 
         const fixtures = result.fixtures || [];
+        const isSenior = currentRole === "senior";
 
         if (!fixtures.length) {
             container.innerHTML = `
@@ -906,22 +944,31 @@ async function loadMatchAdminFixtures() {
         container.innerHTML = fixtures.map(fixture => {
 
             const groups = (fixture.age_groups || [])
-                .map(group => group.display_name || group.age_group)
+                .map(group =>
+                    group.display_name || group.age_group
+                )
                 .join(", ");
 
-            const status = String(fixture.status || "").toLowerCase();
+            const status = String(
+                fixture.status || ""
+            ).toLowerCase();
 
             const statusLabel =
-                status.charAt(0).toUpperCase() + status.slice(1);
+                status.charAt(0).toUpperCase() +
+                status.slice(1);
 
             return `
                 <div class="card" style="margin:12px 0;">
 
-                    <h3>${matchAdminEscape(fixture.opposition)}</h3>
+                    <h3>
+                        ${matchAdminEscape(fixture.opposition)}
+                    </h3>
 
                     <p>
                         <strong>Date:</strong>
-                        ${matchAdminEscape(matchAdminDate(fixture.fixture_date))}
+                        ${matchAdminEscape(
+                            matchAdminDate(fixture.fixture_date)
+                        )}
                     </p>
 
                     <p>
@@ -954,7 +1001,7 @@ async function loadMatchAdminFixtures() {
                     </p>
 
                     ${
-                        status === "draft"
+                        isSenior && status === "draft"
                         ? `
                             <button class="primary-button"
                                 onclick="publishMatchFixture(${Number(fixture.id)})">
@@ -996,7 +1043,6 @@ async function loadMatchAdminFixtures() {
         `;
     }
 }
-
 
 // =========================================================
 // CREATE FIXTURE FORM
@@ -1331,6 +1377,7 @@ async function publishMatchFixture(fixtureId) {
    ========================================================= */
 
 
+
 async function viewMatchFixture(fixtureId, silentRefresh = false) {
 
     try {
@@ -1340,7 +1387,6 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
             matchFixtureRefreshTimer = null;
         }
 
-        // Remember which age groups are expanded.
         const previouslyOpen = new Set(
             Array.from(
                 document.querySelectorAll(
@@ -1352,8 +1398,6 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
         );
 
         const result = await matchAdminCall("admin_fixtures", {
-            installation_id: getInstallationID(),
-            senior_code: currentSeniorPIN,
             action: "detail",
             fixture_id: Number(fixtureId)
         });
@@ -1432,9 +1476,7 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                         `
                         : `
                             <p>
-                                This fixture was created before link
-                                retrieval was enabled. Its original
-                                parent link cannot be recovered.
+                                The original parent link cannot be retrieved.
                             </p>
                         `
                     }
@@ -1606,14 +1648,11 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
 
         renderShell(html);
 
-        // Start the automatic refresh only on initial entry.
         if (!silentRefresh) {
 
             matchFixtureRefreshTimer = setInterval(() => {
 
-                // Stop refreshing if the detail screen is no longer visible.
                 if (!document.getElementById("matchFixtureDetailScreen")) {
-
                     clearInterval(matchFixtureRefreshTimer);
                     matchFixtureRefreshTimer = null;
                     return;
@@ -1638,7 +1677,6 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
     }
 }
 
-
 // =========================================================
 // BACK TO ADMIN FIXTURES
 // =========================================================
@@ -1658,13 +1696,12 @@ async function returnToMatchAdminFixtures() {
 // COPY PARENT FIXTURE LINK
 // =========================================================
 
+
 async function copyMatchFixtureLink(fixtureId) {
 
     try {
 
         const result = await matchAdminCall("admin_fixtures", {
-            installation_id: getInstallationID(),
-            senior_code: currentSeniorPIN,
             action: "detail",
             fixture_id: Number(fixtureId)
         });

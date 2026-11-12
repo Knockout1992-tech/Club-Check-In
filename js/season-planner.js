@@ -38,6 +38,7 @@ async function spRPC(name,args) {
 
 async function showSeasonPlanner() {
     if (!spSenior()) return;
+    seasonPlannerPage = "home";
     renderShell(`
         <div class="card">
             <button class="back-button" onclick="showSeniorDashboard()">← Admin Dashboard</button>
@@ -62,7 +63,6 @@ async function loadSeasonPlanner() {
         });
         if (!seasonPlannerData || !seasonPlannerData.season) throw new Error("Unable to load the current season. Check Senior access and the current season setting.");
         seasonPlannerAgeFilter = "all";
-        seasonPlannerPage = "home";
         renderSeasonPlanner();
     } catch(e) {
         root.innerHTML = `<div class="info-box">Unable to load Season Planner.<br>${spEsc(e.message)}</div><button class="primary-button" onclick="loadSeasonPlanner()">Retry</button>`;

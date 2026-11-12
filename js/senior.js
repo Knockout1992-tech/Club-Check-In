@@ -831,18 +831,12 @@ async function showMatchAvailabilityAdmin() {
 
             <div id="matchAdminMessage"></div>
 
-            ${
-                isSenior
-                ? `
-                    <div style="margin-top:20px;">
-                        <button class="primary-button"
-                            onclick="showMatchFixtureForm()">
-                            + Create Fixture
-                        </button>
-                    </div>
-                `
-                : ""
-            }
+            <div style="margin-top:20px;">
+                <button class="primary-button"
+                    onclick="showMatchFixtureForm()">
+                    + Create Fixture
+                </button>
+            </div>
 
             <h3 style="margin-top:25px;">Fixtures</h3>
 
@@ -853,60 +847,8 @@ async function showMatchAvailabilityAdmin() {
         </div>
     `);
 
-    try {
-        if (isSenior) {
-            await loadMatchAdminAgeGroups();
-        }
-
-        await loadMatchAdminFixtures();
-
-    } catch (error) {
-
-        console.error(
-            "Match Availability initialisation failed:",
-            error
-        );
-
-        const container = document.getElementById(
-            "matchAdminFixtures"
-        );
-
-        if (container) {
-            container.innerHTML = `
-                <p class="error">
-                    ${matchAdminEscape(error.message)}
-                </p>
-
-                <button class="secondary-button"
-                    onclick="showMatchAvailabilityAdmin()">
-                    Try Again
-                </button>
-            `;
-        }
-    }
+    await loadMatchAdminFixtures();
 }
-
-
-// =========================================================
-// LOAD ACTIVE AGE GROUPS
-// =========================================================
-
-async function loadMatchAdminAgeGroups() {
-
-    const { data, error } = await supabaseClient
-        .from("age_groups")
-        .select("id, age_group, display_name, sort_order")
-        .eq("active", true)
-        .order("sort_order");
-
-    if (error) {
-        console.error("Age group loading failed:", error);
-        throw new Error("Unable to load age groups.");
-    }
-
-    matchAdminAgeGroups = data || [];
-}
-
 
 // =========================================================
 // LOAD FIXTURES
@@ -931,8 +873,14 @@ async function loadMatchAdminFixtures() {
             }
         );
 
+        // Active age groups supplied by the Edge Function
+        matchAdminAgeGroups = result.available_age_groups || [];
+
         const fixtures = result.fixtures || [];
-        const isSenior = currentRole === "senior";
+
+        const canManageFixtures =
+            (currentRole === "senior" && currentSeniorPIN) ||
+            (currentRole === "coach" && currentAccessPIN);
 
         if (!fixtures.length) {
             container.innerHTML = `
@@ -1001,7 +949,7 @@ async function loadMatchAdminFixtures() {
                     </p>
 
                     ${
-                        isSenior && status === "draft"
+                        canManageFixtures && status === "draft"
                         ? `
                             <button class="primary-button"
                                 onclick="publishMatchFixture(${Number(fixture.id)})">
@@ -1043,7 +991,6 @@ async function loadMatchAdminFixtures() {
         `;
     }
 }
-
 // =========================================================
 // CREATE FIXTURE FORM
 // =========================================================
@@ -1164,9 +1111,13 @@ function showMatchFixtureForm() {
 
 async function createMatchFixtureFromForm() {
 
-    if (currentRole !== "senior" || !currentSeniorPIN) {
+    const hasAccess =
+        (currentRole === "senior" && currentSeniorPIN) ||
+        (currentRole === "coach" && currentAccessPIN);
+
+    if (!hasAccess) {
         await appAlert(
-            "Admin access is required.",
+            "You do not have permission to create fixtures.",
             "Access required",
             "danger"
         );
@@ -1216,11 +1167,10 @@ async function createMatchFixtureFromForm() {
     }
 
     try {
+
         const result = await matchAdminCall(
             "create_fixture",
             {
-                installation_id: getInstallationID(),
-                senior_code: currentSeniorPIN,
                 opposition,
                 fixture_date: fixtureDate,
                 fixture_type: fixtureType,
@@ -1279,6 +1229,7 @@ async function createMatchFixtureFromForm() {
         `;
 
     } catch (error) {
+
         console.error("Fixture creation failed:", error);
 
         await appAlert(
@@ -1288,8 +1239,6 @@ async function createMatchFixtureFromForm() {
         );
     }
 }
-
-
 // =========================================================
 // COPY PARENT LINK
 // =========================================================
@@ -1320,16 +1269,19 @@ async function copyLatestMatchFixtureLink() {
     }
 }
 
-
 // =========================================================
 // PUBLISH FIXTURE
 // =========================================================
 
 async function publishMatchFixture(fixtureId) {
 
-    if (currentRole !== "senior" || !currentSeniorPIN) {
+    const hasAccess =
+        (currentRole === "senior" && currentSeniorPIN) ||
+        (currentRole === "coach" && currentAccessPIN);
+
+    if (!hasAccess) {
         await appAlert(
-            "Admin access is required.",
+            "You do not have permission to publish fixtures.",
             "Access required",
             "danger"
         );
@@ -1344,11 +1296,10 @@ async function publishMatchFixture(fixtureId) {
     if (!confirmed) return;
 
     try {
+
         await matchAdminCall(
             "publish_fixture",
             {
-                installation_id: getInstallationID(),
-                senior_code: currentSeniorPIN,
                 fixture_id: Number(fixtureId)
             }
         );
@@ -1362,6 +1313,7 @@ async function publishMatchFixture(fixtureId) {
         await loadMatchAdminFixtures();
 
     } catch (error) {
+
         console.error("Fixture publishing failed:", error);
 
         await appAlert(

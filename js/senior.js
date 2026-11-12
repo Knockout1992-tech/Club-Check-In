@@ -831,10 +831,15 @@ async function showMatchAvailabilityAdmin() {
 
             <div id="matchAdminMessage"></div>
 
-            <div style="margin-top:20px;">
+            <div class="user-management-actions" style="margin-top:20px;">
                 <button class="primary-button"
                     onclick="showMatchFixtureForm()">
                     + Create Fixture
+                </button>
+
+                <button class="secondary-button"
+                    onclick="copyCentralMatchParentLink()">
+                    Copy Parent Home Link
                 </button>
             </div>
 
@@ -1234,17 +1239,6 @@ async function createMatchFixtureFromForm() {
                     It will become available when the fixture is published.
                 </p>
 
-                <button class="primary-button"
-                    onclick="copyLatestCentralParentLink()">
-                    Copy Parent Home Link
-                </button>
-
-                <button class="secondary-button"
-                    onclick="copyLatestMatchFixtureLink()"
-                    ${latestCreatedFixtureLink ? "" : "disabled"}>
-                    Copy Individual Fixture Link
-                </button>
-
                 <button class="secondary-button"
                     onclick="publishMatchFixture(${Number(result.fixture_id)})">
                     Publish Fixture
@@ -1469,16 +1463,11 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                     <strong>Parent Availability Link</strong>
 
                     <p>
-                        Use the central link for all events, or share this fixture directly.
+                        Share the direct link for this fixture with parents.
                     </p>
 
                     <div class="user-management-actions">
                         <button class="primary-button"
-                            onclick="copyCentralMatchParentLink()">
-                            Copy Parent Home Link
-                        </button>
-
-                        <button class="secondary-button"
                             onclick="copyMatchFixtureLink(${Number(fixture.id)}, '${matchAdminEscape(fixture.parent_token || "")}')"
                             ${fixture.parent_token ? "" : "disabled"}>
                             Copy Individual Fixture Link

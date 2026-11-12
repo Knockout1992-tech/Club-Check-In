@@ -5,6 +5,7 @@
 
 let seasonPlannerData = null;
 let seasonPlannerAgeFilter = "all";
+let seasonPlannerShowLocked = false;
 let seasonPlannerPage = "home";
 
 function spEsc(value) {
@@ -110,7 +111,7 @@ function spGroupUpcomingEvents(events) {
 }
 function spRenderHome() {
     const s=seasonPlannerData.season;
-    const upcoming=seasonPlannerData.events.filter(e=>e.event_date>spToday())
+    const upcoming=seasonPlannerData.events.filter(e=>e.event_date>spToday() && e.event_type!=="cancelled")
         .sort((a,b)=>a.event_date.localeCompare(b.event_date)||String(a.start_time||"").localeCompare(String(b.start_time||"")));
     const nextDate=upcoming.length?upcoming[0].event_date:null;
     const next=nextDate?spGroupUpcomingEvents(upcoming.filter(e=>e.event_date===nextDate)):[];
@@ -141,47 +142,49 @@ function spRenderHome() {
 }
 function spRenderSchedules() {
     const s=seasonPlannerData.season, groups=seasonPlannerData.age_groups;
-    const checks=groups.map(g=>'<label style="display:flex;gap:8px;padding:6px 0;"><input type="checkbox" class="spScheduleGroup" value="'+g.id+'"> '+spEsc(g.display_name||g.age_group)+'</label>').join("");
-    const schedules=seasonPlannerData.schedules.map(x=>'<div class="info-box" style="margin:8px 0;padding:13px;"><strong>'+spEsc(x.schedule_name)+'</strong><br>'+spEsc(spAgeNames(x))+'<br>'+spDay(x.weekday)+' · '+spTime(x.start_time)+'–'+spTime(x.end_time)+' · Every '+x.recurrence_interval_weeks+' week(s)<br>'+spDate(x.schedule_start_date)+' – '+spDate(x.schedule_end_date)+(x.venue?' · '+spEsc(x.venue):'')+(x.active?'<br><button class="secondary-button" style="margin-top:9px;" onclick="endSeasonPlannerSchedule('+x.id+')">End future sessions</button>':'<br><span class="subtitle">Schedule ended</span>')+'</div>').join("")||"<p>No recurring schedules yet.</p>";
-    let h=spBackHome()+'<h3>Recurring Schedules</h3><p class="subtitle">Create separate schedules for different days or age groups. All age groups automatically includes newly activated groups.</p>';
-    if(!s.start_date||!s.end_date) h+='<div class="info-box">Set the season dates in Season Setup before creating schedules.</div>';
-    h+='<div class="card" style="padding:14px;margin:12px 0;"><h4>Create a schedule</h4><div class="form-group"><label>Applies to</label><select id="spScheduleScope" onchange="document.getElementById(\'spScheduleGroups\').style.display=this.value===\'selected\'?\'block\':\'none\'"><option value="all">All age groups</option><option value="selected">Choose age groups</option></select></div>';
-    h+='<div id="spScheduleGroups" style="display:none;border:1px solid #ddd;border-radius:8px;padding:8px;margin-bottom:12px;"><div class="subtitle">Select one or more age groups</div>'+checks+'</div>';
+    const checks=groups.map(g=>'<label class="sp-group-choice"><input type="checkbox" class="spScheduleGroup" value="'+g.id+'"> '+spEsc(g.display_name||g.age_group)+'</label>').join("");
+    const schedules=seasonPlannerData.schedules.map(x=>'<article class="sp-management-row"><div class="sp-management-main"><strong>'+spEsc(x.schedule_name)+'</strong><div class="sp-event-meta">'+spEsc(spAgeNames(x))+'</div><div class="sp-event-meta">'+spDay(x.weekday)+' · '+spTime(x.start_time)+'–'+spTime(x.end_time)+' · Every '+x.recurrence_interval_weeks+' week(s)</div><div class="sp-event-meta">'+spDate(x.schedule_start_date)+' – '+spDate(x.schedule_end_date)+(x.venue?' · '+spEsc(x.venue):'')+'</div></div><div>'+(x.active?'<button class="secondary-button" onclick="endSeasonPlannerSchedule('+x.id+')">End schedule</button>':'<span class="sp-locked-tag">Ended</span>')+'</div></article>').join("")||'<div class="sp-empty">No recurring schedules yet.</div>';
+    let h='<div class="sp-page-intro">Build regular training or match patterns. Each schedule can cover all age groups or a selected group of teams.</div>';
+    if(!s.start_date||!s.end_date) h+='<div class="sp-empty">Set the season dates in Season Setup before creating schedules.</div>';
+    h+='<section class="sp-form-panel"><h3>Create a schedule</h3><div class="form-group"><label for="spScheduleScope">Applies to</label><select id="spScheduleScope" onchange="document.getElementById(\'spScheduleGroups\').style.display=this.value===\'selected\'?\'block\':\'none\'"><option value="all">All age groups</option><option value="selected">Choose age groups</option></select></div>';
+    h+='<div id="spScheduleGroups" class="sp-group-picker" style="display:none;"><div class="sp-field-hint">Select one or more age groups</div>'+checks+'</div>';
     h+='<div class="form-group"><label for="spScheduleName">Schedule name</label><input id="spScheduleName" maxlength="80" placeholder="e.g. Sunday training"></div>';
     h+='<div class="form-group"><label for="spWeekday">Day</label><select id="spWeekday"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></div>';
     h+='<div class="form-group"><label for="spFrequency">Frequency</label><select id="spFrequency"><option value="1">Every week</option><option value="2">Every 2 weeks</option><option value="3">Every 3 weeks</option><option value="4">Every 4 weeks</option></select></div>';
-    h+='<div class="form-group"><label for="spScheduleStart">Starts</label><input id="spScheduleStart" type="date" min="'+(s.start_date||'')+'" max="'+(s.end_date||'')+'" value="'+(s.start_date||'')+'"></div>';
-    h+='<div class="form-group"><label for="spScheduleEnd">Ends</label><input id="spScheduleEnd" type="date" min="'+(s.start_date||'')+'" max="'+(s.end_date||'')+'" value="'+(s.end_date||'')+'"></div>';
-    h+='<div style="display:flex;gap:10px;flex-wrap:wrap;"><div class="form-group" style="flex:1;min-width:120px;"><label for="spStartTime">Start time</label><input id="spStartTime" type="time" value="10:00"></div><div class="form-group" style="flex:1;min-width:120px;"><label for="spEndTime">End time</label><input id="spEndTime" type="time" value="11:00"></div></div>';
-    h+='<div class="form-group"><label for="spVenue">Location</label><input id="spVenue" maxlength="160" placeholder="e.g. Club grounds"></div><button class="primary-button" onclick="createSeasonPlannerSchedule()">Create schedule</button></div><h4>Existing schedules</h4>'+schedules;
+    h+='<div class="sp-form-grid"><div class="form-group"><label for="spScheduleStart">Starts</label><input id="spScheduleStart" type="date" min="'+(s.start_date||'')+'" max="'+(s.end_date||'')+'" value="'+(s.start_date||'')+'"></div><div class="form-group"><label for="spScheduleEnd">Ends</label><input id="spScheduleEnd" type="date" min="'+(s.start_date||'')+'" max="'+(s.end_date||'')+'" value="'+(s.end_date||'')+'"></div></div>';
+    h+='<div class="sp-form-grid"><div class="form-group"><label for="spStartTime">Start time</label><input id="spStartTime" type="time" value="10:00"></div><div class="form-group"><label for="spEndTime">End time</label><input id="spEndTime" type="time" value="11:00"></div></div>';
+    h+='<div class="form-group"><label for="spVenue">Location</label><input id="spVenue" maxlength="160" placeholder="e.g. Club grounds"></div><button class="primary-button" onclick="createSeasonPlannerSchedule()">Create schedule</button></section><section class="sp-existing-section"><h3>Existing schedules</h3>'+schedules+'</section>';
     return h;
 }
 function spRenderHolidays() {
     const s=seasonPlannerData.season, groups=seasonPlannerData.age_groups;
     const opts=groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("");
-    const breaks=seasonPlannerData.breaks.map(x=>'<div class="info-box" style="margin:8px 0;padding:13px;"><strong>'+spEsc(x.label)+'</strong> · '+(x.age_group?spEsc(x.display_name||x.age_group):"All age groups")+'<br>'+spDate(x.start_date)+' – '+spDate(x.end_date)+'<br><button class="secondary-button" style="margin-top:8px;" onclick="deleteSeasonPlannerBreak('+x.id+')">Remove break</button></div>').join("")||"<p>No holidays or breaks added.</p>";
-    let h=spBackHome()+'<h3>Holidays & Breaks</h3><p class="subtitle">A break changes matching future training sessions to holidays. Past sessions are not altered.</p><div class="card" style="padding:14px;margin:12px 0;">';
-    h+='<div class="form-group"><label for="spBreakGroup">Applies to</label><select id="spBreakGroup"><option value="">All age groups</option>'+opts+'</select></div>';
+    const breaks=seasonPlannerData.breaks.map(x=>'<article class="sp-management-row sp-calendar-holiday"><div class="sp-management-main"><strong>'+spEsc(x.label)+'</strong> '+spTypeBadge("holiday")+'<div class="sp-event-meta">'+(x.age_group?spEsc(x.display_name||x.age_group):"All age groups")+'</div><div class="sp-event-meta">'+spDate(x.start_date)+' – '+spDate(x.end_date)+'</div></div><button class="secondary-button" onclick="deleteSeasonPlannerBreak('+x.id+')">Remove</button></article>').join("")||'<div class="sp-empty">No holidays or breaks added.</div>';
+    let h='<div class="sp-page-intro">Add club closures and age-group breaks. Matching future training sessions will be marked as holidays; past sessions stay unchanged.</div>';
+    h+='<section class="sp-form-panel"><h3>Add a holiday or break</h3><div class="form-group"><label for="spBreakGroup">Applies to</label><select id="spBreakGroup"><option value="">All age groups</option>'+opts+'</select></div>';
     h+='<div class="form-group"><label for="spBreakName">Name</label><input id="spBreakName" maxlength="80" placeholder="e.g. Christmas break"></div>';
-    h+='<div class="form-group"><label for="spBreakStart">From</label><input id="spBreakStart" type="date" min="'+(s.start_date||'')+'" max="'+(s.end_date||'')+'"></div>';
-    h+='<div class="form-group"><label for="spBreakEnd">To</label><input id="spBreakEnd" type="date" min="'+(s.start_date||'')+'" max="'+(s.end_date||'')+'"></div><button class="primary-button" onclick="createSeasonPlannerBreak()">Add break</button></div><h4>Existing breaks</h4>'+breaks;
+    h+='<div class="sp-form-grid"><div class="form-group"><label for="spBreakStart">From</label><input id="spBreakStart" type="date" min="'+(s.start_date||'')+'" max="'+(s.end_date||'')+'"></div><div class="form-group"><label for="spBreakEnd">To</label><input id="spBreakEnd" type="date" min="'+(s.start_date||'')+'" max="'+(s.end_date||'')+'"></div></div><button class="primary-button" onclick="createSeasonPlannerBreak()">Add break</button></section>';
+    h+='<section class="sp-existing-section"><h3>Planned holidays</h3>'+breaks+'</section>';
     return h;
 }
 function spRenderCalendar() {
     const groups=seasonPlannerData.age_groups;
-    const events=seasonPlannerData.events.filter(x=>seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter));
+    const allEvents=seasonPlannerData.events.filter(x=>seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter));
+    const lockedCount=allEvents.filter(x=>x.event_date<=spToday()).length;
+    const events=allEvents.filter(x=>seasonPlannerShowLocked||x.event_date>spToday());
     const rows=events.map(x=>{
         const locked=x.event_date<=spToday();
         const time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set";
-        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+'<div class="sp-event-meta">'+spEsc(x.display_name||x.age_group)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(x.opposition?'<div class="sp-event-meta">Opposition: '+spEsc(x.opposition)+'</div>':'')+(x.notes?'<div class="sp-event-meta">'+spEsc(x.notes)+'</div>':'')+'</div>'+(locked?'<span class="subtitle">Locked</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>')+'</div>';
-    }).join("")||"<p>No events found for this filter.</p>";
-    let h=spBackHome()+'<h3>Season Calendar</h3><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>';
-    h+=groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div>'+rows;
+        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+(locked?'<span class="sp-locked-tag">Locked</span>':'')+'<div class="sp-event-meta">'+spEsc(x.display_name||x.age_group)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(x.opposition?'<div class="sp-event-meta">Opposition: '+spEsc(x.opposition)+'</div>':'')+(x.notes?'<div class="sp-event-meta">'+spEsc(x.notes)+'</div>':'')+'</div>'+(locked?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>')+'</div>';
+    }).join("")||'<div class="sp-empty">'+(lockedCount&&!seasonPlannerShowLocked?'Past sessions are hidden. Use “Show locked” to include them.':'No events found for this filter.')+'</div>';
+    let h='<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>';
+    h+=groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div>';
+    h+='<button class="secondary-button sp-locked-toggle" onclick="toggleSeasonPlannerLocked()">'+(seasonPlannerShowLocked?'Hide locked':'Show locked')+(lockedCount?' ('+lockedCount+')':'')+'</button></div>'+rows;
     return h;
 }
 function spRenderSetup() {
     const s=seasonPlannerData.season;
-    return spBackHome()+'<h3>Season Setup</h3><p class="subtitle">Set the date range that schedules and events can be created within.</p><div class="info-box"><strong>'+spEsc(s.season_name)+'</strong></div><div class="form-group"><label for="spSeasonStart">Season start</label><input id="spSeasonStart" type="date" value="'+(s.start_date||'')+'"></div><div class="form-group"><label for="spSeasonEnd">Season end</label><input id="spSeasonEnd" type="date" value="'+(s.end_date||'')+'"></div><button class="primary-button" onclick="saveSeasonPlannerPeriod()">Save season dates</button>';
+    return '<div class="sp-page-intro">Set the date range for this season. Recurring schedules and planned events use these dates.</div><section class="sp-form-panel"><h3>'+spEsc(s.season_name)+'</h3><div class="sp-form-grid"><div class="form-group"><label for="spSeasonStart">Season starts</label><input id="spSeasonStart" type="date" value="'+(s.start_date||'')+'"></div><div class="form-group"><label for="spSeasonEnd">Season ends</label><input id="spSeasonEnd" type="date" value="'+(s.end_date||'')+'"></div></div><button class="primary-button" onclick="saveSeasonPlannerPeriod()">Save season dates</button></section>';
 }
 function renderSeasonPlanner() {
     const root=document.getElementById("seasonPlannerContent");
@@ -290,6 +293,10 @@ async function endSeasonPlannerSchedule(id) {
     } catch(e) { await appAlert(e.message || "Unable to end schedule.","Update failed","danger"); }
 }
 
+function toggleSeasonPlannerLocked() {
+    seasonPlannerShowLocked=!seasonPlannerShowLocked;
+    renderSeasonPlanner();
+}
 function filterSeasonPlannerCalendar(value) {
     seasonPlannerAgeFilter=value;
     renderSeasonPlanner();

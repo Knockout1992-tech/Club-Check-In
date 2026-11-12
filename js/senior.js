@@ -751,6 +751,16 @@ function matchAdminDate(value) {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
+function matchAdminFixtureType(value, status) {
+    if (String(status || "").toLowerCase() === "cancelled") return "Cancelled";
+    return ({
+        home: "Home match",
+        away: "Away match",
+        training: "Training",
+        other: "Other event"
+    })[String(value || "").toLowerCase()] || "Club event";
+}
+
 
 
 async function matchAdminCall(functionName, body) {
@@ -953,13 +963,7 @@ async function loadMatchAdminFixtures() {
 
                     <p>
                         <strong>Type:</strong>
-                        ${
-                            status === "cancelled"
-                            ? "Cancelled"
-                            : fixture.fixture_type === "home"
-                                ? "Home"
-                                : "Away"
-                        }
+                        ${matchAdminEscape(matchAdminFixtureType(fixture.fixture_type, status))}
                     </p>
 
                     <p>
@@ -1613,7 +1617,7 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                 <div class="subtitle">
                     ${matchAdminEscape(matchAdminDate(fixture.fixture_date))}
                     · ${matchAdminEscape(
-                        fixture.fixture_type === "home" ? "Home" : "Away"
+                        matchAdminFixtureType(fixture.fixture_type, fixture.status)
                     )}
                 </div>
 

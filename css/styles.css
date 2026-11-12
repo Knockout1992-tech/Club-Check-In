@@ -1194,3 +1194,54 @@ h2 {
 .sp-response-parent-head small,.sp-response-child small{display:block;opacity:.7;margin-top:3px}
 .sp-response-child{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
 .sp-response-child select{min-width:135px;padding:8px;border-radius:8px}
+
+
+/* Season Calendar compact control and action alignment */
+.sp-main-calendar .sp-calendar-toolbar {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:end;
+    gap:10px;
+}
+.sp-main-calendar .sp-calendar-toolbar .form-group {
+    min-width:0;
+}
+.sp-main-calendar .sp-calendar-toolbar select {
+    width:100%;
+    min-width:0;
+}
+.sp-main-calendar .sp-calendar-toolbar > button {
+    white-space:nowrap;
+    min-height:40px;
+}
+.sp-main-calendar .sp-calendar-actions {
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:stretch;
+    gap:8px;
+    margin-top:12px;
+}
+.sp-main-calendar .sp-calendar-actions button {
+    flex:1 1 0;
+    min-width:0;
+    padding:9px 10px;
+    white-space:nowrap;
+}
+@media(max-width:520px) {
+    .sp-main-calendar .sp-calendar-toolbar {
+        grid-template-columns:minmax(0,1fr) auto;
+        align-items:end;
+        gap:8px;
+    }
+    .sp-main-calendar .sp-calendar-toolbar > button {
+        padding:9px 10px;
+        font-size:12px;
+    }
+    .sp-main-calendar .sp-calendar-actions {
+        gap:6px;
+    }
+    .sp-main-calendar .sp-calendar-actions button {
+        padding:8px 5px;
+        font-size:11px;
+    }
+}

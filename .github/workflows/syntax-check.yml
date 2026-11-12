@@ -78,7 +78,7 @@ jobs:
           with open(config_path, "r", encoding="utf-8") as f:
               config = f.read()
 
-          version_pattern = r'(const\\s+APP_VERSION\\s*=\\s*["\\']V)(\\d+)\\.(\\d+)\\.(\\d+)(["\\'];)'
+          version_pattern = r"(const\\s+APP_VERSION\\s*=\\s*['\\"]V)(\\d+)\\.(\\d+)\\.(\\d+)(['\\"];)"
 
           def increment_version(match):
               major, minor, patch = map(int, match.group(2, 3, 4))
@@ -99,7 +99,7 @@ jobs:
           with open(worker_path, "r", encoding="utf-8") as f:
               worker = f.read()
 
-          cache_pattern = r'(const\\s+CACHE_NAME\\s*=\\s*["\\']club-check-in-v)(\\d+)(["\\'];)'
+          cache_pattern = r"(const\\s+CACHE_NAME\\s*=\\s*['\\"]club-check-in-v)(\\d+)(['\\"];)"
           worker_updated, worker_count = re.subn(
               cache_pattern,
               lambda m: f"{m.group(1)}{int(m.group(2)) + 1:03d}{m.group(3)}",

@@ -1169,3 +1169,16 @@ h2 {
     .sp-event-editor-page .sp-form-panel { padding:14px; }
     .sp-editor-page-heading h2 { font-size:21px; }
 }
+
+/* Season Planner availability on/off switch */
+.sp-availability-setting{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;cursor:pointer}
+.sp-availability-setting>span:first-child{display:flex;flex-direction:column;gap:4px}
+.sp-availability-setting small{opacity:.72;font-size:.88em}
+.sp-switch{position:relative;display:inline-flex;flex:0 0 54px;width:54px;height:30px}
+.sp-switch input{position:absolute;opacity:0;width:1px;height:1px}
+.sp-switch-track{position:absolute;inset:0;border-radius:999px;background:#929292;transition:background .2s;cursor:pointer}
+.sp-switch-track:before{content:"";position:absolute;width:22px;height:22px;left:4px;top:4px;border-radius:50%;background:#fff;transition:transform .2s}
+.sp-switch input:checked+.sp-switch-track{background:#287a4b}
+.sp-switch input:checked+.sp-switch-track:before{transform:translateX(24px)}
+.sp-switch input:focus-visible+.sp-switch-track{outline:3px solid #e3b341;outline-offset:3px}
+.sp-switch input:disabled+.sp-switch-track{opacity:.45;cursor:not-allowed}

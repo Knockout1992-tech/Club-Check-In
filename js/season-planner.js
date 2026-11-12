@@ -325,22 +325,27 @@ function filterSeasonPlannerCalendar(value) {
     renderSeasonPlanner();
 }
 
+function spMarkMatchTitleManual() {
+    const title=document.getElementById("spEditTitle");
+    if(title) title.dataset.matchAuto="false";
+}
 function spUpdateMatchTitle() {
     const type=document.getElementById("spEditType");
     const opposition=document.getElementById("spEditOpposition");
     const title=document.getElementById("spEditTitle");
     if(!type||!opposition||!title) return;
-    const current=title.value.trim();
+    const previous=type.dataset.lastValue||type.value;
     const wasAuto=title.dataset.matchAuto==="true";
-    if(type.value==="match") {
-        if(!current||wasAuto||current.startsWith("Opposition: ")) {
-            title.value=opposition.value.trim()?"Opposition: "+opposition.value.trim():"";
-            title.dataset.matchAuto="true";
-        }
-    } else if(wasAuto) {
+    if(type.value==="match" && previous!=="match") {
+        title.value=opposition.value.trim()?"Opposition: "+opposition.value.trim():"";
+        title.dataset.matchAuto="true";
+    } else if(type.value==="match" && wasAuto) {
+        title.value=opposition.value.trim()?"Opposition: "+opposition.value.trim():"";
+    } else if(type.value!=="match" && wasAuto) {
         title.value="";
         title.dataset.matchAuto="false";
     }
+    type.dataset.lastValue=type.value;
 }
 function editSeasonPlannerEvent(id) {
     if (!spSenior()) return;
@@ -357,7 +362,7 @@ function editSeasonPlannerEvent(id) {
         <h3>Change future session</h3>
         <p class="subtitle">${spDate(event.event_date)} · ${spEsc(event.display_name || event.age_group)}</p>
         <div class="form-group"><label>Event type</label><select id="spEditType" onchange="spUpdateMatchTitle()">${["training","match","other","holiday","cancelled"].map(t=>`<option value="${t}" ${t===event.event_type?"selected":""}>${spType(t)}</option>`).join("")}</select></div>
-        <div class="form-group"><label>Title</label><input id="spEditTitle" maxlength="120" value="${spEsc(event.title)}"></div>
+        <div class="form-group"><label>Title</label><input id="spEditTitle" maxlength="120" value="${spEsc(event.title)}" oninput="spMarkMatchTitleManual()"></div>
         <div class="form-group"><label>Start time</label><input id="spEditStart" type="time" value="${spTime(event.start_time)}"></div>
         <div class="form-group"><label>End time</label><input id="spEditEnd" type="time" value="${spTime(event.end_time)}"></div>
         <div class="form-group"><label>Location</label><input id="spEditVenue" maxlength="160" value="${spEsc(event.venue || "")}"></div>
@@ -365,7 +370,17 @@ function editSeasonPlannerEvent(id) {
         <div class="form-group"><label>Notes</label><textarea id="spEditNotes" rows="3" maxlength="1000">${spEsc(event.notes || "")}</textarea></div>
         <button class="primary-button" onclick="saveSeasonPlannerEvent(${event.id})">Save changes</button>
         <button class="secondary-button" onclick="document.getElementById('spEventEditor').remove()">Close</button>`;
-    root.appendChild(editor); editor.scrollIntoView({behavior:"smooth",block:"start"});
+    root.appendChild(editor);
+    const type=document.getElementById("spEditType");
+    const title=document.getElementById("spEditTitle");
+    if(type && title) {
+        type.dataset.lastValue=event.event_type;
+        if(event.event_type==="match" && (!event.title || event.title==="Match" || event.title.startsWith("Opposition: "))) {
+            title.dataset.matchAuto="true";
+            spUpdateMatchTitle();
+        }
+    }
+    editor.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
 async function saveSeasonPlannerEvent(id) {

@@ -167,15 +167,38 @@ function spRenderHolidays() {
     h+='<section class="sp-existing-section"><h3>Planned holidays</h3>'+breaks+'</section>';
     return h;
 }
+function spGroupCalendarEvents(events) {
+    const grouped=new Map();
+    events.forEach(event=>{
+        const key=[event.event_date,event.title,event.event_type,spTime(event.start_time),
+            spTime(event.end_time),event.venue||"",event.opposition||"",event.notes||""].join("|");
+        if(!grouped.has(key)) grouped.set(key,[]);
+        grouped.get(key).push(event);
+    });
+    const allIds=(seasonPlannerData.age_groups||[]).map(g=>String(g.id)).sort();
+    return [...grouped.values()].map(items=>{
+        const ids=[...new Set(items.map(e=>String(e.age_group_id)))].sort();
+        const names=ids.map(id=>{
+            const g=(seasonPlannerData.age_groups||[]).find(x=>String(x.id)===id);
+            return g?(g.display_name||g.age_group):"";
+        }).filter(Boolean);
+        const all=allIds.length>0&&ids.length===allIds.length&&ids.every((id,i)=>id===allIds[i]);
+        return {items, event:items[0], ageLabel:all?"All age groups":names.join(" · "), multiple:items.length>1};
+    }).sort((a,b)=>a.event.event_date.localeCompare(b.event.event_date)||
+        String(a.event.start_time||"").localeCompare(String(b.event.start_time||"")));
+}
 function spRenderCalendar() {
     const groups=seasonPlannerData.age_groups;
     const allEvents=seasonPlannerData.events.filter(x=>seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter));
     const lockedCount=allEvents.filter(x=>x.event_date<=spToday()).length;
     const events=allEvents.filter(x=>seasonPlannerShowLocked||x.event_date>spToday());
-    const rows=events.map(x=>{
-        const locked=x.event_date<=spToday();
+    const grouped=spGroupCalendarEvents(events);
+    const rows=grouped.map(group=>{
+        const x=group.event,locked=x.event_date<=spToday();
         const time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set";
-        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+(locked?'<span class="sp-locked-tag">Locked</span>':'')+'<div class="sp-event-meta">'+spEsc(x.display_name||x.age_group)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(x.opposition?'<div class="sp-event-meta">Opposition: '+spEsc(x.opposition)+'</div>':'')+(x.notes?'<div class="sp-event-meta">'+spEsc(x.notes)+'</div>':'')+'</div>'+(locked?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>')+'</div>';
+        const edit=locked?'<span class="sp-lock-note">Past session</span>':
+            (group.multiple&&seasonPlannerAgeFilter==="all"?'<span class="sp-lock-note">Filter by age group to edit</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>');
+        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+(locked?'<span class="sp-locked-tag">Locked</span>':'')+'<div class="sp-event-meta">'+spEsc(group.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(x.opposition&&!String(x.title||"").toLowerCase().includes(String(x.opposition).toLowerCase())?'<div class="sp-event-meta">Opposition: '+spEsc(x.opposition)+'</div>':'')+(x.notes?'<div class="sp-event-meta">'+spEsc(x.notes)+'</div>':'')+'</div>'+edit+'</div>';
     }).join("")||'<div class="sp-empty">'+(lockedCount&&!seasonPlannerShowLocked?'Past sessions are hidden. Use “Show locked” to include them.':'No events found for this filter.')+'</div>';
     let h='<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>';
     h+=groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div>';
@@ -302,6 +325,23 @@ function filterSeasonPlannerCalendar(value) {
     renderSeasonPlanner();
 }
 
+function spUpdateMatchTitle() {
+    const type=document.getElementById("spEditType");
+    const opposition=document.getElementById("spEditOpposition");
+    const title=document.getElementById("spEditTitle");
+    if(!type||!opposition||!title) return;
+    const current=title.value.trim();
+    const wasAuto=title.dataset.matchAuto==="true";
+    if(type.value==="match") {
+        if(!current||wasAuto||current.startsWith("Opposition: ")) {
+            title.value=opposition.value.trim()?"Opposition: "+opposition.value.trim():"";
+            title.dataset.matchAuto="true";
+        }
+    } else if(wasAuto) {
+        title.value="";
+        title.dataset.matchAuto="false";
+    }
+}
 function editSeasonPlannerEvent(id) {
     if (!spSenior()) return;
     const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
@@ -316,12 +356,12 @@ function editSeasonPlannerEvent(id) {
     editor.innerHTML=`
         <h3>Change future session</h3>
         <p class="subtitle">${spDate(event.event_date)} · ${spEsc(event.display_name || event.age_group)}</p>
-        <div class="form-group"><label>Event type</label><select id="spEditType">${["training","match","other","holiday","cancelled"].map(t=>`<option value="${t}" ${t===event.event_type?"selected":""}>${spType(t)}</option>`).join("")}</select></div>
+        <div class="form-group"><label>Event type</label><select id="spEditType" onchange="spUpdateMatchTitle()">${["training","match","other","holiday","cancelled"].map(t=>`<option value="${t}" ${t===event.event_type?"selected":""}>${spType(t)}</option>`).join("")}</select></div>
         <div class="form-group"><label>Title</label><input id="spEditTitle" maxlength="120" value="${spEsc(event.title)}"></div>
         <div class="form-group"><label>Start time</label><input id="spEditStart" type="time" value="${spTime(event.start_time)}"></div>
         <div class="form-group"><label>End time</label><input id="spEditEnd" type="time" value="${spTime(event.end_time)}"></div>
         <div class="form-group"><label>Location</label><input id="spEditVenue" maxlength="160" value="${spEsc(event.venue || "")}"></div>
-        <div class="form-group"><label>Opposition (for matches)</label><input id="spEditOpposition" maxlength="120" value="${spEsc(event.opposition || "")}"></div>
+        <div class="form-group"><label>Opposition (for matches)</label><input id="spEditOpposition" maxlength="120" value="${spEsc(event.opposition || "")}" oninput="spUpdateMatchTitle()"></div>
         <div class="form-group"><label>Notes</label><textarea id="spEditNotes" rows="3" maxlength="1000">${spEsc(event.notes || "")}</textarea></div>
         <button class="primary-button" onclick="saveSeasonPlannerEvent(${event.id})">Save changes</button>
         <button class="secondary-button" onclick="document.getElementById('spEventEditor').remove()">Close</button>`;

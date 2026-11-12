@@ -40,8 +40,8 @@ async function showSeasonPlanner() {
     if (!spSenior()) return;
     seasonPlannerPage = "home";
     renderShell(`
-        <div class="card">
-            <button class="back-button" onclick="showSeniorDashboard()">← Admin Dashboard</button>
+        <div class="card season-planner-shell">
+            <button class="back-button" onclick="showSeniorDashboard()">← Back</button>
             <h2>Season Planner</h2>
             <div class="subtitle">Plan recurring training, matches, holidays and other age-group events across the full season.</div>
             <div id="seasonPlannerContent">Loading...</div>
@@ -74,32 +74,69 @@ function spSetPage(page) {
     renderSeasonPlanner();
 }
 function spBackHome() {
-    return '<button class="back-button" onclick="spSetPage(\'home\')">← Season Planner</button>';
+    return '<button class="back-button" onclick="spSetPage(\'home\')">← Back</button>';
 }
 function spAgeNames(x) {
     if (x.applies_to_all) return "All age groups";
     const names=(x.age_group_ids||[]).map(g=>g.display_name||g.age_group).filter(Boolean);
     return names.length ? names.join(", ") : (x.display_name||x.age_group||"Age group");
 }
+function spEventCategory(value) {
+    return ({training:"training",match:"fixture",holiday:"holiday",other:"event",cancelled:"cancelled"})[value] || "event";
+}
+function spTypeBadge(value) {
+    const category=spEventCategory(value);
+    return '<span class="sp-type-badge sp-type-' + category + '">' + spEsc(spType(value)) + '</span>';
+}
+function spGroupUpcomingEvents(events) {
+    const grouped = new Map();
+    events.forEach(event => {
+        const key = [event.event_date,event.title,event.event_type,spTime(event.start_time),
+            spTime(event.end_time),event.venue||"",event.opposition||"",event.notes||""].join("|");
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(event);
+    });
+    const allIds = (seasonPlannerData.age_groups||[]).map(g=>String(g.id)).sort();
+    return [...grouped.values()].map(items => {
+        const ids=[...new Set(items.map(e=>String(e.age_group_id)))].sort();
+        const names=ids.map(id=>{
+            const g=(seasonPlannerData.age_groups||[]).find(x=>String(x.id)===id);
+            return g ? (g.display_name||g.age_group) : "";
+        }).filter(Boolean);
+        const all=allIds.length>0 && ids.length===allIds.length && ids.every((id,i)=>id===allIds[i]);
+        return {event:items[0],ageLabel:all?"All age groups":names.join(" · ")};
+    }).sort((x,y)=>x.event.event_date.localeCompare(y.event.event_date)||
+        String(x.event.start_time||"").localeCompare(String(y.event.start_time||"")));
+}
 function spRenderHome() {
     const s=seasonPlannerData.season;
-    const upcoming=seasonPlannerData.events.filter(e=>e.event_date>spToday()).sort((a,b)=>a.event_date.localeCompare(b.event_date)||String(a.start_time||"").localeCompare(String(b.start_time||"")));
+    const upcoming=seasonPlannerData.events.filter(e=>e.event_date>spToday())
+        .sort((a,b)=>a.event_date.localeCompare(b.event_date)||String(a.start_time||"").localeCompare(String(b.start_time||"")));
     const nextDate=upcoming.length?upcoming[0].event_date:null;
-    const next=nextDate?upcoming.filter(e=>e.event_date===nextDate):[];
-    let html='<div class="info-box" style="padding:16px;"><div class="subtitle">CURRENT SEASON</div><strong>'+spEsc(s.season_name)+'</strong><br>';
-    html+=(s.start_date&&s.end_date?spDate(s.start_date)+" – "+spDate(s.end_date):"Season dates not set");
-    html+='<div style="margin-top:10px;">'+seasonPlannerData.schedules.filter(x=>x.active).length+' active schedules · '+upcoming.length+' upcoming sessions</div></div>';
-    html+='<h3 style="margin-top:20px;">Up Next</h3>';
+    const next=nextDate?spGroupUpcomingEvents(upcoming.filter(e=>e.event_date===nextDate)):[];
+    const active=seasonPlannerData.schedules.filter(x=>x.active).length;
+    let html='<section class="sp-season-summary"><div class="sp-eyebrow">CURRENT SEASON</div>'+
+        '<div class="sp-season-name">'+spEsc(s.season_name)+'</div><div class="sp-season-dates">'+
+        (s.start_date&&s.end_date?spDate(s.start_date)+' – '+spDate(s.end_date):'Season dates not set')+
+        '</div><div class="sp-season-meta">'+active+' active schedules <span>·</span> '+upcoming.length+' upcoming sessions</div></section>';
+    html+='<section class="sp-section"><div class="sp-section-heading"><h3>Up Next</h3>'+
+        (nextDate?'<span class="sp-date-chip">'+spDate(nextDate)+'</span>':'')+'</div>';
     if(next.length) {
-        html+='<div class="info-box" style="padding:14px;margin:10px 0;"><div class="subtitle">'+spDate(nextDate)+'</div>';
-        html+=next.map(e=>'<div style="padding:8px 0;border-bottom:1px solid #ddd;"><strong>'+spEsc(e.title)+'</strong><br>'+spEsc(e.display_name||e.age_group)+' · '+spType(e.event_type)+(e.start_time?' · '+spTime(e.start_time):'')+(e.venue?' · '+spEsc(e.venue):'')+'</div>').join("");
-        html+='</div>';
-    } else html+='<div class="info-box">No upcoming events have been scheduled.</div>';
-    html+='<h3 style="margin-top:22px;">Manage season</h3>';
-    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\'schedules\')"><strong>Recurring Schedules</strong><br><span class="subtitle">Regular training and match days</span></button>';
-    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\'holidays\')"><strong>Holidays & Breaks</strong><br><span class="subtitle">Club closures and time off</span></button>';
-    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\'calendar\')"><strong>Season Calendar</strong><br><span class="subtitle">View and edit future events</span></button>';
-    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\'setup\')"><strong>Season Setup</strong><br><span class="subtitle">Season start and end dates</span></button>';
+        html+='<div class="sp-upcoming-list">'+next.map(item=>{
+            const e=item.event;
+            return '<div class="sp-upcoming-row sp-upcoming-'+spEventCategory(e.event_type)+'">'+
+                '<div class="sp-event-content"><div class="sp-event-title">'+spEsc(e.title)+' '+spTypeBadge(e.event_type)+'</div>'+
+                '<div class="sp-event-meta">'+spEsc(item.ageLabel)+
+                (e.start_time?' · '+spTime(e.start_time):'')+(e.venue?' · '+spEsc(e.venue):'')+
+                (e.opposition?' · '+spEsc(e.opposition):'')+'</div></div></div>';
+        }).join('')+'</div>';
+    } else html+='<div class="sp-empty">No upcoming events have been scheduled.</div>';
+    html+='</section><section class="sp-section sp-manage-section"><h3>Manage season</h3><div class="sp-menu-list">'+
+        '<button class="sp-menu-item" onclick="spSetPage(\'schedules\')"><span><strong>Recurring Schedules</strong><small>Regular training and match days</small></span><b>›</b></button>'+
+        '<button class="sp-menu-item" onclick="spSetPage(\'calendar\')"><span><strong>Season Calendar</strong><small>View and edit future events</small></span><b>›</b></button>'+
+        '<button class="sp-menu-item" onclick="spSetPage(\'holidays\')"><span><strong>Holidays & Breaks</strong><small>Club closures and time off</small></span><b>›</b></button>'+
+        '<button class="sp-menu-item" onclick="spSetPage(\'setup\')"><span><strong>Season Setup</strong><small>Season start and end dates</small></span><b>›</b></button>'+
+        '</div></section>';
     return html;
 }
 function spRenderSchedules() {
@@ -136,7 +173,7 @@ function spRenderCalendar() {
     const rows=events.map(x=>{
         const locked=x.event_date<=spToday();
         const time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set";
-        return '<div class="info-box" style="margin:8px 0;padding:13px;"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><div><strong>'+spDate(x.event_date)+' · '+spEsc(x.title)+'</strong><br>'+spEsc(x.display_name||x.age_group)+' · '+spType(x.event_type)+'<br>'+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+(x.opposition?'<br>Opposition: '+spEsc(x.opposition):'')+(x.notes?'<br>'+spEsc(x.notes):'')+'</div>'+(locked?'<span class="subtitle">Locked</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>')+'</div></div>';
+        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+'<div class="sp-event-meta">'+spEsc(x.display_name||x.age_group)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(x.opposition?'<div class="sp-event-meta">Opposition: '+spEsc(x.opposition)+'</div>':'')+(x.notes?'<div class="sp-event-meta">'+spEsc(x.notes)+'</div>':'')+'</div>'+(locked?'<span class="subtitle">Locked</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>')+'</div>';
     }).join("")||"<p>No events found for this filter.</p>";
     let h=spBackHome()+'<h3>Season Calendar</h3><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>';
     h+=groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div>'+rows;

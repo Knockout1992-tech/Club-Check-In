@@ -83,11 +83,12 @@ function spAgeNames(x) {
     const names=(x.age_group_ids||[]).map(g=>g.display_name||g.age_group).filter(Boolean);
     return names.length ? names.join(", ") : (x.display_name||x.age_group||"Age group");
 }
-function spEventCategory(value) {
-    return ({training:"training",match:"fixture",holiday:"holiday",other:"event",cancelled:"cancelled"})[value] || "event";
+function spEventCategory(value, matchLocation) {
+    if (value === "match") return matchLocation === "away" ? "match-away" : "match-home";
+    return ({training:"training",holiday:"holiday",other:"event",cancelled:"cancelled"})[value] || "event";
 }
-function spTypeBadge(value) {
-    const category=spEventCategory(value);
+function spTypeBadge(value, matchLocation) {
+    const category=spEventCategory(value, matchLocation);
     return '<span class="sp-type-badge sp-type-' + category + '">' + spEsc(spType(value)) + '</span>';
 }
 function spEventGroupKey(event){return [event.event_date,event.title,event.event_type,spTime(event.start_time),spTime(event.end_time),event.venue||""].join("|");}
@@ -107,8 +108,8 @@ function spRenderHome() {
     if(next.length) {
         html+='<div class="sp-upcoming-list">'+next.map(item=>{
             const e=item.event;
-            return '<div class="sp-upcoming-row sp-upcoming-'+spEventCategory(e.event_type)+'">'+
-                '<div class="sp-event-content"><div class="sp-event-title">'+spEsc(e.title)+' '+spTypeBadge(e.event_type)+'</div>'+
+            return '<div class="sp-upcoming-row sp-upcoming-'+spEventCategory(e.event_type,e.match_location)+'">'+
+                '<div class="sp-event-content"><div class="sp-event-title">'+spEsc(e.title)+' '+spTypeBadge(e.event_type,e.match_location)+'</div>'+
                 '<div class="sp-event-meta">'+spEsc(item.ageLabel)+
                 (e.start_time?' · '+spTime(e.start_time):'')+(e.venue?' · '+spEsc(e.venue):'')+
                 (e.opposition?' · '+spEsc(e.opposition):'')+'</div></div></div>';
@@ -150,7 +151,7 @@ function spRenderHolidays() {
     return h;
 }
 function spGroupCalendarEvents(events){const grouped=new Map();events.forEach(event=>{const k=spEventGroupKey(event);if(!grouped.has(k))grouped.set(k,[]);grouped.get(k).push(event);});const allIds=(seasonPlannerData.age_groups||[]).map(g=>String(g.id)).sort();return [...grouped.values()].map(items=>{const ids=[...new Set(items.map(e=>String(e.age_group_id)))].sort(),names=ids.map(id=>{const g=(seasonPlannerData.age_groups||[]).find(x=>String(x.id)===id);return g?(g.display_name||g.age_group):"";}).filter(Boolean),all=allIds.length>0&&ids.length===allIds.length&&ids.every((id,i)=>id===allIds[i]),notes=[...new Set(items.map(e=>(e.notes||"").trim()).filter(Boolean))];return {items,event:items[0],ageLabel:all?"All age groups":names.join(" · "),multiple:items.length>1,notes:notes.length===1?notes[0]:""};}).sort((a,b)=>a.event.event_date.localeCompare(b.event.event_date)||String(a.event.start_time||"").localeCompare(String(b.event.start_time||"")));}
-function spRenderCalendar(){const groups=seasonPlannerData.age_groups,filtered=seasonPlannerData.events.filter(x=>(seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter))&&(seasonPlannerShowPast||x.event_date>spToday())&&(seasonPlannerShowCancelled||x.event_type!=="cancelled")),grouped=spGroupCalendarEvents(filtered),rows=grouped.map(g=>{const x=g.event,past=x.event_date<=spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set",edit=past?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+'</div>'+edit+'</div>';}).join("")||'<div class="sp-empty">No events found for these filters.</div>';let h='<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div></div><div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;return h;}
+function spRenderCalendar(){const groups=seasonPlannerData.age_groups,filtered=seasonPlannerData.events.filter(x=>(seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter))&&(seasonPlannerShowPast||x.event_date>spToday())&&(seasonPlannerShowCancelled||x.event_type!=="cancelled")),grouped=spGroupCalendarEvents(filtered),rows=grouped.map(g=>{const x=g.event,past=x.event_date<=spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set",edit=past?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+'</div>'+edit+'</div>';}).join("")||'<div class="sp-empty">No events found for these filters.</div>';let h='<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div></div><div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;return h;}
 function spRenderSetup() {
     const s=seasonPlannerData.season;
     const nextName=typeof getNextSeason==="function"?getNextSeason(s.season_name):"";

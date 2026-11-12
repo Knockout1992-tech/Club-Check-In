@@ -82,15 +82,16 @@ function getNextSeason(season) {
 
 async function performNewSeason(nextSeason) {
 
-    const startDate =
-        new Date()
-            .toISOString()
-            .split("T")[0];
+    // The rollover date is fixed at 1 August of the season being started.
+    // The database independently enforces this date and Senior PIN validation.
+    const startYear = Number(String(nextSeason).split("/")[0]);
+    const startDate = startYear + "-08-01";
 
     const { data, error } =
         await supabaseClient.rpc(
-            "rollover_season",
+            "rollover_season_secure",
             {
+                supplied_code: currentSeniorPIN,
                 new_season_name: nextSeason,
                 new_start_date: startDate
             }

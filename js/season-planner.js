@@ -70,6 +70,7 @@ async function loadSeasonPlanner(requestedSeasonId = null) {
         seasonPlannerAvailabilityByEvent = new Map();
         if (typeof matchAdminCall === "function") {
             try {
+                await matchAdminCall("parent_home", { action: "sync_calendar" });
                 const availability = await matchAdminCall("admin_fixtures", { action: "list" });
                 (availability.fixtures || []).forEach(f => {
                     (f.calendar_event_ids || []).forEach(id => seasonPlannerAvailabilityByEvent.set(Number(id), Number(f.id)));

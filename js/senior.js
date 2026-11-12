@@ -976,6 +976,8 @@ async function loadMatchAdminFixtures() {
                         ${matchAdminEscape(statusLabel)}
                     </p>
 
+                    ${fixture.calendar_managed ? '<p class="user-status">Managed in Season Planner</p>' : ''}
+
                     <p>
                         <strong>Responses:</strong>
                         ${Number(fixture.response_count || 0)}
@@ -998,7 +1000,7 @@ async function loadMatchAdminFixtures() {
                     }
 
                     ${
-                        canManageFixtures && ["draft", "open"].includes(status)
+                        canManageFixtures && !fixture.calendar_managed && ["draft", "open"].includes(status)
                         ? `
                             <button class="secondary-button"
                                 onclick="editMatchFixture(${Number(fixture.id)})">

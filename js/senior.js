@@ -876,7 +876,25 @@ async function loadMatchAdminFixtures() {
         // Active age groups supplied by the Edge Function
         matchAdminAgeGroups = result.available_age_groups || [];
 
-        const fixtures = result.fixtures || [];
+        const allFixtures = result.fixtures || [];
+
+        // Filter fixtures for Coaches using their dashboard selection
+        const fixtures =
+            currentRole === "coach" &&
+            selectedAgeGroups.length > 0
+            ? allFixtures.filter(fixture => {
+
+                const fixtureGroups = (fixture.age_groups || [])
+                    .map(group =>
+                        group.display_name || group.age_group
+                    );
+
+                return selectedAgeGroups.some(ageGroup =>
+                    fixtureGroups.includes(ageGroup)
+                );
+
+            })
+            : allFixtures;
 
         const canManageFixtures =
             (currentRole === "senior" && currentSeniorPIN) ||
@@ -884,7 +902,13 @@ async function loadMatchAdminFixtures() {
 
         if (!fixtures.length) {
             container.innerHTML = `
-                <p>No fixtures have been created yet.</p>
+                <p>
+                    ${
+                        currentRole === "coach"
+                        ? "No fixtures found for your selected age groups."
+                        : "No fixtures have been created yet."
+                    }
+                </p>
             `;
             return;
         }
@@ -1328,6 +1352,7 @@ async function publishMatchFixture(fixtureId) {
    MATCH FIXTURE - VIEW RESPONSES
    ========================================================= */
 
+
 async function viewMatchFixture(fixtureId, silentRefresh = false) {
 
     try {
@@ -1359,7 +1384,43 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
         }
 
         const submissions = fixture.submissions || [];
-        const ageGroups = fixture.age_groups || [];
+        const allAgeGroups = fixture.age_groups || [];
+
+        // Coaches only see their selected age groups.
+        // Seniors continue to see every age group.
+        const ageGroups =
+            currentRole === "coach"
+            ? allAgeGroups.filter(group =>
+                selectedAgeGroups.includes(
+                    group.display_name || group.age_group
+                )
+            )
+            : allAgeGroups;
+
+        // Count responses and children only within the visible groups.
+        const visibleAgeGroupIDs = new Set(
+            ageGroups.map(group => Number(group.age_group_id))
+        );
+
+        const visibleSubmissions = submissions.filter(submission =>
+            (submission.children || []).some(child =>
+                visibleAgeGroupIDs.has(Number(child.age_group_id))
+            )
+        );
+
+        const visibleChildren = ageGroups.reduce(
+            (total, group) =>
+                total + submissions.reduce(
+                    (groupTotal, submission) =>
+                        groupTotal +
+                        (submission.children || []).filter(child =>
+                            Number(child.age_group_id) ===
+                            Number(group.age_group_id)
+                        ).length,
+                    0
+                ),
+            0
+        );
 
         const totalAvailable = ageGroups.reduce(
             (sum, group) => sum + Number(group.available || 0), 0
@@ -1436,9 +1497,9 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                     <strong>Fixture Summary</strong>
 
                     <p>
-                        ${Number(fixture.response_count || 0)}
+                        ${visibleSubmissions.length}
                         parent responses ·
-                        ${Number(fixture.children_count || 0)}
+                        ${visibleChildren}
                         children registered
                     </p>
 
@@ -1459,7 +1520,8 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                     </div>
 
                     ${
-                        Number(fixture.duplicate_review_count || 0) > 0
+                        Number(fixture.duplicate_review_count || 0) > 0 &&
+                        currentRole === "senior"
                         ? `
                             <p>
                                 <span class="user-status user-status-inactive">
@@ -1478,6 +1540,14 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
 
                 <h3>Age Group Responses</h3>
         `;
+
+        if (!ageGroups.length) {
+            html += `
+                <p>
+                    No responses found for your selected age groups.
+                </p>
+            `;
+        }
 
         ageGroups.forEach((group, index) => {
 

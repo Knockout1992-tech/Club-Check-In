@@ -9,6 +9,8 @@ let seasonPlannerShowPast = false;
 let seasonPlannerShowCancelled = false;
 let seasonPlannerPage = "home";
 let seasonPlannerEditingEventId = null;
+let seasonPlannerAvailabilityByEvent = new Map();
+let seasonPlannerAvailabilityData = null;
 
 function spEsc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({
@@ -65,6 +67,17 @@ async function loadSeasonPlanner(requestedSeasonId = null) {
             supplied_code:currentSeniorPIN, requested_season_id:requestedSeasonId
         });
         if (!seasonPlannerData || !seasonPlannerData.season) throw new Error("Unable to load the current season. Check Senior access and the current season setting.");
+        seasonPlannerAvailabilityByEvent = new Map();
+        if (typeof matchAdminCall === "function") {
+            try {
+                const availability = await matchAdminCall("admin_fixtures", { action: "list" });
+                (availability.fixtures || []).forEach(f => {
+                    (f.calendar_event_ids || []).forEach(id => seasonPlannerAvailabilityByEvent.set(Number(id), Number(f.id)));
+                });
+            } catch (availabilityError) {
+                console.warn("Calendar availability links could not be loaded:", availabilityError);
+            }
+        }
         seasonPlannerAgeFilter = "all";
         renderSeasonPlanner();
     } catch(e) {
@@ -164,7 +177,50 @@ function spRenderHolidays() {
     return h;
 }
 function spGroupCalendarEvents(events){const grouped=new Map();events.forEach(event=>{const k=spEventGroupKey(event);if(!grouped.has(k))grouped.set(k,[]);grouped.get(k).push(event);});const allIds=(seasonPlannerData.age_groups||[]).map(g=>String(g.id)).sort();return [...grouped.values()].map(items=>{const ids=[...new Set(items.map(e=>String(e.age_group_id)))].sort(),names=ids.map(id=>{const g=(seasonPlannerData.age_groups||[]).find(x=>String(x.id)===id);return g?(g.display_name||g.age_group):"";}).filter(Boolean),all=allIds.length>0&&ids.length===allIds.length&&ids.every((id,i)=>id===allIds[i]),notes=[...new Set(items.map(e=>(e.notes||"").trim()).filter(Boolean))];return {items,event:items[0],ageLabel:all?"All age groups":names.join(" · "),multiple:items.length>1,notes:notes.length===1?notes[0]:""};}).sort((a,b)=>a.event.event_date.localeCompare(b.event.event_date)||String(a.event.start_time||"").localeCompare(String(b.event.start_time||"")));}
-function spRenderCalendar(){const groups=seasonPlannerData.age_groups,grouped=spGetCalendarGroups(),rows=grouped.map(g=>{const x=g.event,past=x.event_date<=spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set",edit=past?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+'</div>'+edit+'</div>';}).join("")||'<div class="sp-empty">No events found for these filters.</div>';let h='<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div></div><div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;return h;}
+function spRenderCalendar(){
+    const groups=seasonPlannerData.age_groups,grouped=spGetCalendarGroups();
+    const rows=grouped.map(g=>{
+        const x=g.event,past=x.event_date<=spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set";
+        const fixtureId=(g.items||[]).map(item=>seasonPlannerAvailabilityByEvent.get(Number(item.id))).find(Boolean);
+        const availabilityOn=x.availability_enabled!==false&&!["holiday","cancelled"].includes(x.event_type);
+        const edit=past?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';
+        const actions=fixtureId?'<div class="sp-calendar-actions"><button class="secondary-button" onclick="copyMatchFixtureLink('+fixtureId+')">Copy Fixture Link</button><button class="secondary-button" onclick="spReviewAvailability('+fixtureId+')">Review availability</button></div>':(availabilityOn?'<div class="sp-calendar-actions"><span class="sp-field-hint">Availability link will be created when Parent Home syncs this season.</span></div>':'');
+        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+actions+'</div>'+edit+'</div>';
+    }).join("")||'<div class="sp-empty">No events found for these filters.</div>';
+    return '<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div><button class="secondary-button" onclick="copyCentralMatchParentLink()">Copy Parent Home Link</button></div><div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;
+}
+
+async function spReviewAvailability(fixtureId) {
+    if (!spSenior()) return;
+    try {
+        const result = await matchAdminCall("admin_fixtures", { action: "detail", fixture_id: Number(fixtureId) });
+        seasonPlannerAvailabilityData = result.fixtures?.[0] || null;
+        if (!seasonPlannerAvailabilityData) throw new Error("Availability details could not be found.");
+        seasonPlannerPage = "availability-review";
+        renderSeasonPlanner();
+    } catch (e) {
+        await appAlert(e.message || "Unable to load event availability.", "Availability unavailable", "danger");
+    }
+}
+function spRenderAvailabilityReview() {
+    const f=seasonPlannerAvailabilityData;
+    if(!f) return '<div class="sp-empty">No availability details loaded.</div>';
+    const groups=(f.age_groups||[]).map(g=>'<div class="sp-response-summary"><strong>'+spEsc(g.display_name||g.age_group)+'</strong><span>'+Number(g.available||0)+' available</span><span>'+Number(g.unavailable||0)+' unavailable</span><span>'+Number(g.unsure||0)+' unsure</span></div>').join("");
+    const submissions=(f.submissions||[]).map(sub=>{
+        const children=(sub.children||[]).map(ch=>'<div class="sp-response-child"><div><strong>'+spEsc(ch.child_name)+'</strong><small>'+spEsc(ch.age_group||"Age group not set")+(ch.school_year?' · School Year '+spEsc(ch.school_year):"")+'</small></div><select onchange="spUpdateAvailabilityResponse('+Number(ch.id)+',this.value,'+Number(f.id)+')"><option value="available" '+(ch.availability==="available"?"selected":"")+'>Available</option><option value="unavailable" '+(ch.availability==="unavailable"?"selected":"")+'>Unavailable</option><option value="unsure" '+(ch.availability==="unsure"?"selected":"")+'>Unsure</option></select></div>').join("");
+        return '<section class="sp-response-parent"><div class="sp-response-parent-head"><strong>'+spEsc(sub.parent_name||"Parent")+'</strong><small>Submitted '+spEsc(sub.submitted_at?new Date(sub.submitted_at).toLocaleString("en-GB"):"")+'</small></div>'+children+'</section>';
+    }).join("")||'<div class="sp-empty">No parent responses have been submitted yet.</div>';
+    return '<div class="sp-review-toolbar"><button class="secondary-button" onclick="spSetPage(\'calendar\')">← Back to calendar</button><button class="secondary-button" onclick="copyMatchFixtureLink('+Number(f.id)+')">Copy Fixture Link</button></div><section class="sp-form-panel"><h3>'+spEsc(f.opposition||"Club event")+'</h3><div class="sp-event-meta">'+spDate(f.fixture_date)+' · '+spEsc(matchAdminFixtureType(f.fixture_type,f.status))+'</div><p>'+Number(f.children_count||0)+' player responses from '+Number(f.response_count||0)+' parents</p>'+groups+'</section><section class="sp-form-panel"><h3>Parent responses</h3>'+submissions+'</section>';
+}
+async function spUpdateAvailabilityResponse(childId,availability,fixtureId) {
+    try {
+        await matchAdminCall("manage_match_child",{action:"update_availability",child_id:Number(childId),availability});
+        await spReviewAvailability(fixtureId);
+    } catch(e) {
+        await appAlert(e.message||"Unable to update availability.","Update failed","danger");
+        await spReviewAvailability(fixtureId);
+    }
+}
 function spRenderSetup() {
     const s=seasonPlannerData.season;
     const nextName=typeof getNextSeason==="function"?getNextSeason(s.season_name):"";
@@ -175,13 +231,14 @@ function spRenderSetup() {
 function renderSeasonPlanner() {
     const root=document.getElementById("seasonPlannerContent");
     if(!root||!seasonPlannerData) return;
-    const pages={home:spRenderHome,schedules:spRenderSchedules,holidays:spRenderHolidays,calendar:spRenderCalendar,setup:spRenderSetup,"edit-event":spRenderEventEditor};
+    const pages={home:spRenderHome,schedules:spRenderSchedules,holidays:spRenderHolidays,calendar:spRenderCalendar,setup:spRenderSetup,"edit-event":spRenderEventEditor,"availability-review":spRenderAvailabilityReview};
     const headers={
         home:["Season Planner","Plan recurring training, matches, holidays and other age-group events across the full season."],
         schedules:["Recurring Schedules","Create and manage regular training and match schedules across your age groups."],
         holidays:["Holidays & Breaks","Set dates when training and club activities are paused."],
         calendar:["Season Calendar","View the season at a glance and make changes to future events."],
         "edit-event":["Change Event","Update the event details and choose which age groups receive the change."],
+        "availability-review":["Event Availability","Review parent responses and update player availability."],
         setup:["Season Setup","Set the dates for your club season."]
     };
     const header=headers[seasonPlannerPage]||headers.home;
@@ -192,7 +249,7 @@ function renderSeasonPlanner() {
     if(description) description.textContent=header[1];
     if(back) {
         back.textContent=seasonPlannerPage==="home"?"← Back to Dashboard":"← Back";
-        back.onclick=seasonPlannerPage==="home"?showSeniorDashboard:()=>spSetPage(seasonPlannerPage==="edit-event"?"calendar":"home");
+        back.onclick=seasonPlannerPage==="home"?showSeniorDashboard:()=>spSetPage(["edit-event","availability-review"].includes(seasonPlannerPage)?"calendar":"home");
     }
     root.innerHTML=(pages[seasonPlannerPage]||pages.home)();
     const filter=document.getElementById("spFilter");

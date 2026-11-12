@@ -1070,3 +1070,24 @@ h2 {
     .sp-calendar-filter-row { align-items:flex-start; flex-direction:column; gap:12px; }
     .sp-group-picker { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+
+/* Season Planner event palette — reuse the app's established blue, yellow and green */
+.sp-type-match-home { color:#0f5132; background:#d1e7dd; }
+.sp-type-match-away { color:#084298; background:#cfe2ff; }
+.sp-type-training { color:#563477; background:#eee5f7; }
+.sp-type-holiday { color:#664d03; background:#fff3cd; }
+.sp-type-event { color:#7a3e00; background:#ffead1; }
+.sp-type-cancelled { color:#555; background:#e5e5e5; }
+
+.sp-upcoming-match-home,.sp-calendar-match-home { border-left-color:#198754; }
+.sp-upcoming-match-away,.sp-calendar-match-away { border-left-color:#0d6efd; }
+.sp-upcoming-training,.sp-calendar-training { border-left-color:#8960ad; }
+.sp-upcoming-holiday,.sp-calendar-holiday { border-left-color:#d6a900; }
+.sp-upcoming-event,.sp-calendar-event { border-left-color:#d97706; }
+.sp-upcoming-cancelled,.sp-calendar-cancelled { border-left-color:#999; }
+
+/* Keep the group cards calm; category appears as a slim side accent */
+.sp-calendar-row,.sp-upcoming-row,.sp-management-row { border-left-width:4px; }
+.sp-calendar-row { background:#fff; }
+.sp-upcoming-row { background:rgba(255,255,255,.72); }

@@ -767,6 +767,9 @@ async function matchAdminCall(functionName, body) {
                 body: {
                     installation_id: getInstallationID(),
                     ...credentials,
+                    ...(currentRole === "coach"
+                        ? { selected_age_groups: selectedAgeGroups }
+                        : {}),
                     ...body
                 }
             }
@@ -989,7 +992,23 @@ async function loadMatchAdminFixtures() {
                     }
 
                     ${
-                        status === "open"
+                        canManageFixtures && ["draft", "open"].includes(status)
+                        ? `
+                            <button class="secondary-button"
+                                onclick="editMatchFixture(${Number(fixture.id)})">
+                                Edit Fixture
+                            </button>
+
+                            <button class="secondary-button"
+                                onclick="cancelMatchFixture(${Number(fixture.id)})">
+                                Cancel Fixture
+                            </button>
+                        `
+                        : ""
+                    }
+
+                    ${
+                        status !== "draft"
                         ? `
                             <button class="secondary-button"
                                 onclick="viewMatchFixture(${Number(fixture.id)})">
@@ -1024,36 +1043,62 @@ async function loadMatchAdminFixtures() {
 // CREATE FIXTURE FORM
 // =========================================================
 
-function showMatchFixtureForm() {
+function showMatchFixtureForm(fixture = null) {
 
     const container = document.getElementById("matchAdminFixtures");
-
     if (!container) return;
 
-    const ageGroupHTML = matchAdminAgeGroups.map(group => `
-        <label style="
-            display:flex;
-            align-items:center;
-            gap:10px;
-            margin:10px 0;
-        ">
-            <input
-                type="checkbox"
-                class="matchFixtureAgeGroup"
-                value="${Number(group.id)}">
+    const isEditing = Boolean(fixture);
+    const hasResponses = Number(fixture?.response_count || 0) > 0;
 
-            ${matchAdminEscape(group.display_name || group.age_group)}
-        </label>
-    `).join("");
+    const selectedIDs = new Set(
+        (fixture?.age_groups || []).map(group => Number(group.age_group_id))
+    );
+
+    const ageGroupHTML = matchAdminAgeGroups.map(group => {
+        const checked = selectedIDs.has(Number(group.id)) ? "checked" : "";
+        const disabled = hasResponses ? "disabled" : "";
+
+        return `
+            <label style="
+                display:flex;
+                align-items:center;
+                gap:10px;
+                margin:10px 0;
+            ">
+                <input
+                    type="checkbox"
+                    class="matchFixtureAgeGroup"
+                    value="${Number(group.id)}"
+                    ${checked}
+                    ${disabled}>
+
+                ${matchAdminEscape(group.display_name || group.age_group)}
+            </label>
+        `;
+    }).join("");
+
+    const deadline = fixture?.response_deadline
+        ? new Date(fixture.response_deadline).toISOString().slice(0, 16)
+        : "";
 
     container.innerHTML = `
         <div class="card">
 
-            <h3>Create Fixture</h3>
+            <h3>${isEditing ? "Edit Fixture" : "Create Fixture"}</h3>
+
+            ${hasResponses ? `
+                <div class="info-box">
+                    Age groups are locked because parents have already responded.
+                    All other fixture details can still be changed.
+                </div>
+            ` : ""}
 
             <form onsubmit="
                 event.preventDefault();
-                createMatchFixtureFromForm();
+                ${isEditing
+                    ? `updateMatchFixtureFromForm(${Number(fixture.id)})`
+                    : "createMatchFixtureFromForm()"};
             ">
 
                 <label>Opposition</label>
@@ -1062,6 +1107,7 @@ function showMatchFixtureForm() {
                     type="text"
                     required
                     maxlength="150"
+                    value="${matchAdminEscape(fixture?.opposition || "")}"
                     placeholder="e.g. Northampton RFC">
 
                 <label style="display:block;margin-top:15px;">
@@ -1070,20 +1116,24 @@ function showMatchFixtureForm() {
                 <input
                     id="matchFixtureDate"
                     type="date"
-                    required>
+                    required
+                    value="${matchAdminEscape(fixture?.fixture_date || "")}">
 
                 <label style="display:block;margin-top:15px;">
                     Fixture type
                 </label>
                 <select id="matchFixtureType">
-                    <option value="home">Home</option>
-                    <option value="away">Away</option>
+                    <option value="home" ${fixture?.fixture_type === "home" ? "selected" : ""}>Home</option>
+                    <option value="away" ${fixture?.fixture_type === "away" ? "selected" : ""}>Away</option>
                 </select>
 
                 <label style="display:block;margin-top:15px;">
                     Kick-off time
                 </label>
-                <input id="matchKickOff" type="time">
+                <input
+                    id="matchKickOff"
+                    type="time"
+                    value="${matchAdminEscape(fixture?.kick_off_time || "")}">
 
                 <label style="display:block;margin-top:15px;">
                     Venue
@@ -1092,6 +1142,7 @@ function showMatchFixtureForm() {
                     id="matchVenue"
                     type="text"
                     maxlength="150"
+                    value="${matchAdminEscape(fixture?.venue || "")}"
                     placeholder="e.g. Rushden & Higham RFC">
 
                 <label style="display:block;margin-top:15px;">
@@ -1100,14 +1151,16 @@ function showMatchFixtureForm() {
                 <input
                     id="matchVenueAddress"
                     type="text"
-                    maxlength="300">
+                    maxlength="300"
+                    value="${matchAdminEscape(fixture?.venue_address || "")}">
 
                 <label style="display:block;margin-top:15px;">
                     Response deadline
                 </label>
                 <input
                     id="matchResponseDeadline"
-                    type="datetime-local">
+                    type="datetime-local"
+                    value="${deadline}">
 
                 <h3 style="margin-top:20px;">Age Groups</h3>
 
@@ -1116,7 +1169,7 @@ function showMatchFixtureForm() {
                 <div style="margin-top:25px;">
 
                     <button class="primary-button" type="submit">
-                        Create Draft Fixture
+                        ${isEditing ? "Save Fixture Changes" : "Create Draft Fixture"}
                     </button>
 
                     <button class="secondary-button"
@@ -1133,6 +1186,95 @@ function showMatchFixtureForm() {
     `;
 }
 
+async function editMatchFixture(fixtureId) {
+    try {
+        const result = await matchAdminCall("admin_fixtures", {
+            action: "detail",
+            fixture_id: Number(fixtureId)
+        });
+
+        const fixture = result.fixtures?.[0];
+        if (!fixture) throw new Error("Fixture details could not be found.");
+
+        if (!["draft", "open"].includes(String(fixture.status).toLowerCase())) {
+            throw new Error("Only draft or open fixtures can be edited.");
+        }
+
+        showMatchFixtureForm(fixture);
+    } catch (error) {
+        await appAlert(error.message || "Unable to load fixture for editing.", "Edit unavailable", "danger");
+    }
+}
+
+async function updateMatchFixtureFromForm(fixtureId) {
+    const opposition = document.getElementById("matchOpposition").value.trim();
+    const fixtureDate = document.getElementById("matchFixtureDate").value;
+    const fixtureType = document.getElementById("matchFixtureType").value;
+    const ageGroupIds = Array.from(
+        document.querySelectorAll(".matchFixtureAgeGroup:checked")
+    ).map(input => Number(input.value));
+
+    if (!ageGroupIds.length) {
+        await appAlert("Please select at least one age group.", "Age groups required", "warning");
+        return;
+    }
+
+    const deadlineValue = document.getElementById("matchResponseDeadline").value;
+    let deadline = null;
+
+    if (deadlineValue) {
+        const deadlineDate = new Date(deadlineValue);
+        if (Number.isNaN(deadlineDate.getTime())) {
+            await appAlert("Please enter a valid response deadline.", "Invalid deadline", "warning");
+            return;
+        }
+        deadline = deadlineDate.toISOString();
+    }
+
+    try {
+        await matchAdminCall("admin_fixtures", {
+            action: "update",
+            fixture_id: Number(fixtureId),
+            opposition,
+            fixture_date: fixtureDate,
+            fixture_type: fixtureType,
+            kick_off_time: document.getElementById("matchKickOff").value || null,
+            venue: document.getElementById("matchVenue").value.trim(),
+            venue_address: document.getElementById("matchVenueAddress").value.trim(),
+            response_deadline: deadline,
+            age_group_ids: ageGroupIds
+        });
+
+        await appAlert("Fixture details have been updated.", "Fixture updated", "success");
+        await loadMatchAdminFixtures();
+    } catch (error) {
+        console.error("Fixture update failed:", error);
+        await appAlert(error.message || "Unable to update fixture.", "Update failed", "danger");
+    }
+}
+
+async function cancelMatchFixture(fixtureId) {
+    const confirmed = await appConfirm(
+        "Cancel this fixture?\n\nExisting parent responses will be retained, but parents will no longer be able to submit or update availability.",
+        "Cancel fixture",
+        "Cancel fixture"
+    );
+
+    if (!confirmed) return;
+
+    try {
+        await matchAdminCall("admin_fixtures", {
+            action: "cancel",
+            fixture_id: Number(fixtureId)
+        });
+
+        await appAlert("The fixture has been cancelled. Existing responses have been retained.", "Fixture cancelled", "success");
+        await loadMatchAdminFixtures();
+    } catch (error) {
+        console.error("Fixture cancellation failed:", error);
+        await appAlert(error.message || "Unable to cancel fixture.", "Cancellation failed", "danger");
+    }
+}
 
 // =========================================================
 // CREATE FIXTURE

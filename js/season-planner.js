@@ -8,6 +8,7 @@ let seasonPlannerAgeFilter = "all";
 let seasonPlannerShowPast = false;
 let seasonPlannerShowCancelled = false;
 let seasonPlannerPage = "home";
+let seasonPlannerEditingEventId = null;
 
 function spEsc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({
@@ -126,7 +127,7 @@ function spRenderHome() {
     } else html+='<div class="sp-empty">No upcoming events have been scheduled.</div>';
     html+='</section>'+
         '<button type="button" class="sp-season-calendar-launch" onclick="spSetPage(\'calendar\')">'+
-        '<span class="sp-season-calendar-icon">▦</span><span class="sp-season-calendar-copy"><strong>Season Calendar</strong>'+
+        '<span class="sp-season-calendar-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="32" rx="5" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M6 19h36M16 6v9M32 6v9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M15 26h5v5h-5zM24 26h5v5h-5zM33 26h3v5h-3zM15 34h5v4h-5zM24 34h5v4h-5z" fill="currentColor" opacity=".78"/></svg></span><span class="sp-season-calendar-copy"><strong>Season Calendar</strong>'+
         '<small>View and manage the full season schedule</small></span><span class="sp-season-calendar-arrow">›</span></button>'+
         '<section class="sp-section sp-admin-support"><div class="sp-section-heading"><h3>Admin support</h3><span class="sp-field-hint">Planning tools</span></div><div class="sp-menu-list">'+
         '<button class="sp-menu-item" onclick="spSetPage(\'schedules\')"><span><strong>Recurring Schedules</strong><small>Manage regular training and match days</small></span><b>›</b></button>'+
@@ -174,12 +175,13 @@ function spRenderSetup() {
 function renderSeasonPlanner() {
     const root=document.getElementById("seasonPlannerContent");
     if(!root||!seasonPlannerData) return;
-    const pages={home:spRenderHome,schedules:spRenderSchedules,holidays:spRenderHolidays,calendar:spRenderCalendar,setup:spRenderSetup};
+    const pages={home:spRenderHome,schedules:spRenderSchedules,holidays:spRenderHolidays,calendar:spRenderCalendar,setup:spRenderSetup,"edit-event":spRenderEventEditor};
     const headers={
         home:["Season Planner","Plan recurring training, matches, holidays and other age-group events across the full season."],
         schedules:["Recurring Schedules","Create and manage regular training and match schedules across your age groups."],
         holidays:["Holidays & Breaks","Set dates when training and club activities are paused."],
         calendar:["Season Calendar","View the season at a glance and make changes to future events."],
+        "edit-event":["Change Event","Update the event details and choose which age groups receive the change."],
         setup:["Season Setup","Set the dates for your club season."]
     };
     const header=headers[seasonPlannerPage]||headers.home;
@@ -190,7 +192,7 @@ function renderSeasonPlanner() {
     if(description) description.textContent=header[1];
     if(back) {
         back.textContent=seasonPlannerPage==="home"?"← Back to Dashboard":"← Back";
-        back.onclick=seasonPlannerPage==="home"?showSeniorDashboard:()=>spSetPage("home");
+        back.onclick=seasonPlannerPage==="home"?showSeniorDashboard:()=>spSetPage(seasonPlannerPage==="edit-event"?"calendar":"home");
     }
     root.innerHTML=(pages[seasonPlannerPage]||pages.home)();
     const filter=document.getElementById("spFilter");
@@ -341,25 +343,25 @@ function editSeasonPlannerEvent(id) {
     const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
     if(!event || event.event_date<=spToday())
         return appAlert("Past sessions and today's sessions cannot be changed.","Past session","warning");
+    seasonPlannerEditingEventId=Number(id);
+    spSetPage("edit-event");
+}
+
+function spRenderEventEditor() {
+    const id=seasonPlannerEditingEventId;
+    const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
+    if(!event) return '<div class="sp-empty">This event could not be found. <button class="secondary-button" onclick="spSetPage(\'calendar\')">Back to calendar</button></div>';
     const group=spGroupCalendarEvents(seasonPlannerData.events.filter(x=>
         x.event_date>spToday() && spEventGroupKey(x)===spEventGroupKey(event)
     )).find(g=>g.items.some(x=>Number(x.id)===Number(id)));
     const items=group?group.items:[event];
-    const root=document.getElementById("seasonPlannerContent");
-    const old=document.getElementById("spEventEditor");
-    if(old) old.remove();
     const checks=items.map(e=>{
         const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
         return '<label class="sp-group-choice"><input type="checkbox" class="spEditGroup" value="'+e.id+'" checked> '+spEsc(ag?(ag.display_name||ag.age_group):e.age_group)+'</label>';
     }).join("");
     const isHomeMatch=event.event_type==="match" && (event.match_location||"home")==="home";
-    const editor=document.createElement("div");
-    editor.id="spEventEditor";
-    editor.className="card sp-event-editor";
-    editor.style.marginTop="18px";
-    editor.innerHTML=
-        '<h3>Change event</h3>'+
-        '<p class="subtitle">'+spDate(event.event_date)+' · '+spEsc(group?group.ageLabel:(event.display_name||event.age_group))+'</p>'+
+    return '<section class="sp-event-editor-page">'+
+        '<div class="sp-editor-page-heading"><div><div class="sp-eyebrow">SEASON CALENDAR</div><h2>Change event</h2><p>'+spDate(event.event_date)+' · '+spEsc(group?group.ageLabel:(event.display_name||event.age_group))+'</p></div></div>'+
         '<div class="sp-form-panel">'+
         '<div class="form-group"><label>Apply changes to</label><div class="sp-group-picker">'+checks+'</div><div class="sp-field-hint">Untick any age group that should not receive this change.</div></div>'+
         '<div class="form-group"><label for="spEditType">Event type</label><select id="spEditType" onchange="spUpdateMatchEditorFields()">'+
@@ -368,14 +370,11 @@ function editSeasonPlannerEvent(id) {
         '<div class="form-group"><label id="spEditTitleLabel" for="spEditTitle">'+(event.event_type==="match"?"Opposition":"Event title")+'</label><input id="spEditTitle" maxlength="120" value="'+spEsc(event.title)+'" placeholder="'+(event.event_type==="match"?"e.g. Olney":"Enter an event title")+'" oninput="spMarkMatchTitleManual()"></div>'+
         '<div class="form-group"><label for="spEditDate">Date</label><input id="spEditDate" type="date" min="'+(seasonPlannerData.season.start_date||"")+'" max="'+(seasonPlannerData.season.end_date||"")+'" value="'+event.event_date+'"></div>'+
         '<div class="sp-form-grid"><div class="form-group"><label for="spEditStart">Start time</label><input id="spEditStart" type="time" value="'+spTime(event.start_time)+'"></div><div class="form-group"><label for="spEditEnd">End time</label><input id="spEditEnd" type="time" value="'+spTime(event.end_time)+'"></div></div>'+
-        '<div class="form-group" id="spMatchLocationWrap" style="display:'+(event.event_type==="match"?"block":"none")+'"><label for="spEditMatchLocation">Match location</label><select id="spEditMatchLocation" onchange="spUpdateMatchEditorFields()"><option value="home" '+((event.match_location||"home")==="home"?"selected":"")+'>Home</option><option value="away" '+(event.match_location==="away"?"selected":"")+'>Away</option></select></div>'+
+        '<div class="form-group" id="spMatchLocationWrap" style="display:'+(event.event_type==="match"?"block":"none")+'"><label for="spEditMatchLocation">Match location</label><select id="spEditMatchLocation" onchange="spUpdateMatchEditorFields()"><option value="home" '+((event.match_location||"home")==="home"?"selected":"")+'>Home</option><option value="away" '+(event.match_location==="away"?"selected":"") +'>Away</option></select></div>'+
         '<div class="form-group"><label id="spEditVenueLabel" for="spEditVenue">'+(isHomeMatch?"Home venue":event.event_type==="match"?"Away venue / address":"Location")+'</label><input id="spEditVenue" maxlength="240" value="'+spEsc(event.venue||(isHomeMatch?"Rushden & Higham RUFC":""))+'" placeholder="'+(event.event_type==="match"&&!isHomeMatch?"Enter away ground name and address":"")+'" '+(isHomeMatch?'readonly':'')+'><div id="spEditVenueHint" class="sp-field-hint">'+(isHomeMatch?"The club home venue is set automatically.":event.event_type==="match"?"Enter the opposition's ground or full address.":"")+'</div></div>'+
         '<div class="form-group"><label for="spEditNotes">Notes</label><textarea id="spEditNotes" maxlength="1000" rows="3" placeholder="Add useful information for coaches and parents">'+spEsc(event.notes||"")+'</textarea></div>'+
-        '<button class="primary-button" onclick="saveSeasonPlannerEvent('+event.id+')">Save changes</button> <button class="secondary-button" onclick="document.getElementById(\'spEventEditor\').remove()">Close</button>'+
-        '</div>';
-    root.appendChild(editor);
-    spUpdateMatchEditorFields();
-    editor.scrollIntoView({behavior:"smooth",block:"start"});
+        '<div class="sp-editor-actions"><button class="primary-button" onclick="saveSeasonPlannerEvent('+event.id+')">Save changes</button> <button class="secondary-button" onclick="spSetPage(\'calendar\')">Cancel</button></div>'+
+        '</div></section>';
 }
 
 async function saveSeasonPlannerEvent(id) {
@@ -412,6 +411,8 @@ async function saveSeasonPlannerEvent(id) {
             requested_notes:(v("spEditNotes")||"").trim()||null
         });
         if(ok!==true) throw new Error("The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
+        seasonPlannerEditingEventId=null;
+        seasonPlannerPage="calendar";
         await loadSeasonPlanner();
         await appAlert("Updated "+ids.length+" age-group session record(s).","Events updated","success");
     } catch(e) {

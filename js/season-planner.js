@@ -485,7 +485,7 @@ function spRenderEventEditor() {
     return '<section class="sp-event-editor-page">'+
         '<div class="sp-editor-page-heading"><div><div class="sp-eyebrow">SEASON CALENDAR</div><h2>Change event</h2><p>'+spDate(event.event_date)+' · '+spEsc(group?group.ageLabel:(event.display_name||event.age_group))+'</p></div></div>'+
         '<div class="sp-form-panel">'+
-        '<div class="form-group"><label>Apply changes to</label><div class="sp-group-picker">'+checks+'</div><div class="sp-field-hint">Untick any age group that should not receive this change.</div></div>'+
+        '<div class="form-group"><label>Apply changes to</label><div class="sp-group-picker">'+checks+'</div><div class="sp-field-hint">Only the age groups shown here will receive this change.</div></div>'+
         '<div class="form-group"><label for="spEditType">Event type</label><select id="spEditType" onchange="spUpdateMatchEditorFields()">'+
         ["training","match","other","holiday","cancelled"].map(t=>'<option value="'+t+'" '+(t===event.event_type?'selected':'')+'>'+spType(t)+'</option>').join("")+
         '</select></div>'+

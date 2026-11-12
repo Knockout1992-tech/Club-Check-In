@@ -980,6 +980,8 @@ async function loadMatchAdminFixtures() {
                         children
                     </p>
 
+                    <div class="fixture-actions" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:20px;">
+
                     ${
                         canManageFixtures && status === "draft"
                         ? `
@@ -1017,6 +1019,8 @@ async function loadMatchAdminFixtures() {
                         `
                         : ""
                     }
+
+                    </div>
 
                 </div>
             `;

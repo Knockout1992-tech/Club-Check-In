@@ -1019,6 +1019,10 @@ async function loadMatchAdminFixtures() {
                         status !== "draft"
                         ? `
                             <button class="secondary-button"
+                                onclick="copyMatchFixtureLink(${Number(fixture.id)})">
+                                Copy Fixture Link
+                            </button>
+                            <button class="secondary-button"
                                 onclick="viewMatchFixture(${Number(fixture.id)})">
                                 View Responses
                             </button>
@@ -2011,17 +2015,24 @@ async function copyCentralMatchParentLink() {
     }
 }
 
-async function copyMatchFixtureLink(fixtureId, parentToken) {
-    if (!parentToken) {
-        await appAlert("The individual fixture link is unavailable for this fixture.", "Link unavailable", "warning");
-        return;
-    }
-    const fixtureLink = MATCH_AVAILABILITY_URL + "?fixture=" + encodeURIComponent(parentToken);
+async function copyMatchFixtureLink(fixtureId, parentToken = null) {
     try {
+        if (!parentToken) {
+            const result = await matchAdminCall("admin_fixtures", {
+                action: "detail",
+                fixture_id: Number(fixtureId)
+            });
+            parentToken = result.fixtures?.[0]?.parent_token || null;
+        }
+        if (!parentToken) {
+            await appAlert("The individual fixture link is unavailable. Publish the fixture first.", "Link unavailable", "warning");
+            return;
+        }
+        const fixtureLink = MATCH_AVAILABILITY_URL + "?fixture=" + encodeURIComponent(parentToken);
         await navigator.clipboard.writeText(fixtureLink);
         await appAlert("The direct parent link for this fixture has been copied.", "Fixture link copied", "success");
     } catch (error) {
         console.error("Unable to copy individual fixture link:", error);
-        await appAlert("Unable to copy fixture link.", "Copy failed", "danger");
+        await appAlert(error.message || "Unable to copy fixture link.", "Copy failed", "danger");
     }
 }

@@ -291,15 +291,118 @@ function spMarkMatchTitleManual() {
     const title=document.getElementById("spEditTitle");
     if(title) title.dataset.matchAuto="false";
 }
-function spUpdateMatchTitle() {
+function spUpdateMatchEditorFields() {
     const type=document.getElementById("spEditType");
-    const label=document.getElementById("spEditTitleLabel");
-    const title=document.getElementById("spEditTitle");
-    if(!type||!label||!title)return;
-    const isMatch=type.value==="match";
-    label.textContent=isMatch?"Match / opposition name":"Event title";
-    title.placeholder=isMatch?"e.g. Olney":"Enter an event title";
+    const wrap=document.getElementById("spMatchLocationWrap");
+    const location=document.getElementById("spEditMatchLocation");
+    const venue=document.getElementById("spEditVenue");
+    const label=document.getElementById("spEditVenueLabel");
+    const hint=document.getElementById("spEditVenueHint");
+    const titleLabel=document.getElementById("spEditTitleLabel");
+    const isMatch=type && type.value==="match";
+    if(wrap) wrap.style.display=isMatch?"block":"none";
+    if(titleLabel) titleLabel.textContent=isMatch?"Opposition":"Event title";
+    if(!venue) return;
+    if(!isMatch) {
+        venue.readOnly=false;
+        venue.placeholder="Enter location (optional)";
+        if(label) label.textContent="Location";
+        if(hint) hint.textContent="";
+    } else if(location && location.value==="home") {
+        venue.value="Rushden & Higham RUFC";
+        venue.readOnly=true;
+        venue.placeholder="";
+        if(label) label.textContent="Home venue";
+        if(hint) hint.textContent="The club home venue is set automatically.";
+    } else {
+        if(venue.value==="Rushden & Higham RUFC") venue.value="";
+        venue.readOnly=false;
+        venue.placeholder="Enter away ground name and address";
+        if(label) label.textContent="Away venue / address";
+        if(hint) hint.textContent="Enter the opposition's ground or full address.";
+    }
 }
-function editSeasonPlannerEvent(id){if(!spSenior())return;const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));if(!event||event.event_date<=spToday())return appAlert("Past sessions and today's sessions cannot be changed.","Past session","warning");const group=spGroupCalendarEvents(seasonPlannerData.events.filter(x=>x.event_date>spToday()&&spEventGroupKey(x)===spEventGroupKey(event))).find(g=>g.items.some(x=>Number(x.id)===Number(id))),items=group?group.items:[event],root=document.getElementById("seasonPlannerContent"),old=document.getElementById("spEventEditor");if(old)old.remove();const checks=items.map(e=>{const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));return '<label class="sp-group-choice"><input type="checkbox" class="spEditGroup" value="'+e.id+'" checked> '+spEsc(ag?(ag.display_name||ag.age_group):e.age_group)+'</label>';}).join("");const editor=document.createElement("div");editor.id="spEventEditor";editor.className="card";editor.style.marginTop="18px";editor.innerHTML='<h3>Change event</h3><p class="subtitle">'+spDate(event.event_date)+' · '+spEsc(group?group.ageLabel:(event.display_name||event.age_group))+'</p><div class="sp-form-panel"><div class="form-group"><label>Apply changes to</label><div class="sp-group-picker">'+checks+'</div><div class="sp-field-hint">Untick any age group that should not receive this change.</div></div><div class="form-group"><label for="spEditType">Event type</label><select id="spEditType" onchange="spUpdateMatchTitle()">'+["training","match","other","holiday","cancelled"].map(t=>'<option value="'+t+'" '+(t===event.event_type?'selected':'')+'>'+spType(t)+'</option>').join("")+'</select></div><div class="form-group"><label id="spEditTitleLabel" for="spEditTitle">Event title</label><input id="spEditTitle" maxlength="120" value="'+spEsc(event.title)+'"></div><div class="form-group"><label for="spEditDate">Date</label><input id="spEditDate" type="date" min="'+(seasonPlannerData.season.start_date||"")+'" max="'+(seasonPlannerData.season.end_date||"")+'" value="'+event.event_date+'"></div><div class="sp-form-grid"><div class="form-group"><label for="spEditStart">Start time</label><input id="spEditStart" type="time" value="'+spTime(event.start_time)+'"></div><div class="form-group"><label for="spEditEnd">End time</label><input id="spEditEnd" type="time" value="'+spTime(event.end_time)+'"></div></div><div class="form-group"><label for="spEditVenue">Location</label><input id="spEditVenue" maxlength="160" value="'+spEsc(event.venue||"")+'"></div><button class="primary-button" onclick="saveSeasonPlannerEvent('+event.id+')">Save changes</button> <button class="secondary-button" onclick="document.getElementById(\'spEventEditor\').remove()">Close</button></div>';root.appendChild(editor);spUpdateMatchTitle();editor.scrollIntoView({behavior:"smooth",block:"start"});}
+function spUpdateMatchTitle() { spUpdateMatchEditorFields(); }
 
-async function saveSeasonPlannerEvent(id){if(!spSenior())return;const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));if(!event||event.event_date<=spToday())return appAlert("Past sessions cannot be changed.","Past session","warning");const v=k=>document.getElementById(k)?.value,ids=[...document.querySelectorAll(".spEditGroup:checked")].map(x=>Number(x.value)),st=v("spEditStart")||null,en=v("spEditEnd")||null;if(!ids.length)return appAlert("Select at least one age group.","No age groups selected","warning");if(!v("spEditTitle")||!v("spEditDate")||(st&&en&&en<=st))return appAlert("Enter a title, date and valid session times.","Check details","warning");try{const ok=await spRPC("update_season_planner_event_group_shared",{supplied_code:currentSeniorPIN,requested_event_ids:ids,requested_event_date:v("spEditDate"),requested_event_type:v("spEditType"),requested_title:v("spEditTitle"),requested_start_time:st,requested_end_time:en,requested_venue:v("spEditVenue")||null,requested_opposition:null});if(ok!==true)throw new Error("The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");await loadSeasonPlanner();await appAlert("Updated "+ids.length+" age-group session record(s).","Events updated","success");}catch(e){await appAlert(e.message||"Unable to update sessions.","Update failed","danger");}}
+function editSeasonPlannerEvent(id) {
+    if(!spSenior()) return;
+    const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
+    if(!event || event.event_date<=spToday())
+        return appAlert("Past sessions and today's sessions cannot be changed.","Past session","warning");
+    const group=spGroupCalendarEvents(seasonPlannerData.events.filter(x=>
+        x.event_date>spToday() && spEventGroupKey(x)===spEventGroupKey(event)
+    )).find(g=>g.items.some(x=>Number(x.id)===Number(id)));
+    const items=group?group.items:[event];
+    const root=document.getElementById("seasonPlannerContent");
+    const old=document.getElementById("spEventEditor");
+    if(old) old.remove();
+    const checks=items.map(e=>{
+        const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
+        return '<label class="sp-group-choice"><input type="checkbox" class="spEditGroup" value="'+e.id+'" checked> '+spEsc(ag?(ag.display_name||ag.age_group):e.age_group)+'</label>';
+    }).join("");
+    const isHomeMatch=event.event_type==="match" && (event.match_location||"home")==="home";
+    const editor=document.createElement("div");
+    editor.id="spEventEditor";
+    editor.className="card sp-event-editor";
+    editor.style.marginTop="18px";
+    editor.innerHTML=
+        '<h3>Change event</h3>'+
+        '<p class="subtitle">'+spDate(event.event_date)+' · '+spEsc(group?group.ageLabel:(event.display_name||event.age_group))+'</p>'+
+        '<div class="sp-form-panel">'+
+        '<div class="form-group"><label>Apply changes to</label><div class="sp-group-picker">'+checks+'</div><div class="sp-field-hint">Untick any age group that should not receive this change.</div></div>'+
+        '<div class="form-group"><label for="spEditType">Event type</label><select id="spEditType" onchange="spUpdateMatchEditorFields()">'+
+        ["training","match","other","holiday","cancelled"].map(t=>'<option value="'+t+'" '+(t===event.event_type?'selected':'')+'>'+spType(t)+'</option>').join("")+
+        '</select></div>'+
+        '<div class="form-group"><label id="spEditTitleLabel" for="spEditTitle">'+(event.event_type==="match"?"Opposition":"Event title")+'</label><input id="spEditTitle" maxlength="120" value="'+spEsc(event.title)+'" placeholder="'+(event.event_type==="match"?"e.g. Olney":"Enter an event title")+'" oninput="spMarkMatchTitleManual()"></div>'+
+        '<div class="form-group"><label for="spEditDate">Date</label><input id="spEditDate" type="date" min="'+(seasonPlannerData.season.start_date||"")+'" max="'+(seasonPlannerData.season.end_date||"")+'" value="'+event.event_date+'"></div>'+
+        '<div class="sp-form-grid"><div class="form-group"><label for="spEditStart">Start time</label><input id="spEditStart" type="time" value="'+spTime(event.start_time)+'"></div><div class="form-group"><label for="spEditEnd">End time</label><input id="spEditEnd" type="time" value="'+spTime(event.end_time)+'"></div></div>'+
+        '<div class="form-group" id="spMatchLocationWrap" style="display:'+(event.event_type==="match"?"block":"none")+'"><label for="spEditMatchLocation">Match location</label><select id="spEditMatchLocation" onchange="spUpdateMatchEditorFields()"><option value="home" '+((event.match_location||"home")==="home"?"selected":"")+'>Home</option><option value="away" '+(event.match_location==="away"?"selected":"")+'>Away</option></select></div>'+
+        '<div class="form-group"><label id="spEditVenueLabel" for="spEditVenue">'+(isHomeMatch?"Home venue":event.event_type==="match"?"Away venue / address":"Location")+'</label><input id="spEditVenue" maxlength="240" value="'+spEsc(event.venue||(isHomeMatch?"Rushden & Higham RUFC":""))+'" placeholder="'+(event.event_type==="match"&&!isHomeMatch?"Enter away ground name and address":"")+'" '+(isHomeMatch?'readonly':'')+'><div id="spEditVenueHint" class="sp-field-hint">'+(isHomeMatch?"The club home venue is set automatically.":event.event_type==="match"?"Enter the opposition's ground or full address.":"")+'</div></div>'+
+        '<div class="form-group"><label for="spEditNotes">Notes</label><textarea id="spEditNotes" maxlength="1000" rows="3" placeholder="Add useful information for coaches and parents">'+spEsc(event.notes||"")+'</textarea></div>'+
+        '<button class="primary-button" onclick="saveSeasonPlannerEvent('+event.id+')">Save changes</button> <button class="secondary-button" onclick="document.getElementById(\'spEventEditor\').remove()">Close</button>'+
+        '</div>';
+    root.appendChild(editor);
+    spUpdateMatchEditorFields();
+    editor.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+async function saveSeasonPlannerEvent(id) {
+    if(!spSenior()) return;
+    const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
+    if(!event || event.event_date<=spToday())
+        return appAlert("Past sessions cannot be changed.","Past session","warning");
+    const v=k=>document.getElementById(k)?.value;
+    const ids=[...document.querySelectorAll(".spEditGroup:checked")].map(x=>Number(x.value));
+    const type=v("spEditType");
+    const matchLocation=type==="match"?(v("spEditMatchLocation")||"home"):null;
+    let venue=(v("spEditVenue")||"").trim();
+    if(type==="match" && matchLocation==="home") venue="Rushden & Higham RUFC";
+    const startTime=v("spEditStart")||null, endTime=v("spEditEnd")||null;
+    const date=v("spEditDate"), title=(v("spEditTitle")||"").trim();
+    if(!ids.length) return appAlert("Select at least one age group.","No age groups selected","warning");
+    if(!title || !date || (startTime&&endTime&&endTime<=startTime))
+        return appAlert("Enter an opposition/event name, date and valid session times.","Check details","warning");
+    if(date<=spToday()) return appAlert("Only future sessions can be changed.","Past session","warning");
+    if(type==="match" && matchLocation==="away" && !venue)
+        return appAlert("Enter the away venue or address.","Away venue required","warning");
+    try {
+        const ok=await spRPC("update_season_planner_event_group_shared",{
+            supplied_code:currentSeniorPIN,
+            requested_event_ids:ids,
+            requested_event_date:date,
+            requested_event_type:type,
+            requested_title:title,
+            requested_start_time:startTime,
+            requested_end_time:endTime,
+            requested_venue:venue||null,
+            requested_opposition:type==="match"?title:null,
+            requested_match_location:matchLocation,
+            requested_notes:(v("spEditNotes")||"").trim()||null
+        });
+        if(ok!==true) throw new Error("The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
+        await loadSeasonPlanner();
+        await appAlert("Updated "+ids.length+" age-group session record(s).","Events updated","success");
+    } catch(e) {
+        await appAlert(e.message||"Unable to update sessions.","Update failed","danger");
+    }
+}

@@ -343,6 +343,28 @@ h2 {
     background: #0d6efd;
 }
 
+/* Coach dashboard visual polish — presentation only */
+.coach-dashboard-card { padding: 20px; }
+.coach-dashboard-title { font-size: 25px; line-height: 1.2; margin-bottom: 7px; }
+.coach-dashboard-subtitle { line-height: 1.5; margin-bottom: 22px; }
+.coach-dashboard-stats { gap: 13px; margin: 20px 0 25px; }
+.coach-dashboard-card .stat { padding: 16px 8px; border: 1px solid #e7e7e7; border-radius: 12px; }
+.coach-dashboard-card .stat-number { font-size: 27px; line-height: 1.1; }
+.coach-dashboard-card .stat-label { font-size: 12px; margin-top: 6px; }
+.coach-dashboard-menu { gap: 15px; }
+.coach-dashboard-menu .menu-button { min-height: 88px; padding: 15px 12px; line-height: 1.35; border-radius: 12px; transition: filter 120ms ease, transform 120ms ease; }
+.coach-dashboard-menu .menu-button:active { transform: scale(0.985); }
+.coach-dashboard-menu .menu-button:focus-visible { outline: 3px solid #777; outline-offset: 3px; }
+@media (max-width: 520px) {
+    .coach-dashboard-card { padding: 16px; }
+    .coach-dashboard-title { font-size: 23px; }
+    .coach-dashboard-stats { gap: 9px; margin: 17px 0 22px; }
+    .coach-dashboard-card .stat { padding: 14px 5px; }
+    .coach-dashboard-card .stat-number { font-size: 24px; }
+    .coach-dashboard-menu { gap: 12px; }
+    .coach-dashboard-menu .menu-button { min-height: 82px; padding: 12px 8px; font-size: 14px; }
+}
+
 /* =========================
    PLAYER ROW
    ========================= */

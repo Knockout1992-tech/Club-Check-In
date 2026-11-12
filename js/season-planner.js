@@ -239,7 +239,10 @@ function spRenderCalendar(){
         const actions=fixtureId?'<div class="sp-calendar-actions"><button class="secondary-button" onclick="copyMatchFixtureLink('+fixtureId+')">Copy Fixture Link</button><button class="secondary-button" onclick="spReviewAvailability('+fixtureId+')">Review availability</button>'+edit+'</div>':(availabilityOn?'<div class="sp-calendar-actions"><span class="sp-field-hint">Availability link will be created when Parent Home syncs this season.</span>'+edit+'</div>':'<div class="sp-calendar-actions">'+edit+'</div>');
         return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+actions+'</div></div>';
     }).join("")||'<div class="sp-empty">No events found for these filters.</div>';
-    return '<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div><button class="secondary-button" onclick="copyCentralMatchParentLink()">Copy Parent Home Link</button></div><div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;
+    const toolbar=currentRole==="coach"
+        ? '<div class="sp-calendar-toolbar"><div class="sp-field-hint">Showing '+spEsc((selectedAgeGroups||[]).join(" + "))+' and club-wide events</div></div>'
+        : '<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div><button class="secondary-button" onclick="copyCentralMatchParentLink()">Copy Parent Home Link</button></div>';
+    return toolbar+'<div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;
 }
 
 async function spReviewAvailability(fixtureId) {
@@ -301,7 +304,11 @@ function renderSeasonPlanner() {
     if(description) description.textContent=header[1];
     if(back) {
         back.textContent=seasonPlannerPage==="home"?"← Back to Dashboard":"← Back";
-        back.onclick=seasonPlannerPage==="home"?showSeniorDashboard:()=>spSetPage(["edit-event","availability-review"].includes(seasonPlannerPage)?"calendar":"home");
+        if(currentRole==="coach") {
+            back.onclick=seasonPlannerPage==="calendar"?showCoachDashboard:()=>spSetPage("calendar");
+        } else {
+            back.onclick=seasonPlannerPage==="home"?showSeniorDashboard:()=>spSetPage(["edit-event","availability-review"].includes(seasonPlannerPage)?"calendar":"home");
+        }
     }
     root.innerHTML=(pages[seasonPlannerPage]||pages.home)();
     const filter=document.getElementById("spFilter");
@@ -540,7 +547,7 @@ async function saveSeasonPlannerEvent(id) {
                 if(availabilitySaved!==true) throw new Error("Event details were saved, but the availability setting could not be updated. Please reopen the event and check it.");
             }
         }
-        if(ok!==true) throw new Error("The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
+        if(ok!==true) throw new Error(currentRole==="coach"?"This event could not be split safely. If parents have already responded to a shared event, ask a Senior user to make the change so existing responses are preserved.":"The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
         seasonPlannerEditingEventId=null;
         seasonPlannerPage="calendar";
         if(currentRole==="coach") await loadCoachSeasonPlanner(); else await loadSeasonPlanner();

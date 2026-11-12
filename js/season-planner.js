@@ -5,7 +5,8 @@
 
 let seasonPlannerData = null;
 let seasonPlannerAgeFilter = "all";
-let seasonPlannerShowLocked = false;
+let seasonPlannerShowPast = false;
+let seasonPlannerShowCancelled = false;
 let seasonPlannerPage = "home";
 
 function spEsc(value) {
@@ -89,26 +90,8 @@ function spTypeBadge(value) {
     const category=spEventCategory(value);
     return '<span class="sp-type-badge sp-type-' + category + '">' + spEsc(spType(value)) + '</span>';
 }
-function spGroupUpcomingEvents(events) {
-    const grouped = new Map();
-    events.forEach(event => {
-        const key = [event.event_date,event.title,event.event_type,spTime(event.start_time),
-            spTime(event.end_time),event.venue||"",event.opposition||"",event.notes||""].join("|");
-        if (!grouped.has(key)) grouped.set(key, []);
-        grouped.get(key).push(event);
-    });
-    const allIds = (seasonPlannerData.age_groups||[]).map(g=>String(g.id)).sort();
-    return [...grouped.values()].map(items => {
-        const ids=[...new Set(items.map(e=>String(e.age_group_id)))].sort();
-        const names=ids.map(id=>{
-            const g=(seasonPlannerData.age_groups||[]).find(x=>String(x.id)===id);
-            return g ? (g.display_name||g.age_group) : "";
-        }).filter(Boolean);
-        const all=allIds.length>0 && ids.length===allIds.length && ids.every((id,i)=>id===allIds[i]);
-        return {event:items[0],ageLabel:all?"All age groups":names.join(" · ")};
-    }).sort((x,y)=>x.event.event_date.localeCompare(y.event.event_date)||
-        String(x.event.start_time||"").localeCompare(String(y.event.start_time||"")));
-}
+function spEventGroupKey(event){return [event.event_date,event.title,event.event_type,spTime(event.start_time),spTime(event.end_time),event.venue||""].join("|");}
+function spGroupUpcomingEvents(events){const grouped=new Map();events.forEach(event=>{const k=spEventGroupKey(event);if(!grouped.has(k))grouped.set(k,[]);grouped.get(k).push(event);});const allIds=(seasonPlannerData.age_groups||[]).map(g=>String(g.id)).sort();return [...grouped.values()].map(items=>{const ids=[...new Set(items.map(e=>String(e.age_group_id)))].sort(),names=ids.map(id=>{const g=(seasonPlannerData.age_groups||[]).find(x=>String(x.id)===id);return g?(g.display_name||g.age_group):"";}).filter(Boolean),all=allIds.length>0&&ids.length===allIds.length&&ids.every((id,i)=>id===allIds[i]),notes=[...new Set(items.map(e=>(e.notes||"").trim()).filter(Boolean))];return {items,event:items[0],ageLabel:all?"All age groups":names.join(" · "),notes:notes.length===1?notes[0]:""};}).sort((a,b)=>a.event.event_date.localeCompare(b.event.event_date)||String(a.event.start_time||"").localeCompare(String(b.event.start_time||"")));}
 function spRenderHome() {
     const s=seasonPlannerData.season;
     const upcoming=seasonPlannerData.events.filter(e=>e.event_date>spToday() && e.event_type!=="cancelled")
@@ -167,44 +150,8 @@ function spRenderHolidays() {
     h+='<section class="sp-existing-section"><h3>Planned holidays</h3>'+breaks+'</section>';
     return h;
 }
-function spGroupCalendarEvents(events) {
-    const grouped=new Map();
-    events.forEach(event=>{
-        const key=[event.event_date,event.title,event.event_type,spTime(event.start_time),
-            spTime(event.end_time),event.venue||"",event.opposition||"",event.notes||""].join("|");
-        if(!grouped.has(key)) grouped.set(key,[]);
-        grouped.get(key).push(event);
-    });
-    const allIds=(seasonPlannerData.age_groups||[]).map(g=>String(g.id)).sort();
-    return [...grouped.values()].map(items=>{
-        const ids=[...new Set(items.map(e=>String(e.age_group_id)))].sort();
-        const names=ids.map(id=>{
-            const g=(seasonPlannerData.age_groups||[]).find(x=>String(x.id)===id);
-            return g?(g.display_name||g.age_group):"";
-        }).filter(Boolean);
-        const all=allIds.length>0&&ids.length===allIds.length&&ids.every((id,i)=>id===allIds[i]);
-        return {items, event:items[0], ageLabel:all?"All age groups":names.join(" · "), multiple:items.length>1};
-    }).sort((a,b)=>a.event.event_date.localeCompare(b.event.event_date)||
-        String(a.event.start_time||"").localeCompare(String(b.event.start_time||"")));
-}
-function spRenderCalendar() {
-    const groups=seasonPlannerData.age_groups;
-    const allEvents=seasonPlannerData.events.filter(x=>seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter));
-    const lockedCount=allEvents.filter(x=>x.event_date<=spToday()).length;
-    const events=allEvents.filter(x=>seasonPlannerShowLocked||x.event_date>spToday());
-    const grouped=spGroupCalendarEvents(events);
-    const rows=grouped.map(group=>{
-        const x=group.event,locked=x.event_date<=spToday();
-        const time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set";
-        const edit=locked?'<span class="sp-lock-note">Past session</span>':
-            (group.multiple&&seasonPlannerAgeFilter==="all"?'<span class="sp-lock-note">Filter by age group to edit</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>');
-        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+(locked?'<span class="sp-locked-tag">Locked</span>':'')+'<div class="sp-event-meta">'+spEsc(group.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(x.opposition&&!String(x.title||"").toLowerCase().includes(String(x.opposition).toLowerCase())?'<div class="sp-event-meta">Opposition: '+spEsc(x.opposition)+'</div>':'')+(x.notes?'<div class="sp-event-meta">'+spEsc(x.notes)+'</div>':'')+'</div>'+edit+'</div>';
-    }).join("")||'<div class="sp-empty">'+(lockedCount&&!seasonPlannerShowLocked?'Past sessions are hidden. Use “Show locked” to include them.':'No events found for this filter.')+'</div>';
-    let h='<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>';
-    h+=groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div>';
-    h+='<button class="secondary-button sp-locked-toggle" onclick="toggleSeasonPlannerLocked()">'+(seasonPlannerShowLocked?'Hide locked':'Show locked')+(lockedCount?' ('+lockedCount+')':'')+'</button></div>'+rows;
-    return h;
-}
+function spGroupCalendarEvents(events){const grouped=new Map();events.forEach(event=>{const k=spEventGroupKey(event);if(!grouped.has(k))grouped.set(k,[]);grouped.get(k).push(event);});const allIds=(seasonPlannerData.age_groups||[]).map(g=>String(g.id)).sort();return [...grouped.values()].map(items=>{const ids=[...new Set(items.map(e=>String(e.age_group_id)))].sort(),names=ids.map(id=>{const g=(seasonPlannerData.age_groups||[]).find(x=>String(x.id)===id);return g?(g.display_name||g.age_group):"";}).filter(Boolean),all=allIds.length>0&&ids.length===allIds.length&&ids.every((id,i)=>id===allIds[i]),notes=[...new Set(items.map(e=>(e.notes||"").trim()).filter(Boolean))];return {items,event:items[0],ageLabel:all?"All age groups":names.join(" · "),multiple:items.length>1,notes:notes.length===1?notes[0]:""};}).sort((a,b)=>a.event.event_date.localeCompare(b.event.event_date)||String(a.event.start_time||"").localeCompare(String(b.event.start_time||"")));}
+function spRenderCalendar(){const groups=seasonPlannerData.age_groups,filtered=seasonPlannerData.events.filter(x=>(seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter))&&(seasonPlannerShowPast||x.event_date>spToday())&&(seasonPlannerShowCancelled||x.event_type!=="cancelled")),grouped=spGroupCalendarEvents(filtered),rows=grouped.map(g=>{const x=g.event,past=x.event_date<=spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set",edit=past?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+'</div>'+edit+'</div>';}).join("")||'<div class="sp-empty">No events found for these filters.</div>';let h='<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div></div><div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;return h;}
 function spRenderSetup() {
     const s=seasonPlannerData.season;
     return '<div class="sp-page-intro">Set the date range for this season. Recurring schedules and planned events use these dates.</div><section class="sp-form-panel"><h3>'+spEsc(s.season_name)+'</h3><div class="sp-form-grid"><div class="form-group"><label for="spSeasonStart">Season starts</label><input id="spSeasonStart" type="date" value="'+(s.start_date||'')+'"></div><div class="form-group"><label for="spSeasonEnd">Season ends</label><input id="spSeasonEnd" type="date" value="'+(s.end_date||'')+'"></div></div><button class="primary-button" onclick="saveSeasonPlannerPeriod()">Save season dates</button></section>';
@@ -316,10 +263,8 @@ async function endSeasonPlannerSchedule(id) {
     } catch(e) { await appAlert(e.message || "Unable to end schedule.","Update failed","danger"); }
 }
 
-function toggleSeasonPlannerLocked() {
-    seasonPlannerShowLocked=!seasonPlannerShowLocked;
-    renderSeasonPlanner();
-}
+function toggleSeasonPlannerPast(value){seasonPlannerShowPast=!!value;renderSeasonPlanner();}
+function toggleSeasonPlannerCancelled(value){seasonPlannerShowCancelled=!!value;renderSeasonPlanner();}
 function filterSeasonPlannerCalendar(value) {
     seasonPlannerAgeFilter=value;
     renderSeasonPlanner();
@@ -347,60 +292,6 @@ function spUpdateMatchTitle() {
     }
     type.dataset.lastValue=type.value;
 }
-function editSeasonPlannerEvent(id) {
-    if (!spSenior()) return;
-    const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
-    if (!event || event.event_date<=spToday())
-        return appAlert("Past sessions and today's sessions are locked. Only future sessions can be changed.","Session locked","warning");
+function editSeasonPlannerEvent(id){if(!spSenior())return;const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));if(!event||event.event_date<=spToday())return appAlert("Past sessions and today's sessions cannot be changed.","Past session","warning");const group=spGroupCalendarEvents(seasonPlannerData.events.filter(x=>x.event_date>spToday()&&spEventGroupKey(x)===spEventGroupKey(event))).find(g=>g.items.some(x=>Number(x.id)===Number(id))),items=group?group.items:[event],root=document.getElementById("seasonPlannerContent"),old=document.getElementById("spEventEditor");if(old)old.remove();const checks=items.map(e=>{const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));return '<label class="sp-group-choice"><input type="checkbox" class="spEditGroup" value="'+e.id+'" checked> '+spEsc(ag?(ag.display_name||ag.age_group):e.age_group)+'</label>';}).join("");const editor=document.createElement("div");editor.id="spEventEditor";editor.className="card";editor.style.marginTop="18px";editor.innerHTML='<h3>Change event</h3><p class="subtitle">'+spDate(event.event_date)+' · '+spEsc(group?group.ageLabel:(event.display_name||event.age_group))+'</p><div class="sp-form-panel"><div class="form-group"><label>Apply changes to</label><div class="sp-group-picker">'+checks+'</div><div class="sp-field-hint">Untick any age group that should not receive this change.</div></div><div class="form-group"><label for="spEditType">Event type</label><select id="spEditType">'+["training","match","other","holiday","cancelled"].map(t=>'<option value="'+t+'" '+(t===event.event_type?'selected':'')+'>'+spType(t)+'</option>').join("")+'</select></div><div class="form-group"><label for="spEditTitle">Event title</label><input id="spEditTitle" maxlength="120" value="'+spEsc(event.title)+'"></div><div class="form-group"><label for="spEditDate">Date</label><input id="spEditDate" type="date" min="'+(seasonPlannerData.season.start_date||"")+'" max="'+(seasonPlannerData.season.end_date||"")+'" value="'+event.event_date+'"></div><div class="sp-form-grid"><div class="form-group"><label for="spEditStart">Start time</label><input id="spEditStart" type="time" value="'+spTime(event.start_time)+'"></div><div class="form-group"><label for="spEditEnd">End time</label><input id="spEditEnd" type="time" value="'+spTime(event.end_time)+'"></div></div><div class="form-group"><label for="spEditVenue">Location</label><input id="spEditVenue" maxlength="160" value="'+spEsc(event.venue||"")+'"></div><button class="primary-button" onclick="saveSeasonPlannerEvent('+event.id+')">Save changes</button> <button class="secondary-button" onclick="document.getElementById(\'spEventEditor\').remove()">Close</button></div>';root.appendChild(editor);editor.scrollIntoView({behavior:"smooth",block:"start"});}
 
-    const root=document.getElementById("seasonPlannerContent");
-    const old=document.getElementById("spEventEditor");
-    if (old) old.remove();
-    const editor=document.createElement("div");
-    editor.id="spEventEditor"; editor.className="card"; editor.style.marginTop="18px";
-    editor.innerHTML=`
-        <h3>Change future session</h3>
-        <p class="subtitle">${spDate(event.event_date)} · ${spEsc(event.display_name || event.age_group)}</p>
-        <div class="form-group"><label>Event type</label><select id="spEditType" onchange="spUpdateMatchTitle()">${["training","match","other","holiday","cancelled"].map(t=>`<option value="${t}" ${t===event.event_type?"selected":""}>${spType(t)}</option>`).join("")}</select></div>
-        <div class="form-group"><label>Title</label><input id="spEditTitle" maxlength="120" value="${spEsc(event.title)}" oninput="spMarkMatchTitleManual()"></div>
-        <div class="form-group"><label>Start time</label><input id="spEditStart" type="time" value="${spTime(event.start_time)}"></div>
-        <div class="form-group"><label>End time</label><input id="spEditEnd" type="time" value="${spTime(event.end_time)}"></div>
-        <div class="form-group"><label>Location</label><input id="spEditVenue" maxlength="160" value="${spEsc(event.venue || "")}"></div>
-        <div class="form-group"><label>Opposition (for matches)</label><input id="spEditOpposition" maxlength="120" value="${spEsc(event.opposition || "")}" oninput="spUpdateMatchTitle()"></div>
-        <div class="form-group"><label>Notes</label><textarea id="spEditNotes" rows="3" maxlength="1000">${spEsc(event.notes || "")}</textarea></div>
-        <button class="primary-button" onclick="saveSeasonPlannerEvent(${event.id})">Save changes</button>
-        <button class="secondary-button" onclick="document.getElementById('spEventEditor').remove()">Close</button>`;
-    root.appendChild(editor);
-    const type=document.getElementById("spEditType");
-    const title=document.getElementById("spEditTitle");
-    if(type && title) {
-        type.dataset.lastValue=event.event_type;
-        if(event.event_type==="match" && (!event.title || event.title==="Match" || event.title.startsWith("Opposition: "))) {
-            title.dataset.matchAuto="true";
-            spUpdateMatchTitle();
-        }
-    }
-    editor.scrollIntoView({behavior:"smooth",block:"start"});
-}
-
-async function saveSeasonPlannerEvent(id) {
-    if (!spSenior()) return;
-    const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
-    if (!event || event.event_date<=spToday())
-        return appAlert("Past sessions and today's sessions cannot be changed.","Session locked","warning");
-    const v=id=>document.getElementById(id)?.value;
-    const st=v("spEditStart") || null,et=v("spEditEnd") || null;
-    if (!v("spEditTitle") || (st && et && et<=st))
-        return appAlert("Enter a title and check the session times.","Check details","warning");
-    try {
-        const ok=await spRPC("update_season_planner_event",{
-            supplied_code:currentSeniorPIN,requested_event_id:Number(id),
-            requested_event_type:v("spEditType"),requested_title:v("spEditTitle"),
-            requested_start_time:st,requested_end_time:et,requested_venue:v("spEditVenue") || null,
-            requested_opposition:v("spEditOpposition") || null,requested_notes:v("spEditNotes") || null
-        });
-        if (ok!==true) throw new Error("Session could not be changed. It may have become locked.");
-        await loadSeasonPlanner();
-        await appAlert("Future session updated.","Session updated","success");
-    } catch(e) { await appAlert(e.message || "Unable to update session.","Update failed","danger"); }
-}
+async function saveSeasonPlannerEvent(id){if(!spSenior())return;const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));if(!event||event.event_date<=spToday())return appAlert("Past sessions cannot be changed.","Past session","warning");const v=k=>document.getElementById(k)?.value,ids=[...document.querySelectorAll(".spEditGroup:checked")].map(x=>Number(x.value)),st=v("spEditStart")||null,en=v("spEditEnd")||null;if(!ids.length)return appAlert("Select at least one age group.","No age groups selected","warning");if(!v("spEditTitle")||!v("spEditDate")||(st&&en&&en<=st))return appAlert("Enter a title, date and valid session times.","Check details","warning");try{const ok=await spRPC("update_season_planner_event_group_shared",{supplied_code:currentSeniorPIN,requested_event_ids:ids,requested_event_date:v("spEditDate"),requested_event_type:v("spEditType"),requested_title:v("spEditTitle"),requested_start_time:st,requested_end_time:en,requested_venue:v("spEditVenue")||null,requested_opposition:null});if(ok!==true)throw new Error("The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");await loadSeasonPlanner();await appAlert("Updated "+ids.length+" age-group session record(s).","Events updated","success");}catch(e){await appAlert(e.message||"Unable to update sessions.","Update failed","danger");}}

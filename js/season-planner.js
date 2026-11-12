@@ -373,6 +373,7 @@ function spRenderEventEditor() {
         '<div class="form-group" id="spMatchLocationWrap" style="display:'+(event.event_type==="match"?"block":"none")+'"><label for="spEditMatchLocation">Match location</label><select id="spEditMatchLocation" onchange="spUpdateMatchEditorFields()"><option value="home" '+((event.match_location||"home")==="home"?"selected":"")+'>Home</option><option value="away" '+(event.match_location==="away"?"selected":"") +'>Away</option></select></div>'+
         '<div class="form-group"><label id="spEditVenueLabel" for="spEditVenue">'+(isHomeMatch?"Home venue":event.event_type==="match"?"Away venue / address":"Location")+'</label><input id="spEditVenue" maxlength="240" value="'+spEsc(event.venue||(isHomeMatch?"Rushden & Higham RUFC":""))+'" placeholder="'+(event.event_type==="match"&&!isHomeMatch?"Enter away ground name and address":"")+'" '+(isHomeMatch?'readonly':'')+'><div id="spEditVenueHint" class="sp-field-hint">'+(isHomeMatch?"The club home venue is set automatically.":event.event_type==="match"?"Enter the opposition's ground or full address.":"")+'</div></div>'+
         '<div class="form-group"><label for="spEditNotes">Notes</label><textarea id="spEditNotes" maxlength="1000" rows="3" placeholder="Add useful information for coaches and parents">'+spEsc(event.notes||"")+'</textarea></div>'+
+        '<div class="form-group"><label class="sp-group-choice"><input type="checkbox" id="spEditAvailability" '+(event.availability_enabled!==false && !["holiday","cancelled"].includes(event.event_type)?"checked":"")+' '+(["holiday","cancelled"].includes(event.event_type)?"disabled":"")+'> Request availability for this event</label><div class="sp-field-hint">Enabled by default for training, matches and other events. Holidays and cancelled events cannot request availability.</div></div>'+
         '<div class="sp-editor-actions"><button class="primary-button" onclick="saveSeasonPlannerEvent('+event.id+')">Save changes</button> <button class="secondary-button" onclick="spSetPage(\'calendar\')">Cancel</button></div>'+
         '</div></section>';
 }
@@ -411,6 +412,9 @@ async function saveSeasonPlannerEvent(id) {
             requested_notes:(v("spEditNotes")||"").trim()||null
         });
         if(ok!==true) throw new Error("The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
+        const availabilityEnabled=!["holiday","cancelled"].includes(type) && !!document.getElementById("spEditAvailability")?.checked;
+        const availabilitySaved=await spRPC("set_season_event_availability",{supplied_code:currentSeniorPIN,requested_event_ids:ids,requested_enabled:availabilityEnabled});
+        if(availabilitySaved!==true) throw new Error("Event details were saved, but the availability setting could not be updated. Please reopen the event and check it.");
         seasonPlannerEditingEventId=null;
         seasonPlannerPage="calendar";
         await loadSeasonPlanner();

@@ -64,10 +64,7 @@ async function loadCoachSeasonPlanner() {
     try {
         const { data, error } = await supabaseClient.rpc("get_coach_season_planner", {
             supplied_code: currentAccessPIN,
-            requested_age_group_ids: (selectedAgeGroups || []).map(name => {
-                const group = (seasonPlannerData?.age_groups || []).find(g => (g.display_name || g.age_group) === name);
-                return group ? Number(group.id) : null;
-            }).filter(Boolean)
+            requested_age_groups: [...(selectedAgeGroups || [])]
         });
         if (error) throw error;
         seasonPlannerData = data;

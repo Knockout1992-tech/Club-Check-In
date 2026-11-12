@@ -41,6 +41,46 @@ async function spRPC(name,args) {
     return data;
 }
 
+function spCoachOrSenior() {
+    if (currentRole === "senior" && currentSeniorPIN) return true;
+    if (currentRole === "coach" && currentAccessPIN && Array.isArray(selectedAgeGroups) && selectedAgeGroups.length) return true;
+    appAlert("Please log in again and select your age groups.", "Access denied", "danger");
+    return false;
+}
+
+async function showCoachSeasonPlanner() {
+    if (!spCoachOrSenior()) return;
+    seasonPlannerPage = "calendar";
+    seasonPlannerAgeFilter = "all";
+    renderShell('<div class="card season-planner-shell"><button id="spHeaderBack" class="back-button" onclick="showCoachDashboard()">← Back to Dashboard</button><h2 id="spPageTitle">Season Calendar</h2><div id="spPageDescription" class="subtitle">Events for '+spEsc(selectedAgeGroups.join(" + "))+' and club-wide events.</div><div id="seasonPlannerContent">Loading...</div></div>');
+    await loadCoachSeasonPlanner();
+}
+
+async function loadCoachSeasonPlanner() {
+    if (!spCoachOrSenior()) return;
+    const root = document.getElementById("seasonPlannerContent");
+    if (!root) return;
+    root.innerHTML = "Loading...";
+    try {
+        const { data, error } = await supabaseClient.rpc("get_coach_season_planner", {
+            supplied_code: currentAccessPIN,
+            requested_age_group_ids: (selectedAgeGroups || []).map(name => {
+                const group = (seasonPlannerData?.age_groups || []).find(g => (g.display_name || g.age_group) === name);
+                return group ? Number(group.id) : null;
+            }).filter(Boolean)
+        });
+        if (error) throw error;
+        seasonPlannerData = data;
+        if (!seasonPlannerData?.season) throw new Error("Unable to load the calendar for your selected age groups.");
+        seasonPlannerAvailabilityByEvent = new Map();
+        (seasonPlannerData.events || []).forEach(event => { if (event.linked_fixture_id) seasonPlannerAvailabilityByEvent.set(Number(event.id), Number(event.linked_fixture_id)); });
+        seasonPlannerPage = "calendar";
+        renderSeasonPlanner();
+    } catch (e) {
+        root.innerHTML = '<div class="info-box">Unable to load the Coach Calendar.<br>' + spEsc(e.message || "Please try again.") + '</div><button class="primary-button" onclick="loadCoachSeasonPlanner()">Retry</button>';
+    }
+}
+
 async function showSeasonPlanner() {
     if (!spSenior()) return;
     seasonPlannerPage = "home";
@@ -206,7 +246,7 @@ function spRenderCalendar(){
 }
 
 async function spReviewAvailability(fixtureId) {
-    if (!spSenior()) return;
+    if (!spCoachOrSenior()) return;
     try {
         const result = await matchAdminCall("admin_fixtures", { action: "detail", fixture_id: Number(fixtureId) });
         seasonPlannerAvailabilityData = result.fixtures?.[0] || null;
@@ -411,7 +451,7 @@ function spUpdateMatchEditorFields() {
 function spUpdateMatchTitle() { spUpdateMatchEditorFields(); }
 
 function editSeasonPlannerEvent(id) {
-    if(!spSenior()) return;
+    if(!spCoachOrSenior()) return;
     const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
     if(!event || event.event_date<=spToday())
         return appAlert("Past sessions and today's sessions cannot be changed.","Past session","warning");
@@ -427,7 +467,13 @@ function spRenderEventEditor() {
         x.event_date>spToday() && spEventGroupKey(x)===spEventGroupKey(event)
     )).find(g=>g.items.some(x=>Number(x.id)===Number(id)));
     const items=group?group.items:[event];
-    const checks=items.map(e=>{
+    const coachMode=currentRole==="coach";
+    const allowedNames=new Set(selectedAgeGroups||[]);
+    const editableItems=coachMode?items.filter(e=>{
+        const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
+        return ag && allowedNames.has(ag.display_name||ag.age_group);
+    }):items;
+    const checks=editableItems.map(e=>{
         const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
         return '<label class="sp-group-choice"><input type="checkbox" class="spEditGroup" value="'+e.id+'" checked> '+spEsc(ag?(ag.display_name||ag.age_group):e.age_group)+'</label>';
     }).join("");
@@ -451,7 +497,7 @@ function spRenderEventEditor() {
 }
 
 async function saveSeasonPlannerEvent(id) {
-    if(!spSenior()) return;
+    if(!spCoachOrSenior()) return;
     const event=seasonPlannerData.events.find(x=>Number(x.id)===Number(id));
     if(!event || event.event_date<=spToday())
         return appAlert("Past sessions cannot be changed.","Past session","warning");
@@ -470,26 +516,37 @@ async function saveSeasonPlannerEvent(id) {
     if(type==="match" && matchLocation==="away" && !venue)
         return appAlert("Enter the away venue or address.","Away venue required","warning");
     try {
-        const ok=await spRPC("update_season_planner_event_group_shared",{
-            supplied_code:currentSeniorPIN,
-            requested_event_ids:ids,
-            requested_event_date:date,
-            requested_event_type:type,
-            requested_title:title,
-            requested_start_time:startTime,
-            requested_end_time:endTime,
-            requested_venue:venue||null,
-            requested_opposition:type==="match"?title:null,
-            requested_match_location:matchLocation,
-            requested_notes:(v("spEditNotes")||"").trim()||null
-        });
-        if(ok!==true) throw new Error("The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
         const availabilityEnabled=!["holiday","cancelled"].includes(type) && !!document.getElementById("spEditAvailability")?.checked;
-        const availabilitySaved=await spRPC("set_season_event_availability",{supplied_code:currentSeniorPIN,requested_event_ids:ids,requested_enabled:availabilityEnabled});
-        if(availabilitySaved!==true) throw new Error("Event details were saved, but the availability setting could not be updated. Please reopen the event and check it.");
+        let ok;
+        if(currentRole==="coach") {
+            const allowedIds=(selectedAgeGroups||[]).map(name=>{
+                const group=seasonPlannerData.age_groups.find(g=>(g.display_name||g.age_group)===name);
+                return group?Number(group.id):null;
+            }).filter(Boolean);
+            ok=await spRPC("update_coach_season_planner_event_group",{
+                supplied_code:currentAccessPIN, requested_age_group_ids:allowedIds, requested_event_ids:ids,
+                requested_event_date:date, requested_event_type:type, requested_title:title,
+                requested_start_time:startTime, requested_end_time:endTime, requested_venue:venue||null,
+                requested_opposition:type==="match"?title:null, requested_match_location:matchLocation,
+                requested_notes:(v("spEditNotes")||"").trim()||null, requested_availability_enabled:availabilityEnabled
+            });
+        } else {
+            ok=await spRPC("update_season_planner_event_group_shared",{
+                supplied_code:currentSeniorPIN, requested_event_ids:ids, requested_event_date:date,
+                requested_event_type:type, requested_title:title, requested_start_time:startTime,
+                requested_end_time:endTime, requested_venue:venue||null,
+                requested_opposition:type==="match"?title:null, requested_match_location:matchLocation,
+                requested_notes:(v("spEditNotes")||"").trim()||null
+            });
+            if(ok===true) {
+                const availabilitySaved=await spRPC("set_season_event_availability",{supplied_code:currentSeniorPIN,requested_event_ids:ids,requested_enabled:availabilityEnabled});
+                if(availabilitySaved!==true) throw new Error("Event details were saved, but the availability setting could not be updated. Please reopen the event and check it.");
+            }
+        }
+        if(ok!==true) throw new Error("The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
         seasonPlannerEditingEventId=null;
         seasonPlannerPage="calendar";
-        await loadSeasonPlanner();
+        if(currentRole==="coach") await loadCoachSeasonPlanner(); else await loadSeasonPlanner();
         await appAlert("Updated "+ids.length+" age-group session record(s).","Events updated","success");
     } catch(e) {
         await appAlert(e.message||"Unable to update sessions.","Update failed","danger");

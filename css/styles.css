@@ -943,3 +943,64 @@ h2 {
     }
 }
 
+
+
+/* Season Planner: monochrome layout with category colour markers */
+.season-planner-shell { padding:22px !important; border:1px solid #e5e5e5; box-shadow:0 5px 22px rgba(0,0,0,.07); }
+.season-planner-shell > h2 { font-size:28px; letter-spacing:-.5px; margin:4px 0 8px; }
+.season-planner-shell > .subtitle { line-height:1.5; margin-bottom:22px; }
+.season-planner-shell .back-button { background:#171717; color:#fff; border-radius:8px; padding:10px 15px; margin-bottom:18px; }
+.season-planner-shell h3 { font-size:21px; line-height:1.3; margin:0 0 14px; }
+.season-planner-shell h4 { font-size:17px; margin:24px 0 12px; }
+.season-planner-shell .form-group { margin:0 0 21px !important; }
+.season-planner-shell .form-group label { display:block; font-weight:700; margin-bottom:8px; }
+.season-planner-shell input:not([type=checkbox]),.season-planner-shell select,.season-planner-shell textarea { width:100%; min-height:46px; padding:11px 12px; border:1px solid #ccc; border-radius:8px; background:#fff; color:#111; font:inherit; }
+.season-planner-shell textarea { min-height:96px; }
+.season-planner-shell .primary-button { background:#111; border:1px solid #111; min-height:48px; }
+.season-planner-shell .secondary-button { background:#eee; border:1px solid #ddd; }
+.season-planner-shell .info-box { border-radius:10px; line-height:1.5; padding:16px !important; margin:14px 0 !important; }
+.season-planner-shell .card { border:1px solid #e5e5e5; box-shadow:none; border-radius:11px; padding:18px !important; margin:18px 0 !important; }
+.sp-season-summary { padding:14px 0 17px; border-top:1px solid #e5e5e5; border-bottom:1px solid #e5e5e5; margin:18px 0 25px; }
+.sp-eyebrow { color:#666; font-size:11px; font-weight:800; letter-spacing:1px; margin-bottom:5px; }
+.sp-season-name { font-size:21px; font-weight:800; }
+.sp-season-dates { color:#555; margin-top:3px; }
+.sp-season-meta,.sp-event-meta { color:#666; font-size:13px; margin-top:7px; line-height:1.5; }
+.sp-season-meta span { padding:0 4px; color:#aaa; }
+.sp-section { margin-top:25px; }
+.sp-section-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+.sp-section-heading h3 { margin:0; }
+.sp-date-chip { background:#171717; color:#fff; padding:6px 10px; border-radius:7px; font-size:12px; font-weight:700; }
+.sp-upcoming-list { background:#f7f7f7; border-radius:9px; padding:4px 14px; }
+.sp-upcoming-row { padding:13px 10px; border-bottom:1px solid #dedede; border-left:4px solid #777; margin-left:-14px; padding-left:14px; }
+.sp-upcoming-row:last-child { border-bottom:0; }
+.sp-event-title { font-weight:700; display:flex; flex-wrap:wrap; align-items:center; gap:7px; }
+.sp-event-content { min-width:0; line-height:1.4; }
+.sp-type-badge { display:inline-block; border-radius:5px; padding:3px 7px; font-size:10px; line-height:1.3; font-weight:800; letter-spacing:.35px; text-transform:uppercase; vertical-align:middle; }
+.sp-type-fixture { color:#174f80; background:#e1effb; }
+.sp-type-training { color:#17665b; background:#dff2ed; }
+.sp-type-event { color:#65408a; background:#eee5f7; }
+.sp-type-holiday { color:#805500; background:#fff0ce; }
+.sp-type-cancelled { color:#555; background:#e5e5e5; }
+.sp-upcoming-fixture,.sp-calendar-fixture { border-left-color:#3984bd; }
+.sp-upcoming-training,.sp-calendar-training { border-left-color:#329b89; }
+.sp-upcoming-event,.sp-calendar-event { border-left-color:#8960ad; }
+.sp-upcoming-holiday,.sp-calendar-holiday { border-left-color:#d69b2d; }
+.sp-upcoming-cancelled,.sp-calendar-cancelled { border-left-color:#999; }
+.sp-manage-section { margin-top:30px; }
+.sp-menu-list { border-top:1px solid #e2e2e2; }
+.sp-menu-item { width:100%; display:flex; justify-content:space-between; align-items:center; gap:14px; text-align:left; padding:16px 3px; background:transparent; border:0; border-bottom:1px solid #e2e2e2; color:#111; }
+.sp-menu-item strong { display:block; font-size:15px; }
+.sp-menu-item small { display:block; color:#666; font-size:12px; margin-top:4px; line-height:1.4; }
+.sp-menu-item b { font-size:25px; font-weight:400; color:#777; }
+.sp-calendar-row { display:flex; justify-content:space-between; align-items:center; gap:12px; background:#f8f8f8; border:1px solid #e8e8e8; border-left:4px solid #777; border-radius:8px; padding:14px; margin:12px 0; }
+.sp-calendar-main { min-width:0; line-height:1.45; }
+.sp-calendar-date { color:#666; font-size:12px; font-weight:700; margin-bottom:4px; }
+.sp-empty { color:#666; background:#f7f7f7; border-radius:9px; padding:18px; }
+@media(max-width:520px) {
+ .season-planner-shell { padding:17px !important; }
+ .season-planner-shell > h2 { font-size:26px; }
+ .season-planner-shell .form-group { margin-bottom:19px !important; }
+ .season-planner-shell .card { padding:15px !important; }
+ .sp-calendar-row { align-items:flex-start; flex-direction:column; }
+ .sp-calendar-row .secondary-button { align-self:flex-start; }
+}

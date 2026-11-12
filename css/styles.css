@@ -1004,3 +1004,31 @@ h2 {
  .sp-calendar-row { align-items:flex-start; flex-direction:column; }
  .sp-calendar-row .secondary-button { align-self:flex-start; }
 }
+
+/* Season Planner page refinements and locked-session visibility */
+.sp-calendar-toolbar { display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin:12px 0 18px; }
+.sp-calendar-toolbar .form-group { flex:1; margin:0 !important; min-width:0; }
+.sp-locked-toggle { min-height:46px; white-space:nowrap; }
+.sp-locked-tag { display:inline-block; margin-left:6px; padding:3px 7px; border-radius:5px; background:#e9e9e9; color:#555; font-size:10px; font-weight:800; text-transform:uppercase; vertical-align:middle; }
+.sp-lock-note { color:#777; font-size:12px; white-space:nowrap; }
+.sp-page-intro { color:#666; line-height:1.5; margin:2px 0 19px; }
+.sp-form-panel { background:#fafafa; border:1px solid #e5e5e5; border-radius:12px; padding:20px; margin:16px 0 26px; }
+.sp-form-panel h3 { margin:0 0 18px !important; }
+.sp-form-panel .form-group { margin-bottom:18px !important; }
+.sp-group-picker { border:1px solid #ddd; border-radius:9px; padding:12px; margin:0 0 18px; background:#fff; }
+.sp-group-choice { display:flex; gap:9px; align-items:center; padding:8px 2px; }
+.sp-field-hint { color:#666; font-size:13px; margin-bottom:6px; }
+.sp-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.sp-existing-section { margin-top:26px; }
+.sp-existing-section h3 { margin-bottom:12px !important; }
+.sp-management-row { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:15px 13px; margin:11px 0; background:#fafafa; border:1px solid #e7e7e7; border-left:4px solid #999; border-radius:9px; }
+.sp-management-main { min-width:0; line-height:1.45; }
+.sp-management-row .secondary-button { flex-shrink:0; }
+@media(max-width:520px) {
+ .sp-calendar-toolbar { align-items:stretch; flex-direction:column; }
+ .sp-locked-toggle { width:100%; }
+ .sp-form-panel { padding:15px; }
+ .sp-form-grid { grid-template-columns:1fr; gap:0; }
+ .sp-management-row { align-items:flex-start; }
+ .sp-management-row .secondary-button { padding:9px 11px; }
+}

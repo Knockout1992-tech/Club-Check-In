@@ -475,7 +475,7 @@ function spRenderEventEditor() {
     const allowedNames=new Set(selectedAgeGroups||[]);
     const editableItems=coachMode?items.filter(e=>{
         const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
-        return ag && allowedNames.has(ag.display_name||ag.age_group);
+        return ag && (allowedNames.has(ag.age_group) || allowedNames.has(ag.display_name));
     }):items;
     const checks=editableItems.map(e=>{
         const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
@@ -524,7 +524,7 @@ async function saveSeasonPlannerEvent(id) {
         let ok;
         if(currentRole==="coach") {
             const allowedIds=(selectedAgeGroups||[]).map(name=>{
-                const group=seasonPlannerData.age_groups.find(g=>(g.display_name||g.age_group)===name);
+                const group=seasonPlannerData.age_groups.find(g=>g.age_group===name || g.display_name===name);
                 return group?Number(group.id):null;
             }).filter(Boolean);
             ok=await spRPC("update_coach_season_planner_event_group",{

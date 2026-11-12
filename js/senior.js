@@ -1209,10 +1209,8 @@ async function createMatchFixtureFromForm() {
             }
         );
 
-        latestCreatedFixtureLink =
-            MATCH_AVAILABILITY_URL +
-            "?fixture=" +
-            encodeURIComponent(result.parent_token);
+        // Parents now use one central home page for every fixture.
+        latestCreatedFixtureLink = MATCH_AVAILABILITY_URL;
 
         const container =
             document.getElementById("matchAdminFixtures");
@@ -1269,15 +1267,11 @@ async function createMatchFixtureFromForm() {
 
 async function copyLatestMatchFixtureLink() {
 
-    if (!latestCreatedFixtureLink) return;
-
     try {
-        await navigator.clipboard.writeText(
-            latestCreatedFixtureLink
-        );
+        await navigator.clipboard.writeText(MATCH_AVAILABILITY_URL);
 
         await appAlert(
-            "The parent availability link has been copied. You can now share it with parents.",
+            "The central parent availability link has been copied. You can share this same link for every fixture.",
             "Link copied",
             "success"
         );
@@ -1444,12 +1438,6 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
             status === "unavailable" ? "user-status-inactive" :
             "user-status";
 
-        const parentLink = fixture.parent_token
-            ? MATCH_AVAILABILITY_URL +
-                "?fixture=" +
-                encodeURIComponent(fixture.parent_token)
-            : null;
-
         let html = `
             <div class="card" id="matchFixtureDetailScreen">
 
@@ -1470,27 +1458,17 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                 <div class="info-box">
                     <strong>Parent Availability Link</strong>
 
-                    ${
-                        parentLink
-                        ? `
-                            <p>
-                                Share this link with parents to collect
-                                their availability.
-                            </p>
+                    <p>
+                        Share the central parent page with families.
+                        The same link is used for every fixture.
+                    </p>
 
-                            <div class="user-management-actions">
-                                <button class="primary-button"
-                                    onclick="copyMatchFixtureLink(${Number(fixture.id)})">
-                                    Copy Parent Link
-                                </button>
-                            </div>
-                        `
-                        : `
-                            <p>
-                                The original parent link cannot be retrieved.
-                            </p>
-                        `
-                    }
+                    <div class="user-management-actions">
+                        <button class="primary-button"
+                            onclick="copyMatchFixtureLink(${Number(fixture.id)})">
+                            Copy Parent Link
+                        </button>
+                    </div>
                 </div>
 
                 <div class="info-box">
@@ -1859,38 +1837,20 @@ async function copyMatchFixtureLink(fixtureId) {
 
     try {
 
-        const result = await matchAdminCall("admin_fixtures", {
-            action: "detail",
-            fixture_id: Number(fixtureId)
-        });
-
-        const fixture = result.fixtures?.[0];
-
-        if (!fixture?.parent_token) {
-            throw new Error(
-                "The parent link cannot be retrieved for this fixture."
-            );
-        }
-
-        const url =
-            MATCH_AVAILABILITY_URL +
-            "?fixture=" +
-            encodeURIComponent(fixture.parent_token);
-
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(MATCH_AVAILABILITY_URL);
 
         await appAlert(
-            "Parent availability link copied to clipboard.",
+            "The central parent availability link has been copied. The same link works for every fixture.",
             "Link copied",
             "success"
         );
 
     } catch (error) {
 
-        console.error("Unable to copy parent fixture link:", error);
+        console.error("Unable to copy central parent link:", error);
 
         await appAlert(
-            error.message || "Unable to copy parent link.",
+            "Unable to copy parent link.",
             "Unable to copy link",
             "danger"
         );

@@ -54,14 +54,14 @@ async function showSeasonPlanner() {
 // Explicitly expose the entry point used by the Senior Dashboard's inline button.
 window.showSeasonPlanner = showSeasonPlanner;
 
-async function loadSeasonPlanner() {
+async function loadSeasonPlanner(requestedSeasonId = null) {
     if (!spSenior()) return;
     const root = document.getElementById("seasonPlannerContent");
     if (!root) return;
     root.innerHTML = "Loading...";
     try {
         seasonPlannerData = await spRPC("get_season_planner",{
-            supplied_code:currentSeniorPIN, requested_season_id:null
+            supplied_code:currentSeniorPIN, requested_season_id:requestedSeasonId
         });
         if (!seasonPlannerData || !seasonPlannerData.season) throw new Error("Unable to load the current season. Check Senior access and the current season setting.");
         seasonPlannerAgeFilter = "all";
@@ -98,11 +98,10 @@ function spRenderHome() {
         .sort((a,b)=>a.event_date.localeCompare(b.event_date)||String(a.start_time||"").localeCompare(String(b.start_time||"")));
     const nextDate=upcoming.length?upcoming[0].event_date:null;
     const next=nextDate?spGroupUpcomingEvents(upcoming.filter(e=>e.event_date===nextDate)):[];
-    const active=seasonPlannerData.schedules.filter(x=>x.active).length;
     let html='<section class="sp-season-summary"><div class="sp-eyebrow">CURRENT SEASON</div>'+
         '<div class="sp-season-name">'+spEsc(s.season_name)+'</div><div class="sp-season-dates">'+
         (s.start_date&&s.end_date?spDate(s.start_date)+' – '+spDate(s.end_date):'Season dates not set')+
-        '</div><div class="sp-season-meta">'+active+' active schedules <span>·</span> '+upcoming.length+' upcoming sessions</div></section>';
+        '</div></section>';
     html+='<section class="sp-section"><div class="sp-section-heading"><h3>Up Next</h3>'+
         (nextDate?'<span class="sp-date-chip">'+spDate(nextDate)+'</span>':'')+'</div>';
     if(next.length) {
@@ -154,7 +153,10 @@ function spGroupCalendarEvents(events){const grouped=new Map();events.forEach(ev
 function spRenderCalendar(){const groups=seasonPlannerData.age_groups,filtered=seasonPlannerData.events.filter(x=>(seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter))&&(seasonPlannerShowPast||x.event_date>spToday())&&(seasonPlannerShowCancelled||x.event_type!=="cancelled")),grouped=spGroupCalendarEvents(filtered),rows=grouped.map(g=>{const x=g.event,past=x.event_date<=spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set",edit=past?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+'</div>'+edit+'</div>';}).join("")||'<div class="sp-empty">No events found for these filters.</div>';let h='<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div></div><div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;return h;}
 function spRenderSetup() {
     const s=seasonPlannerData.season;
-    return '<div class="sp-page-intro">Set the date range for this season. Recurring schedules and planned events use these dates.</div><section class="sp-form-panel"><h3>'+spEsc(s.season_name)+'</h3><div class="sp-form-grid"><div class="form-group"><label for="spSeasonStart">Season starts</label><input id="spSeasonStart" type="date" value="'+(s.start_date||'')+'"></div><div class="form-group"><label for="spSeasonEnd">Season ends</label><input id="spSeasonEnd" type="date" value="'+(s.end_date||'')+'"></div></div><button class="primary-button" onclick="saveSeasonPlannerPeriod()">Save season dates</button></section>';
+    const nextName=typeof getNextSeason==="function"?getNextSeason(s.season_name):"";
+    return '<div class="sp-page-intro">Set the dates for this season, or prepare the following season in advance. Creating a planned season does not change player age groups or the active season.</div>'+
+    '<section class="sp-form-panel"><h3>'+spEsc(s.season_name)+'</h3><div class="sp-form-grid"><div class="form-group"><label for="spSeasonStart">Season starts</label><input id="spSeasonStart" type="date" value="'+(s.start_date||'')+'"></div><div class="form-group"><label for="spSeasonEnd">Season ends</label><input id="spSeasonEnd" type="date" value="'+(s.end_date||'')+'"></div></div><button class="primary-button" onclick="saveSeasonPlannerPeriod()">Save season dates</button></section>'+
+    '<section class="sp-form-panel"><h3>Plan another season</h3><p class="sp-field-hint">This creates the season and planning dates only. Players will not move age groups until the separate rollover is run from 1 August.</p><div class="form-group"><label for="spNewSeasonName">Season name</label><input id="spNewSeasonName" maxlength="20" value="'+spEsc(nextName)+'" placeholder="e.g. 2027/28"></div><div class="sp-form-grid"><div class="form-group"><label for="spNewSeasonStart">Starts</label><input id="spNewSeasonStart" type="date"></div><div class="form-group"><label for="spNewSeasonEnd">Ends</label><input id="spNewSeasonEnd" type="date"></div></div><button class="primary-button" onclick="createSeasonPlannerSeason()">Create planned season</button></section>';
 }
 function renderSeasonPlanner() {
     const root=document.getElementById("seasonPlannerContent");
@@ -180,6 +182,20 @@ function renderSeasonPlanner() {
     root.innerHTML=(pages[seasonPlannerPage]||pages.home)();
     const filter=document.getElementById("spFilter");
     if(filter) filter.value=seasonPlannerAgeFilter;
+}
+async function createSeasonPlannerSeason() {
+    if (!spSenior()) return;
+    const name=document.getElementById("spNewSeasonName")?.value?.trim();
+    const start=document.getElementById("spNewSeasonStart")?.value;
+    const end=document.getElementById("spNewSeasonEnd")?.value;
+    if (!name || !start || !end || end<=start) return appAlert("Enter a season name and valid dates.","Check season details","warning");
+    try {
+        const id=await spRPC("create_season_planner_season",{supplied_code:currentSeniorPIN,requested_season_name:name,requested_start_date:start,requested_end_date:end});
+        if (!id) throw new Error("That season could not be created. Check the name and dates.");
+        seasonPlannerPage="home";
+        await loadSeasonPlanner(id);
+        await appAlert("The planned season has been created. Players have not been moved and the current season is unchanged.","Season planned","success");
+    } catch(e) { await appAlert(e.message||"Unable to create planned season.","Season creation failed","danger"); }
 }
 async function saveSeasonPlannerPeriod() {
     if (!spSenior()) return;

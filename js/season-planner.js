@@ -70,10 +70,9 @@ async function loadSeasonPlanner(requestedSeasonId = null) {
         seasonPlannerAvailabilityByEvent = new Map();
         if (typeof matchAdminCall === "function") {
             try {
-                await matchAdminCall("parent_home", { action: "sync_calendar" });
-                const availability = await matchAdminCall("admin_fixtures", { action: "list" });
-                (availability.fixtures || []).forEach(f => {
-                    (f.calendar_event_ids || []).forEach(id => seasonPlannerAvailabilityByEvent.set(Number(id), Number(f.id)));
+                const availability = await matchAdminCall("parent_home", { action: "sync_calendar" });
+                (availability.calendar_links || []).forEach(link => {
+                    (link.event_ids || []).forEach(id => seasonPlannerAvailabilityByEvent.set(Number(id), Number(link.fixture_id)));
                 });
             } catch (availabilityError) {
                 console.warn("Calendar availability links could not be loaded:", availabilityError);

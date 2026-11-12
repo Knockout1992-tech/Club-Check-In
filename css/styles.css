@@ -1032,3 +1032,41 @@ h2 {
  .sp-management-row { align-items:flex-start; }
  .sp-management-row .secondary-button { padding:9px 11px; }
 }
+
+
+/* Independent Season Calendar visibility filters */
+.sp-calendar-filter-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 22px;
+    align-items:center;
+    padding:10px 0 16px;
+    margin:0 0 8px;
+    border-bottom:1px solid #e5e5e5;
+}
+.sp-calendar-filter-row label {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:#333;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+}
+.sp-calendar-filter-row input[type="checkbox"],
+.sp-group-picker input[type="checkbox"] {
+    width:17px;
+    height:17px;
+    accent-color:#222;
+    flex:0 0 auto;
+}
+.sp-group-picker {
+    display:flex;
+    flex-wrap:wrap;
+    gap:2px 18px;
+}
+.sp-group-choice { margin:0; min-width:90px; }
+@media(max-width:520px) {
+    .sp-calendar-filter-row { align-items:flex-start; flex-direction:column; gap:12px; }
+    .sp-group-picker { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

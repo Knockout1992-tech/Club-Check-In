@@ -1390,8 +1390,7 @@ async function createMatchFixtureFromForm() {
                 </p>
 
                 <p>
-                    The parent link is ready to copy.
-                    It will become available when the fixture is published.
+                    This fixture is saved as a draft. Parents will see it on the central home page once it is published.
                 </p>
 
                 <button class="secondary-button"

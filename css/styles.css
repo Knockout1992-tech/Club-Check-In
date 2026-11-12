@@ -1116,3 +1116,42 @@ h2 {
     .sp-main-calendar > .sp-section-heading h3 { font-size:21px; }
     .sp-admin-support .sp-menu-list { grid-template-columns:1fr; }
 }
+
+
+/* Prominent Season Calendar navigation card on the planner landing page */
+.sp-season-calendar-launch {
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin:20px 0 26px;
+    padding:21px 20px;
+    text-align:left;
+    color:inherit;
+    background:#fff;
+    border:1px solid #d9e2dc;
+    border-left:6px solid #198754;
+    border-radius:13px;
+    box-shadow:0 3px 13px rgba(0,0,0,.055);
+    cursor:pointer;
+}
+.sp-season-calendar-launch:hover { background:#f8fbf9; border-color:#b9d2c2; }
+.sp-season-calendar-icon {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 48px;
+    height:48px;
+    border-radius:11px;
+    background:#d1e7dd;
+    color:#0f5132;
+    font-size:27px;
+}
+.sp-season-calendar-copy { display:flex; flex:1; flex-direction:column; gap:4px; }
+.sp-season-calendar-copy strong { font-size:19px; }
+.sp-season-calendar-copy small { color:#666; font-size:13px; }
+.sp-season-calendar-arrow { color:#198754; font-size:30px; line-height:1; }
+@media (max-width:600px) {
+    .sp-season-calendar-launch { padding:17px 14px; gap:12px; }
+    .sp-season-calendar-copy strong { font-size:17px; }
+}

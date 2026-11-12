@@ -1130,7 +1130,7 @@ h2 {
     color:inherit;
     background:#fff;
     border:1px solid #d9e2dc;
-    border-left:6px solid #198754;
+    border-left:1px solid #d9e2dc;
     border-radius:13px;
     box-shadow:0 3px 13px rgba(0,0,0,.055);
     cursor:pointer;
@@ -1147,6 +1147,7 @@ h2 {
     color:#0f5132;
     font-size:27px;
 }
+.sp-season-calendar-icon svg { width:34px; height:34px; display:block; }
 .sp-season-calendar-copy { display:flex; flex:1; flex-direction:column; gap:4px; }
 .sp-season-calendar-copy strong { font-size:19px; }
 .sp-season-calendar-copy small { color:#666; font-size:13px; }
@@ -1154,4 +1155,17 @@ h2 {
 @media (max-width:600px) {
     .sp-season-calendar-launch { padding:17px 14px; gap:12px; }
     .sp-season-calendar-copy strong { font-size:17px; }
+}
+
+
+/* Dedicated full-page event editor */
+.sp-event-editor-page { max-width:760px; margin:0 auto; }
+.sp-editor-page-heading { display:flex; align-items:flex-start; justify-content:space-between; margin:8px 0 18px; }
+.sp-editor-page-heading h2 { margin:5px 0; font-size:23px; }
+.sp-editor-page-heading p { margin:0; color:#666; font-size:14px; }
+.sp-event-editor-page .sp-form-panel { padding:20px; }
+.sp-editor-actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:20px; }
+@media (max-width:600px) {
+    .sp-event-editor-page .sp-form-panel { padding:14px; }
+    .sp-editor-page-heading h2 { font-size:21px; }
 }

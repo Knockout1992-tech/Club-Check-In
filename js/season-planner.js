@@ -41,9 +41,9 @@ async function showSeasonPlanner() {
     seasonPlannerPage = "home";
     renderShell(`
         <div class="card season-planner-shell">
-            <button class="back-button" onclick="showSeniorDashboard()">← Back</button>
-            <h2>Season Planner</h2>
-            <div class="subtitle">Plan recurring training, matches, holidays and other age-group events across the full season.</div>
+            <button id="spHeaderBack" class="back-button" onclick="showSeniorDashboard()">← Back</button>
+            <h2 id="spPageTitle">Season Planner</h2>
+            <div id="spPageDescription" class="subtitle">Plan recurring training, matches, holidays and other age-group events across the full season.</div>
             <div id="seasonPlannerContent">Loading...</div>
         </div>`);
     await loadSeasonPlanner();
@@ -74,7 +74,7 @@ function spSetPage(page) {
     renderSeasonPlanner();
 }
 function spBackHome() {
-    return '<button class="back-button" onclick="spSetPage(\'home\')">← Back</button>';
+    return "";
 }
 function spAgeNames(x) {
     if (x.applies_to_all) return "All age groups";
@@ -187,11 +187,27 @@ function renderSeasonPlanner() {
     const root=document.getElementById("seasonPlannerContent");
     if(!root||!seasonPlannerData) return;
     const pages={home:spRenderHome,schedules:spRenderSchedules,holidays:spRenderHolidays,calendar:spRenderCalendar,setup:spRenderSetup};
+    const headers={
+        home:["Season Planner","Plan recurring training, matches, holidays and other age-group events across the full season."],
+        schedules:["Recurring Schedules","Create and manage regular training and match schedules across your age groups."],
+        holidays:["Holidays & Breaks","Set dates when training and club activities are paused."],
+        calendar:["Season Calendar","View the season at a glance and make changes to future events."],
+        setup:["Season Setup","Set the dates for your club season."]
+    };
+    const header=headers[seasonPlannerPage]||headers.home;
+    const title=document.getElementById("spPageTitle");
+    const description=document.getElementById("spPageDescription");
+    const back=document.getElementById("spHeaderBack");
+    if(title) title.textContent=header[0];
+    if(description) description.textContent=header[1];
+    if(back) {
+        back.textContent=seasonPlannerPage==="home"?"← Back to Dashboard":"← Back";
+        back.onclick=seasonPlannerPage==="home"?showSeniorDashboard:()=>spSetPage("home");
+    }
     root.innerHTML=(pages[seasonPlannerPage]||pages.home)();
     const filter=document.getElementById("spFilter");
     if(filter) filter.value=seasonPlannerAgeFilter;
 }
-
 async function saveSeasonPlannerPeriod() {
     if (!spSenior()) return;
     const start=document.getElementById("spSeasonStart")?.value;

@@ -1057,7 +1057,10 @@ function showMatchFixtureForm(fixture = null) {
 
     const ageGroupHTML = matchAdminAgeGroups.map(group => {
         const checked = selectedIDs.has(Number(group.id)) ? "checked" : "";
-        const disabled = hasResponses ? "disabled" : "";
+        const outsideCoachGroups =
+            currentRole === "coach" &&
+            !selectedAgeGroups.includes(group.display_name || group.age_group);
+        const disabled = hasResponses || outsideCoachGroups ? "disabled" : "";
 
         return `
             <label style="
@@ -1078,8 +1081,18 @@ function showMatchFixtureForm(fixture = null) {
         `;
     }).join("");
 
-    const deadline = fixture?.response_deadline
-        ? new Date(fixture.response_deadline).toISOString().slice(0, 16)
+    const deadlineDate = fixture?.response_deadline
+        ? new Date(fixture.response_deadline)
+        : null;
+    const deadline = deadlineDate && !Number.isNaN(deadlineDate.getTime())
+        ? [
+            deadlineDate.getFullYear(),
+            String(deadlineDate.getMonth() + 1).padStart(2, "0"),
+            String(deadlineDate.getDate()).padStart(2, "0")
+        ].join("-") + "T" + [
+            String(deadlineDate.getHours()).padStart(2, "0"),
+            String(deadlineDate.getMinutes()).padStart(2, "0")
+        ].join(":")
         : "";
 
     container.innerHTML = `

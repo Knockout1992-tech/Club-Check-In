@@ -1182,3 +1182,15 @@ h2 {
 .sp-switch input:checked+.sp-switch-track:before{transform:translateX(24px)}
 .sp-switch input:focus-visible+.sp-switch-track{outline:3px solid #e3b341;outline-offset:3px}
 .sp-switch input:disabled+.sp-switch-track{opacity:.45;cursor:not-allowed}
+
+/* Season calendar integrated availability review */
+.sp-calendar-toolbar{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sp-calendar-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sp-calendar-actions button,.sp-review-toolbar button{min-height:38px}
+.sp-review-toolbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sp-response-summary{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border-color,#ddd)}
+.sp-response-parent{padding:12px 0;border-top:1px solid var(--border-color,#ddd)}
+.sp-response-parent-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.sp-response-parent-head small,.sp-response-child small{display:block;opacity:.7;margin-top:3px}
+.sp-response-child{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+.sp-response-child select{min-width:135px;padding:8px;border-radius:8px}

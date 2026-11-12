@@ -68,18 +68,33 @@ async function loadSeasonPlanner(requestedSeasonId = null) {
         });
         if (!seasonPlannerData || !seasonPlannerData.season) throw new Error("Unable to load the current season. Check Senior access and the current season setting.");
         seasonPlannerAvailabilityByEvent = new Map();
-        if (typeof matchAdminCall === "function") {
-            try {
-                const availability = await matchAdminCall("parent_home", { action: "sync_calendar" });
-                (availability.calendar_links || []).forEach(link => {
-                    (link.event_ids || []).forEach(id => seasonPlannerAvailabilityByEvent.set(Number(id), Number(link.fixture_id)));
-                });
-            } catch (availabilityError) {
-                console.warn("Calendar availability links could not be loaded:", availabilityError);
+        (seasonPlannerData.events || []).forEach(event => {
+            if (event.linked_fixture_id) {
+                seasonPlannerAvailabilityByEvent.set(Number(event.id), Number(event.linked_fixture_id));
             }
-        }
+        });
         seasonPlannerAgeFilter = "all";
         renderSeasonPlanner();
+
+        // Only synchronise missing links, and never make the initial planner render wait for it.
+        const needsSync = (seasonPlannerData.events || []).some(event =>
+            event.event_date >= spToday() &&
+            event.availability_enabled === true &&
+            !["holiday", "cancelled"].includes(event.event_type) &&
+            !event.linked_fixture_id
+        );
+        if (needsSync && typeof matchAdminCall === "function") {
+            matchAdminCall("parent_home", { action: "sync_calendar" })
+                .then(result => {
+                    (result.calendar_links || []).forEach(link => {
+                        (link.event_ids || []).forEach(id =>
+                            seasonPlannerAvailabilityByEvent.set(Number(id), Number(link.fixture_id))
+                        );
+                    });
+                    if (seasonPlannerPage === "calendar") renderSeasonPlanner();
+                })
+                .catch(error => console.warn("Background calendar availability sync failed:", error));
+        }
     } catch(e) {
         root.innerHTML = `<div class="info-box">Unable to load Season Planner.<br>${spEsc(e.message)}</div><button class="primary-button" onclick="loadSeasonPlanner()">Retry</button>`;
     }

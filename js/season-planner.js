@@ -47,6 +47,9 @@ async function showSeasonPlanner() {
     await loadSeasonPlanner();
 }
 
+// Explicitly expose the entry point used by the Senior Dashboard's inline button.
+window.showSeasonPlanner = showSeasonPlanner;
+
 async function loadSeasonPlanner() {
     if (!spSenior()) return;
     const root = document.getElementById("seasonPlannerContent");

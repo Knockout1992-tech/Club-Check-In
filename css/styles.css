@@ -1091,3 +1091,28 @@ h2 {
 .sp-calendar-row,.sp-upcoming-row,.sp-management-row { border-left-width:4px; }
 .sp-calendar-row { background:#fff; }
 .sp-upcoming-row { background:rgba(255,255,255,.72); }
+
+
+/* Season Planner: make the calendar the main workspace; keep admin tools secondary */
+.sp-main-calendar {
+    margin-top:24px;
+    padding:20px;
+    border:1px solid #dedede;
+    border-radius:14px;
+    background:#fff;
+    box-shadow:0 4px 18px rgba(0,0,0,.045);
+}
+.sp-main-calendar > .sp-section-heading h3 { font-size:24px; }
+.sp-main-calendar .sp-calendar-row { padding:17px 16px; margin:14px 0; }
+.sp-main-calendar .sp-calendar-toolbar { margin-top:4px; }
+.sp-next-section { margin-bottom:22px; }
+.sp-admin-support { margin-top:28px; padding-top:18px; border-top:1px solid #e7e7e7; }
+.sp-admin-support .sp-section-heading h3 { color:#666; font-size:16px; }
+.sp-admin-support .sp-menu-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:9px; }
+.sp-admin-support .sp-menu-item { background:#f7f7f7; border:1px solid #e8e8e8; padding:13px 15px; }
+.sp-calendar-count { color:#777; font-size:13px; }
+@media (max-width:600px) {
+    .sp-main-calendar { padding:13px; margin-left:-2px; margin-right:-2px; }
+    .sp-main-calendar > .sp-section-heading h3 { font-size:21px; }
+    .sp-admin-support .sp-menu-list { grid-template-columns:1fr; }
+}

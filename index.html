@@ -386,7 +386,7 @@ async function showCoachDashboard() {
 
     renderShell(`
 
-        <div class="card">
+        <div class="card coach-dashboard-card">
 
             <button
                 class="back-button"
@@ -394,7 +394,7 @@ async function showCoachDashboard() {
                 ← Age Groups
             </button>
 
-            <h2>
+            <h2 class="coach-dashboard-title">
                 ${
                     groups.length === 1
                     ? groups[0]
@@ -412,7 +412,7 @@ async function showCoachDashboard() {
 
             </div>
 
-            <div class="stats">
+            <div class="stats coach-dashboard-stats">
 
                 <div class="stat">
                     <div class="stat-number">${activeCount}</div>
@@ -431,7 +431,7 @@ async function showCoachDashboard() {
 
             </div>
 
-            <div class="menu-grid">
+            <div class="menu-grid coach-dashboard-menu">
 
                 <button
                     class="menu-button"

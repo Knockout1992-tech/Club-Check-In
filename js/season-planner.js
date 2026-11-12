@@ -105,7 +105,6 @@ function spGetCalendarGroups(options={}) {
 }
 function spRenderHome() {
     const s=seasonPlannerData.season;
-    const calendarGroups=spGetCalendarGroups();
     const upcomingGroups=spGetCalendarGroups({upcomingOnly:true});
     const nextDate=upcomingGroups.length?upcomingGroups[0].event.event_date:null;
     const next=nextDate?upcomingGroups.filter(g=>g.event.event_date===nextDate):[];
@@ -125,8 +124,10 @@ function spRenderHome() {
                 (g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+'</div></div>';
         }).join('')+'</div>';
     } else html+='<div class="sp-empty">No upcoming events have been scheduled.</div>';
-    html+='</section><section class="sp-section sp-main-calendar"><div class="sp-section-heading"><h3>Season Calendar</h3><span class="sp-calendar-count">'+calendarGroups.length+' events</span></div>'+
-        '<div class="sp-calendar-focus">'+spRenderCalendar()+'</div></section>'+
+    html+='</section>'+
+        '<button type="button" class="sp-season-calendar-launch" onclick="spSetPage(\'calendar\')">'+
+        '<span class="sp-season-calendar-icon">▦</span><span class="sp-season-calendar-copy"><strong>Season Calendar</strong>'+
+        '<small>View and manage the full season schedule</small></span><span class="sp-season-calendar-arrow">›</span></button>'+
         '<section class="sp-section sp-admin-support"><div class="sp-section-heading"><h3>Admin support</h3><span class="sp-field-hint">Planning tools</span></div><div class="sp-menu-list">'+
         '<button class="sp-menu-item" onclick="spSetPage(\'schedules\')"><span><strong>Recurring Schedules</strong><small>Manage regular training and match days</small></span><b>›</b></button>'+
         '<button class="sp-menu-item" onclick="spSetPage(\'holidays\')"><span><strong>Holidays & Breaks</strong><small>Manage club closures and time off</small></span><b>›</b></button>'+

@@ -74,7 +74,7 @@ function spSetPage(page) {
     renderSeasonPlanner();
 }
 function spBackHome() {
-    return '<button class="back-button" onclick="spSetPage(\\'home\\')">← Season Planner</button>';
+    return '<button class="back-button" onclick="spSetPage(\'home\')">← Season Planner</button>';
 }
 function spAgeNames(x) {
     if (x.applies_to_all) return "All age groups";
@@ -96,10 +96,10 @@ function spRenderHome() {
         html+='</div>';
     } else html+='<div class="info-box">No upcoming events have been scheduled.</div>';
     html+='<h3 style="margin-top:22px;">Manage season</h3>';
-    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\\'schedules\\')"><strong>Recurring Schedules</strong><br><span class="subtitle">Regular training and match days</span></button>';
-    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\\'holidays\\')"><strong>Holidays & Breaks</strong><br><span class="subtitle">Club closures and time off</span></button>';
-    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\\'calendar\\')"><strong>Season Calendar</strong><br><span class="subtitle">View and edit future events</span></button>';
-    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\\'setup\\')"><strong>Season Setup</strong><br><span class="subtitle">Season start and end dates</span></button>';
+    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\'schedules\')"><strong>Recurring Schedules</strong><br><span class="subtitle">Regular training and match days</span></button>';
+    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\'holidays\')"><strong>Holidays & Breaks</strong><br><span class="subtitle">Club closures and time off</span></button>';
+    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\'calendar\')"><strong>Season Calendar</strong><br><span class="subtitle">View and edit future events</span></button>';
+    html+='<button class="secondary-button" style="width:100%;text-align:left;padding:15px;margin:5px 0;" onclick="spSetPage(\'setup\')"><strong>Season Setup</strong><br><span class="subtitle">Season start and end dates</span></button>';
     return html;
 }
 function spRenderSchedules() {
@@ -108,7 +108,7 @@ function spRenderSchedules() {
     const schedules=seasonPlannerData.schedules.map(x=>'<div class="info-box" style="margin:8px 0;padding:13px;"><strong>'+spEsc(x.schedule_name)+'</strong><br>'+spEsc(spAgeNames(x))+'<br>'+spDay(x.weekday)+' · '+spTime(x.start_time)+'–'+spTime(x.end_time)+' · Every '+x.recurrence_interval_weeks+' week(s)<br>'+spDate(x.schedule_start_date)+' – '+spDate(x.schedule_end_date)+(x.venue?' · '+spEsc(x.venue):'')+(x.active?'<br><button class="secondary-button" style="margin-top:9px;" onclick="endSeasonPlannerSchedule('+x.id+')">End future sessions</button>':'<br><span class="subtitle">Schedule ended</span>')+'</div>').join("")||"<p>No recurring schedules yet.</p>";
     let h=spBackHome()+'<h3>Recurring Schedules</h3><p class="subtitle">Create separate schedules for different days or age groups. All age groups automatically includes newly activated groups.</p>';
     if(!s.start_date||!s.end_date) h+='<div class="info-box">Set the season dates in Season Setup before creating schedules.</div>';
-    h+='<div class="card" style="padding:14px;margin:12px 0;"><h4>Create a schedule</h4><div class="form-group"><label>Applies to</label><select id="spScheduleScope" onchange="document.getElementById(\\'spScheduleGroups\\').style.display=this.value===\\'selected\\'?\\'block\\':\\'none\\'"><option value="all">All age groups</option><option value="selected">Choose age groups</option></select></div>';
+    h+='<div class="card" style="padding:14px;margin:12px 0;"><h4>Create a schedule</h4><div class="form-group"><label>Applies to</label><select id="spScheduleScope" onchange="document.getElementById(\'spScheduleGroups\').style.display=this.value===\'selected\'?\'block\':\'none\'"><option value="all">All age groups</option><option value="selected">Choose age groups</option></select></div>';
     h+='<div id="spScheduleGroups" style="display:none;border:1px solid #ddd;border-radius:8px;padding:8px;margin-bottom:12px;"><div class="subtitle">Select one or more age groups</div>'+checks+'</div>';
     h+='<div class="form-group"><label for="spScheduleName">Schedule name</label><input id="spScheduleName" maxlength="80" placeholder="e.g. Sunday training"></div>';
     h+='<div class="form-group"><label for="spWeekday">Day</label><select id="spWeekday"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></div>';

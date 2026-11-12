@@ -2019,3 +2019,54 @@ async function copyMatchFixtureLink(fixtureId, parentToken) {
         await appAlert("Unable to copy fixture link.", "Copy failed", "danger");
     }
 }
+
+
+// =========================================================
+// SEASON PLANNER — TEMPORARY SENIOR PREVIEW
+// =========================================================
+
+function showSeasonPlanner() {
+
+    if (currentRole !== "senior" || !currentSeniorPIN) {
+        appAlert(
+            "Only Senior users can access the Season Planner.",
+            "Access denied",
+            "danger"
+        );
+        return;
+    }
+
+    renderShell(`
+        <div class="card">
+
+            <button class="back-button"
+                onclick="showSeniorDashboard()">
+                ← Admin Dashboard
+            </button>
+
+            <h2>Season Planner</h2>
+
+            <div class="subtitle">
+                Plan the full age-group season, including recurring
+                training, matches, holidays and breaks.
+            </div>
+
+            <div class="info-box">
+                The Season Planner is being built here as a separate
+                trial feature. Match Availability remains unchanged.
+            </div>
+
+            <h3>Planned features</h3>
+
+            <ul>
+                <li>Set season start and end dates.</li>
+                <li>Create multiple recurring schedules per age group.</li>
+                <li>Generate the full season calendar.</li>
+                <li>Change future sessions into matches or other events.</li>
+                <li>Mark individual dates or date ranges as holidays.</li>
+                <li>Keep completed and historical sessions locked.</li>
+            </ul>
+
+        </div>
+    `);
+}

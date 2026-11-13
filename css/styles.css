@@ -365,6 +365,38 @@ h2 {
     .coach-dashboard-menu .menu-button { min-height: 82px; padding: 12px 8px; font-size: 14px; }
 }
 
+/* Coach dashboard — next scheduled event */
+.coach-upcoming-summary { margin: 0 0 22px; }
+.coach-upcoming-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 14px 16px;
+    margin: 0;
+    border: 1px solid #dfe5e1;
+    border-left: 4px solid #198754;
+    border-radius: 12px;
+    background: #f8fbf9;
+    color: #111;
+    text-align: left;
+}
+.coach-upcoming-copy { display: grid; gap: 4px; min-width: 0; }
+.coach-upcoming-eyebrow { color: #52705e; font-size: 10px; font-weight: 800; letter-spacing: .9px; }
+.coach-upcoming-title { font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; }
+.coach-upcoming-meta { color: #666; font-size: 12px; line-height: 1.45; }
+.coach-upcoming-arrow { flex: 0 0 auto; font-size: 25px; color: #52705e; }
+.coach-upcoming-empty, .coach-upcoming-loading {
+    padding: 13px 15px;
+    border: 1px solid #e7e7e7;
+    border-radius: 12px;
+    color: #666;
+    font-size: 13px;
+    background: #fafafa;
+}
+
 /* =========================
    PLAYER ROW
    ========================= */

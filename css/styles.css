@@ -977,15 +977,7 @@ h2 {
 .sp-event-content { min-width:0; line-height:1.4; }
 .sp-type-badge { display:inline-block; border-radius:5px; padding:3px 7px; font-size:10px; line-height:1.3; font-weight:800; letter-spacing:.35px; text-transform:uppercase; vertical-align:middle; }
 .sp-type-fixture { color:#174f80; background:#e1effb; }
-.sp-type-training { color:#17665b; background:#dff2ed; }
-.sp-type-event { color:#65408a; background:#eee5f7; }
-.sp-type-holiday { color:#805500; background:#fff0ce; }
-.sp-type-cancelled { color:#555; background:#e5e5e5; }
 .sp-upcoming-fixture,.sp-calendar-fixture { border-left-color:#3984bd; }
-.sp-upcoming-training,.sp-calendar-training { border-left-color:#329b89; }
-.sp-upcoming-event,.sp-calendar-event { border-left-color:#8960ad; }
-.sp-upcoming-holiday,.sp-calendar-holiday { border-left-color:#d69b2d; }
-.sp-upcoming-cancelled,.sp-calendar-cancelled { border-left-color:#999; }
 .sp-manage-section { margin-top:30px; }
 .sp-menu-list { border-top:1px solid #e2e2e2; }
 .sp-menu-item { width:100%; display:flex; justify-content:space-between; align-items:center; gap:14px; text-align:left; padding:16px 3px; background:transparent; border:0; border-bottom:1px solid #e2e2e2; color:#111; }
@@ -1088,7 +1080,6 @@ h2 {
 .sp-upcoming-cancelled,.sp-calendar-cancelled { border-left-color:#999; }
 
 /* Keep the group cards calm; category appears as a slim side accent */
-.sp-calendar-row,.sp-upcoming-row,.sp-management-row { border-left-width:4px; }
 .sp-calendar-row { background:#fff; }
 .sp-upcoming-row { background:rgba(255,255,255,.72); }
 
@@ -1188,7 +1179,6 @@ h2 {
 .sp-calendar-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .sp-calendar-actions button,.sp-review-toolbar button{min-height:38px}
 .sp-review-toolbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-.sp-response-summary{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border-color,#ddd)}
 .sp-response-parent{padding:12px 0;border-top:1px solid var(--border-color,#ddd)}
 .sp-response-parent-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .sp-response-parent-head small,.sp-response-child small{display:block;opacity:.7;margin-top:3px}

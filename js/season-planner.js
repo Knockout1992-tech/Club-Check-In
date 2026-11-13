@@ -11,6 +11,8 @@ let seasonPlannerPage = "home";
 let seasonPlannerEditingEventId = null;
 let seasonPlannerAvailabilityByEvent = new Map();
 let seasonPlannerAvailabilityData = null;
+let seasonPlannerAvailabilityTimer = null;
+let seasonPlannerAvailabilityBusy = false;
 
 function spEsc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({
@@ -245,16 +247,35 @@ function spRenderCalendar(){
     return toolbar+'<div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;
 }
 
-async function spReviewAvailability(fixtureId) {
-    if (!spCoachOrSenior()) return;
+function spStopAvailabilityRefresh() {
+    if (seasonPlannerAvailabilityTimer) clearInterval(seasonPlannerAvailabilityTimer);
+    seasonPlannerAvailabilityTimer = null;
+}
+function spStartAvailabilityRefresh(fixtureId) {
+    spStopAvailabilityRefresh();
+    seasonPlannerAvailabilityTimer = setInterval(() => {
+        if (document.visibilityState !== "visible" || seasonPlannerPage !== "availability-review") return;
+        if (document.activeElement?.closest?.("#seasonPlannerContent select")) return;
+        spReviewAvailability(fixtureId, true);
+    }, 15000);
+}
+async function spReviewAvailability(fixtureId, silentRefresh = false) {
+    if (!spCoachOrSenior() || seasonPlannerAvailabilityBusy) return;
+    if (silentRefresh && (seasonPlannerPage !== "availability-review" ||
+        document.activeElement?.closest?.("#seasonPlannerContent select"))) return;
+    seasonPlannerAvailabilityBusy = true;
     try {
         const result = await matchAdminCall("admin_fixtures", { action: "detail", fixture_id: Number(fixtureId) });
         seasonPlannerAvailabilityData = result.fixtures?.[0] || null;
         if (!seasonPlannerAvailabilityData) throw new Error("Availability details could not be found.");
         seasonPlannerPage = "availability-review";
         renderSeasonPlanner();
+        spStartAvailabilityRefresh(fixtureId);
     } catch (e) {
-        await appAlert(e.message || "Unable to load event availability.", "Availability unavailable", "danger");
+        if (!silentRefresh) await appAlert(e.message || "Unable to load event availability.", "Availability unavailable", "danger");
+        else console.warn("Availability refresh failed:", e);
+    } finally {
+        seasonPlannerAvailabilityBusy = false;
     }
 }
 function spRenderAvailabilityReview() {
@@ -262,8 +283,8 @@ function spRenderAvailabilityReview() {
     if(!f) return '<div class="sp-empty">No availability details loaded.</div>';
     const groups='<div class="sp-response-summary-head"><span>Age group</span><span>Available</span><span>Unavailable</span><span>Unsure</span></div>'+(f.age_groups||[]).map(g=>'<div class="sp-response-summary"><strong>'+spEsc(g.display_name||g.age_group)+'</strong><span class="sp-response-count sp-count-available">'+Number(g.available||0)+'</span><span class="sp-response-count sp-count-unavailable">'+Number(g.unavailable||0)+'</span><span class="sp-response-count sp-count-unsure">'+Number(g.unsure||0)+'</span></div>').join("");
     const submissions=(f.submissions||[]).map(sub=>{
-        const children=(sub.children||[]).map(ch=>'<div class="sp-response-child"><div class="sp-response-child-details"><strong>'+spEsc(ch.child_name)+'</strong><small>'+spEsc(ch.age_group||"Age group not set")+(ch.school_year?' · School Year '+spEsc(ch.school_year):"")+(ch.duplicate_review_status==="pending"?' · Potential duplicate':"")+'</small></div><div class="sp-response-actions"><select aria-label="Availability for '+spEsc(ch.child_name)+'" onchange="spUpdateAvailabilityResponse('+Number(ch.id)+',this.value,'+Number(f.id)+')"><option value="available" '+(ch.availability==="available"?"selected":"")+'>Available</option><option value="unavailable" '+(ch.availability==="unavailable"?"selected":"")+'>Unavailable</option><option value="unsure" '+(ch.availability==="unsure"?"selected":"")+'>Unsure</option></select>'+'<button type="button" class="secondary-button sp-delete-duplicate" onclick="spDeleteDuplicateAvailability('+Number(ch.id)+','+Number(f.id)+')">Delete</button>'+'</div></div>').join("");
-        return '<section class="sp-response-parent"><div class="sp-response-parent-head"><strong>'+spEsc(sub.parent_name||"Parent")+'</strong><small>Submitted '+spEsc(sub.submitted_at?new Date(sub.submitted_at).toLocaleString("en-GB"):"")+'</small></div>'+children+'</section>';
+        const children=(sub.children||[]).map(ch=>'<div class="sp-response-child"><div class="sp-response-child-details"><strong>'+spEsc(ch.child_name)+'</strong><small>'+spEsc(ch.age_group||"Age group not set")+(ch.school_year?' · School Year '+spEsc(ch.school_year):"")+(ch.duplicate_review_status==="pending"?' · Potential duplicate':"")+'</small></div><div class="sp-response-actions"><select aria-label="Availability for '+spEsc(ch.child_name)+'" '+(sub.edit_locked?'disabled title="Parent is editing this response"':'')+' onchange="spUpdateAvailabilityResponse('+Number(ch.id)+',this.value,'+Number(f.id)+')"><option value="available" '+(ch.availability==="available"?"selected":"")+'>Available</option><option value="unavailable" '+(ch.availability==="unavailable"?"selected":"")+'>Unavailable</option><option value="unsure" '+(ch.availability==="unsure"?"selected":"")+'>Unsure</option></select>'+'<button type="button" class="secondary-button sp-delete-duplicate" '+(sub.edit_locked?'disabled title="Parent is editing this response"':'')+' onclick="spDeleteDuplicateAvailability('+Number(ch.id)+','+Number(f.id)+')">Delete</button>'+'</div></div>').join("");
+        return '<section class="sp-response-parent"><div class="sp-response-parent-head"><strong>'+spEsc(sub.parent_name||"Parent")+'</strong><small>Submitted '+spEsc(sub.submitted_at?new Date(sub.submitted_at).toLocaleString("en-GB"):"")+'</small></div>'+(sub.edit_locked?'<div class="sp-field-hint">Parent currently editing this response — changes temporarily disabled</div>':'')+children+'</section>';
     }).join("")||'<div class="sp-empty">No parent responses have been submitted yet.</div>';
     return '<div class="sp-review-toolbar"><button class="secondary-button" onclick="spSetPage(\'calendar\')">← Back to calendar</button><button class="secondary-button" onclick="copyMatchFixtureLink('+Number(f.id)+')">Copy Fixture Link</button></div><section class="sp-form-panel"><h3>'+spEsc(f.opposition||"Club event")+'</h3><div class="sp-event-meta">'+spDate(f.fixture_date)+' · '+spEsc(matchAdminFixtureType(f.fixture_type,f.status))+'</div><p>'+Number(f.children_count||0)+' player responses from '+Number(f.response_count||0)+' parents</p>'+groups+'</section><section class="sp-form-panel"><h3>Parent responses</h3>'+submissions+'</section>';
 }

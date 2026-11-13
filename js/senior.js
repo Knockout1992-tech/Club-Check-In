@@ -1175,21 +1175,22 @@ function showMatchFixtureForm(fixture = null) {
                 <label style="display:block;margin-top:15px;">
                     Venue
                 </label>
-                <input
+                <textarea
                     id="matchVenue"
-                    type="text"
-                    maxlength="150"
-                    value="${matchAdminEscape(fixture?.venue || "")}"
-                    placeholder="e.g. Rushden & Higham RFC">
+                    rows="3"
+                    maxlength="500"
+                    style="width:100%;min-height:96px;padding:11px 12px;border:1px solid #ccc;border-radius:8px;font:inherit;"
+                    placeholder="Enter venue name">${matchAdminEscape(fixture?.venue || "")}</textarea>
 
                 <label style="display:block;margin-top:15px;">
                     Venue address
                 </label>
-                <input
+                <textarea
                     id="matchVenueAddress"
-                    type="text"
-                    maxlength="300"
-                    value="${matchAdminEscape(fixture?.venue_address || "")}">
+                    rows="3"
+                    maxlength="500"
+                    style="width:100%;min-height:96px;padding:11px 12px;border:1px solid #ccc;border-radius:8px;font:inherit;"
+                    placeholder="Enter full address for Google Maps">${matchAdminEscape(fixture?.venue_address || "")}</textarea>
 
                 <label style="display:block;margin-top:15px;">
                     Response deadline

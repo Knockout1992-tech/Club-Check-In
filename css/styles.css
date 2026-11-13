@@ -1340,3 +1340,24 @@ h2 {
 .sp-response-summary>strong{font-size:12px}
 .sp-response-count{min-width:26px;padding:5px 6px}
 }
+
+
+/* Dashboard player availability snapshot */
+.dashboard-availability-host { margin:12px 0 16px; }
+.dashboard-availability-card {
+    display:flex; flex-direction:column; align-items:flex-start; gap:5px;
+    width:100%; padding:14px 16px; border:1px solid #d8e2dc; border-left:4px solid #287a4b;
+    border-radius:12px; background:#f7faf8; color:inherit; text-align:left; cursor:pointer;
+}
+.dashboard-availability-heading { font-size:13px; font-weight:700; color:#52645a; }
+.dashboard-availability-event { font-size:17px; font-weight:700; }
+.dashboard-availability-date { font-size:13px; color:#66736b; }
+.dashboard-availability-counts { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:5px; font-size:15px; font-weight:700; }
+.dashboard-availability-available { color:#287a4b; }
+.dashboard-availability-unavailable { color:#9b4545; }
+.dashboard-availability-hint { margin-top:2px; font-size:12px; color:#66736b; }
+.dashboard-availability-error { padding:10px 12px; color:#6b6254; font-size:13px; }
+@media (max-width:600px) {
+    .dashboard-availability-card { padding:12px 13px; }
+    .dashboard-availability-counts { gap:6px 14px; font-size:14px; }
+}

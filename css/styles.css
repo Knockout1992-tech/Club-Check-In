@@ -1214,15 +1214,17 @@ h2 {
 .sp-response-parent{padding:12px 0;border-top:1px solid var(--border-color,#ddd)}
 .sp-response-parent-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .sp-response-parent-head small,.sp-response-child small{display:block;opacity:.7;margin-top:3px}
-.sp-response-child{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
-.sp-response-child select{min-width:135px;padding:8px;border-radius:8px}
+.sp-response-child{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0}
 .sp-response-child-details{min-width:0;flex:1}
-.sp-response-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
-.sp-response-actions select{min-width:135px}
-.sp-delete-duplicate{min-height:36px;padding:7px 10px;font-size:.85rem}
+.sp-response-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;flex-shrink:0}
+.sp-response-actions select{width:130px;min-width:110px;padding:8px;border-radius:8px}
+.sp-delete-duplicate{min-height:36px;padding:7px 10px;font-size:.85rem;background:#c62828!important;border:1px solid #b71c1c!important;color:#fff!important;white-space:nowrap}
+.sp-delete-duplicate:hover{background:#b71c1c!important}
 @media(max-width:520px){
-    .sp-response-child{align-items:flex-start;flex-direction:column}
-    .sp-response-actions{width:100%;justify-content:flex-start}
+    .sp-response-child{align-items:center;flex-direction:row;gap:8px}
+    .sp-response-actions{width:auto;justify-content:flex-end}
+    .sp-response-actions select{width:112px;min-width:100px}
+    .sp-delete-duplicate{padding:7px 8px;font-size:.8rem}
 }
 
 

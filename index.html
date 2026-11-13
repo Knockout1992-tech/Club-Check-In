@@ -571,7 +571,16 @@ async function loadDashboardUpcoming(hostId, role, groups) {
                     availability.className = "coach-upcoming-availability";
                     const available = Number(fixture.available_count || 0);
                     const unavailable = Number(fixture.unavailable_count || 0);
-                    availability.textContent = available + " available  ·  " + unavailable + " unavailable";
+
+                    const availableCount = document.createElement("span");
+                    availableCount.className = "coach-upcoming-available";
+                    availableCount.textContent = available + " available";
+
+                    const unavailableCount = document.createElement("span");
+                    unavailableCount.className = "coach-upcoming-unavailable";
+                    unavailableCount.textContent = unavailable + " unavailable";
+
+                    availability.append(availableCount, unavailableCount);
                     copy.appendChild(availability);
                 }
             } catch (availabilityError) {

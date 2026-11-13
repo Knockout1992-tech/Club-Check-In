@@ -1343,10 +1343,13 @@ h2 {
 
 
 .coach-upcoming-availability {
-    display:block;
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px 14px;
     margin-top:3px;
-    color:#287a4b;
     font-size:13px;
     font-weight:700;
     line-height:1.4;
 }
+.coach-upcoming-available { color:#287a4b; }
+.coach-upcoming-unavailable { color:#b4232f; }

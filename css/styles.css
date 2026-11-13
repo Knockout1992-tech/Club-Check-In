@@ -16,12 +16,23 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
     font: inherit;
 }
 
 button {
     cursor: pointer;
+}
+
+/* Consistent keyboard focus for interactive controls */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #d6a900;
+    outline-offset: 2px;
 }
 
 #app {

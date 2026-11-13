@@ -33,13 +33,7 @@ async function loadCurrentSeasonFromSupabase() {
         currentSeason = data.season_name;
 
         saveData();
-
-        console.log(
-            "Current season loaded from Supabase:",
-            currentSeason
-        );
-
-        return true;
+return true;
 
     } catch (error) {
 

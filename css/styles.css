@@ -1216,6 +1216,14 @@ h2 {
 .sp-response-parent-head small,.sp-response-child small{display:block;opacity:.7;margin-top:3px}
 .sp-response-child{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
 .sp-response-child select{min-width:135px;padding:8px;border-radius:8px}
+.sp-response-child-details{min-width:0;flex:1}
+.sp-response-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.sp-response-actions select{min-width:135px}
+.sp-delete-duplicate{min-height:36px;padding:7px 10px;font-size:.85rem}
+@media(max-width:520px){
+    .sp-response-child{align-items:flex-start;flex-direction:column}
+    .sp-response-actions{width:100%;justify-content:flex-start}
+}
 
 
 /* Season Calendar compact control and action alignment */

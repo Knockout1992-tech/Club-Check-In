@@ -296,7 +296,11 @@ async function spDeleteDuplicateAvailability(childId,fixtureId) {
         await matchAdminCall("manage_match_child",{action:"delete_duplicate",child_id:Number(childId)});
         await spReviewAvailability(fixtureId);
     } catch(e) {
-        await appAlert(e.message||"Unable to delete duplicate entry.","Delete failed","danger");
+        const parentEditing = /currently editing this response/i.test(e.message || "");
+        const message = parentEditing
+            ? "This parent is currently editing their response. The child entry cannot be deleted until they have finished. Please try again later."
+            : (e.message || "Unable to delete duplicate entry.");
+        await appAlert(message, parentEditing ? "Cannot delete response" : "Delete failed", "danger");
         await spReviewAvailability(fixtureId);
     }
 }

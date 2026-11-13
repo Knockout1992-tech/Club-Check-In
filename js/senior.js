@@ -792,9 +792,18 @@ async function matchAdminCall(functionName, body) {
             error
         );
 
-        throw new Error(
-            error.message || "Unable to contact the server."
-        );
+        let message = error.message || "Unable to contact the server.";
+
+        // Supabase wraps non-2xx Edge Function responses in an error.
+        // Read the function's own message so lock conflicts are clear to coaches.
+        try {
+            const responseBody = await error.context?.clone?.().json();
+            if (responseBody?.error) message = responseBody.error;
+        } catch (_) {
+            // Keep the original error message if no response body is available.
+        }
+
+        throw new Error(message);
     }
 
     if (!data?.success) {
@@ -1984,9 +1993,18 @@ async function deleteMatchDuplicate(childId, fixtureId) {
 
         console.error("Duplicate deletion failed:", error);
 
+        const parentEditingMessage =
+            "This parent is currently editing their response. " +
+            "The child entry cannot be deleted until they have finished. " +
+            "Please try again later.";
+
         await appAlert(
-            error.message || "Unable to delete duplicate.",
-            "Deletion failed",
+            /currently editing this response/i.test(error.message || "")
+                ? parentEditingMessage
+                : (error.message || "Unable to delete duplicate."),
+            /currently editing this response/i.test(error.message || "")
+                ? "Cannot delete response"
+                : "Deletion failed",
             "danger"
         );
     }

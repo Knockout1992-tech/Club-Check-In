@@ -41,7 +41,7 @@ LOAD TODAY'S REGISTER
 async function loadTodayAttendanceRegister(ageGroup) {
 
 if (currentRole !== "coach" || !currentAccessPIN) {
-    alert("Please log in as Coach again.");
+    await appAlert("Please log in as Coach again.", "Session expired", "warning");
     return null;
 }
 
@@ -64,9 +64,7 @@ if (registerError) {
         registerError
     );
 
-    alert(
-        "Unable to open today's register. Please try again."
-    );
+    await appAlert("Unable to open today's register. Please try again.", "Register unavailable", "danger");
 
     return null;
 }
@@ -81,9 +79,7 @@ if (
         ageGroup
     );
 
-    alert(
-        ageGroup + " is not active."
-    );
+    await appAlert(ageGroup + " is not active.", "Age group unavailable", "warning");
 
     return null;
 }
@@ -107,9 +103,7 @@ if (loadError) {
         loadError
     );
 
-    alert(
-        "Unable to load today's register. Please try again."
-    );
+    await appAlert("Unable to load today's register. Please try again.", "Register unavailable", "danger");
 
     return null;
 }
@@ -123,9 +117,7 @@ if (
         "Supabase returned invalid attendance register data."
     );
 
-    alert(
-        "Unable to load today's attendance. Please try again."
-    );
+    await appAlert("Unable to load today's attendance. Please try again.", "Attendance unavailable", "danger");
 
     return null;
 }
@@ -276,9 +268,7 @@ if (
     !currentAccessPIN
 ) {
 
-    alert(
-        "Please log in as Coach again."
-    );
+    await appAlert("Please log in as Coach again.", "Session expired", "warning");
 
     return;
 }
@@ -331,18 +321,14 @@ if (error) {
         error
     );
 
-    alert(
-        "Unable to save attendance. Please try again."
-    );
+    await appAlert("Unable to save attendance. Please try again.", "Attendance not saved", "danger");
 
     return;
 }
 
 if (data !== true) {
 
-    alert(
-        "Attendance could not be updated. Please check your access and try again."
-    );
+    await appAlert("Attendance could not be updated. Please check your access and try again.", "Update unsuccessful", "danger");
 
     return;
 }
@@ -382,7 +368,7 @@ if (!register) {
 }
 
 if (register.submitted || register.closedAutomatically) {
-    alert("This register is closed.");
+    await appAlert("This register is closed.", "Register closed", "warning");
     return false;
 }
 
@@ -402,12 +388,12 @@ if (error) {
         error
     );
 
-    alert("Unable to add the player to today's register.");
+    await appAlert("Unable to add the player to today's register.", "Player not added", "danger");
     return false;
 }
 
 if (data !== true) {
-    alert("The player could not be added to today's register.");
+    await appAlert("The player could not be added to today's register.", "Player not added", "warning");
     return false;
 }
 

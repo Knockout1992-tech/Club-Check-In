@@ -59,7 +59,7 @@ function spType(value) {
 }
 function spSenior() {
     if (currentRole === "senior" && currentSeniorPIN) return true;
-    appAlert("Only Senior users can access the Season Planner.","Access denied","danger");
+    appAlert("Only Admin can access the Season Planner.","Access denied","danger");
     return false;
 }
 async function spRPC(name,args) {
@@ -130,7 +130,7 @@ async function loadSeasonPlanner(requestedSeasonId = null, skipBackgroundSync = 
         seasonPlannerData = await spRPC("get_season_planner",{
             supplied_code:currentSeniorPIN, requested_season_id:requestedSeasonId
         });
-        if (!seasonPlannerData || !seasonPlannerData.season) throw new Error("Unable to load the current season. Check Senior access and the current season setting.");
+        if (!seasonPlannerData || !seasonPlannerData.season) throw new Error("Unable to load the current season. Check Admin access and the current season setting.");
         seasonPlannerAvailabilityByEvent = new Map();
         (seasonPlannerData.events || []).forEach(event => {
             if (event.linked_fixture_id) {
@@ -265,7 +265,7 @@ function spRenderCalendar(){
         const availabilityOn=x.availability_enabled!==false&&!["holiday","cancelled"].includes(x.event_type);
         const edit=past?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';
         const mapLink=spMapsUrl(x.venue);
-        const actions='<div class="sp-calendar-actions">'+(fixtureId?'<button class="secondary-button" onclick="spReviewAvailability('+fixtureId+')">Review availability</button><button class="secondary-button" onclick="copyMatchFixtureLink('+fixtureId+')">Copy Fixture Link</button>':(availabilityOn?'<span class="sp-field-hint">Availability link will be created when a Senior user next opens the Season Calendar.</span>':''))+'<button class="secondary-button" onclick="shareSeasonPlannerEventWhatsApp('+x.id+')">Share via WhatsApp</button>'+edit+'</div>';
+        const actions='<div class="sp-calendar-actions">'+(fixtureId?'<button class="secondary-button" onclick="spReviewAvailability('+fixtureId+')">Review availability</button><button class="secondary-button" onclick="copyMatchFixtureLink('+fixtureId+')">Copy Fixture Link</button>':(availabilityOn?'<span class="sp-field-hint">Availability link will be created when an Admin next opens the Season Calendar.</span>':''))+'<button class="secondary-button" onclick="shareSeasonPlannerEventWhatsApp('+x.id+')">Share via WhatsApp</button>'+edit+'</div>';
         return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+'</div>'+(x.venue?'<div class="sp-event-meta">Venue: '+spEsc(x.venue)+(mapLink?' · <a href="'+spEsc(mapLink)+'" target="_blank" rel="noopener">Open in Google Maps</a>':'')+'</div>':'')+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+actions+'</div></div>';
     }).join("")||'<div class="sp-empty">No events found for these filters.</div>';
     const toolbar=currentRole==="coach"
@@ -618,7 +618,7 @@ async function saveSeasonPlannerEvent(id) {
                 requested_availability_enabled:availabilityEnabled
             });
         }
-        if(ok!==true) throw new Error(currentRole==="coach"?"This event could not be split safely. If parents have already responded to a shared event, ask a Senior user to make the change so existing responses are preserved.":"The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
+        if(ok!==true) throw new Error(currentRole==="coach"?"This event could not be split safely. If parents have already responded to a shared event, ask an Admin to make the change so existing responses are preserved.":"The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
         seasonPlannerEditingEventId=null;
         seasonPlannerPage="calendar";
         if(currentRole==="coach") await loadCoachSeasonPlanner(); else await loadSeasonPlanner(null,true);

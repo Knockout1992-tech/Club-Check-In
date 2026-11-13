@@ -722,6 +722,7 @@ async function resetUserInstallation(personID) {
 // =========================================================
 
 let matchFixtureRefreshTimer = null;
+let matchFixtureRefreshBusy = false;
 
 let matchAdminAgeGroups = [];
 let latestCreatedFixtureLink = null;
@@ -1528,6 +1529,9 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
             matchFixtureRefreshTimer = null;
         }
 
+        if (silentRefresh && (document.activeElement?.closest?.("#matchFixtureDetailScreen select") || matchFixtureRefreshBusy)) return;
+        if (silentRefresh) matchFixtureRefreshBusy = true;
+
         const previouslyOpen = new Set(
             Array.from(
                 document.querySelectorAll(
@@ -1711,7 +1715,8 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                     )
                     .map(child => ({
                         ...child,
-                        parent_name: submission.parent_name
+                        parent_name: submission.parent_name,
+                        edit_locked: submission.edit_locked
                     }))
             );
 
@@ -1803,6 +1808,7 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
 
                                         <select
                                             id="matchAvailability-${childID}"
+                                            ${child.edit_locked ? 'disabled title="Parent is editing this response"' : ""}
                                             style="width:100%;padding:10px;margin-top:5px;"
                                             onchange="updateMatchChildAvailability(
                                                 ${childID},
@@ -1882,13 +1888,14 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                     return;
                 }
 
-                viewMatchFixture(fixtureId, true);
+                if (document.visibilityState === "visible") viewMatchFixture(fixtureId, true);
 
             }, 15000);
         }
+        matchFixtureRefreshBusy = false;
 
     } catch (error) {
-
+        matchFixtureRefreshBusy = false;
         console.error("Unable to load fixture responses:", error);
 
         if (!silentRefresh) {

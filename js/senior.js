@@ -1803,7 +1803,7 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                                     <div style="margin-top:10px;">
 
                                         <label for="matchAvailability-${childID}">
-                                            Change availability
+                                            ${child.edit_locked ? "Parent currently editing" : "Change availability"}
                                         </label>
 
                                         <select
@@ -1851,7 +1851,7 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                                                     onclick="deleteMatchDuplicate(
                                                         ${childID},
                                                         ${Number(fixture.id)}
-                                                    )">
+                                                    )" ${child.edit_locked ? "disabled" : ""}>
 
                                                     Delete Duplicate
 

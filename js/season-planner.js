@@ -27,31 +27,25 @@ function spDate(value) {
 function spTime(value) { return value ? String(value).slice(0,5) : ""; }
 function spMapsUrl(address) {
     const value=String(address||"").trim();
-    return value ? "https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(value) : "";
+    return value ? "https://maps.google.com/?q="+encodeURIComponent(value) : "";
 }
 function shareSeasonPlannerEventWhatsApp(eventId) {
     const event=(seasonPlannerData?.events||[]).find(x=>Number(x.id)===Number(eventId));
     if(!event) return appAlert("This event could not be found.","Share unavailable","warning");
-    const group=spGroupCalendarEvents(seasonPlannerData.events.filter(x=>
-        x.event_date===event.event_date && spEventGroupKey(x)===spEventGroupKey(event)
-    )).find(g=>g.items.some(x=>Number(x.id)===Number(eventId)));
     const date=new Date(event.event_date+"T12:00:00").toLocaleDateString("en-GB",{
-        weekday:"long",day:"numeric",month:"long",year:"numeric"
+        weekday:"short",day:"numeric",month:"short"
     });
     const venue=String(event.venue||"").trim();
+    const notes=String(event.notes||"").trim();
     const lines=[
-        "🏉 Rushden & Higham RUFC",
-        event.title,
-        date,
+        "🏉 "+event.title+" – "+date,
         [spTime(event.start_time),spTime(event.end_time)].filter(Boolean).join(" – "),
-        venue ? "📍 Venue: "+venue : "",
-        venue ? "🗺️ Directions: "+spMapsUrl(venue) : "",
-        group?.ageLabel ? "Age groups: "+group.ageLabel : "",
-        event.notes ? "Notes: "+event.notes : "",
-        "Parent Home / availability: "+MATCH_AVAILABILITY_URL
+        venue ? "📍 "+venue : "",
+        venue ? "🗺️ "+spMapsUrl(venue) : "",
+        notes ? "📝 "+notes : "",
+        "Availability: "+MATCH_AVAILABILITY_URL
     ].filter(Boolean);
-    const message=lines.join("\n");
-    window.location.href="https://wa.me/?text="+encodeURIComponent(message);
+    window.location.href="https://wa.me/?text="+encodeURIComponent(lines.join("\n"));
 }
 function spToday() { return getTodayKey(); }
 function spDay(value) {

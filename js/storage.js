@@ -94,10 +94,7 @@ function loadSavedData() {
         }
 
         backfillLastAttendanceDates();
-
-        console.log("Saved data loaded successfully.");
-
-    } catch (error) {
+} catch (error) {
 
         console.error(
             "Saved data could not be loaded:",
@@ -188,10 +185,7 @@ function saveData() {
             "clubCheckInData",
             JSON.stringify(saved)
         );
-
-        console.log("Saved data successfully.");
-
-    } catch (error) {
+} catch (error) {
 
         console.error(
             "Failed to save local data:",
@@ -264,9 +258,7 @@ async function loadPlayersFromSupabase() {
                 players[ageGroup] = [];
             }
         });
-
-        console.log("Player records loaded successfully.");
-        return true;
+return true;
 
     } catch (error) {
         console.error("Player load failed:", error.message);

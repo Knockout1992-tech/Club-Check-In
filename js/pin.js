@@ -21,7 +21,7 @@ function showPIN(role) {
     const roleName =
         role === "coach"
         ? "Coach"
-        : "Senior Member";
+        : "Admin";
 
     renderShell(`
 
@@ -112,10 +112,11 @@ const {
     data,
     error: supabaseError
 } = await supabaseClient.rpc(
-    "verify_access_code",
+    "verify_access_code_for_installation",
     {
         supplied_code: entered,
-        code_type: currentRole
+        code_type: currentRole,
+        supplied_installation_id: getInstallationID()
     }
 );
 
@@ -132,7 +133,13 @@ if (supabaseError) {
 }
 
 if (data !== true) {
-    error.textContent = "Incorrect PIN.";
+    const { data: locked } = await supabaseClient.rpc(
+        "get_installation_access_lock_status",
+        { supplied_installation_id: getInstallationID() }
+    );
+    error.textContent = locked === true
+        ? "This installation is locked. Contact an Admin to reset it."
+        : "Incorrect PIN.";
     return;
 }
 

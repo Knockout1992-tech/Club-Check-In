@@ -121,7 +121,7 @@ async function showSeasonPlanner() {
 // Explicitly expose the entry point used by the Senior Dashboard's inline button.
 window.showSeasonPlanner = showSeasonPlanner;
 
-async function loadSeasonPlanner(requestedSeasonId = null) {
+async function loadSeasonPlanner(requestedSeasonId = null, skipBackgroundSync = false) {
     if (!spSenior()) return;
     const root = document.getElementById("seasonPlannerContent");
     if (!root) return;
@@ -147,7 +147,7 @@ async function loadSeasonPlanner(requestedSeasonId = null) {
             !["holiday", "cancelled"].includes(event.event_type) &&
             !event.linked_fixture_id
         );
-        if (needsSync && typeof matchAdminCall === "function") {
+        if (!skipBackgroundSync && needsSync && typeof matchAdminCall === "function") {
             matchAdminCall("parent_home", { action: "sync_calendar" })
                 .then(result => {
                     (result.calendar_links || []).forEach(link => {
@@ -614,18 +614,14 @@ async function saveSeasonPlannerEvent(id) {
         if(ok!==true) throw new Error(currentRole==="coach"?"This event could not be split safely. If parents have already responded to a shared event, ask a Senior user to make the change so existing responses are preserved.":"The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
         seasonPlannerEditingEventId=null;
         seasonPlannerPage="calendar";
-        let availabilitySyncError=null;
+        if(currentRole==="coach") await loadCoachSeasonPlanner(); else await loadSeasonPlanner(null,true);
+        const availabilitySync = matchAdminCall("parent_home",{action:"sync_calendar"});
+        await appAlert("Updated "+ids.length+" age-group session record(s). Parent availability is updating in the background.","Events updated","success");
         try {
-            await matchAdminCall("parent_home",{action:"sync_calendar"});
+            await availabilitySync;
         } catch(syncError) {
             console.error("Season Planner availability sync failed:",syncError);
-            availabilitySyncError=syncError;
-        }
-        if(currentRole==="coach") await loadCoachSeasonPlanner(); else await loadSeasonPlanner();
-        if(availabilitySyncError) {
-            await appAlert("The event details were saved, but the parent availability link could not be synchronised. Please try refreshing the calendar. "+(availabilitySyncError.message||""),"Availability sync needed","warning");
-        } else {
-            await appAlert("Updated "+ids.length+" age-group session record(s). Parent availability has been synchronised.","Events updated","success");
+            await appAlert("The event details were saved, but the parent availability link could not be synchronised. Please try refreshing the calendar. "+(syncError.message||""),"Availability sync needed","warning");
         }
     } catch(e) {
         await appAlert(e.message||"Unable to update sessions.","Update failed","danger");

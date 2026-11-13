@@ -2226,8 +2226,8 @@ function showArchiveReview() {
 
                 <br><br>
 
-                A player is only archived when a Senior
-                Member decides that they should no longer
+                A player is only archived when an Admin
+                decides that they should no longer
                 remain on the active register.
 
                 <br><br>
@@ -3502,7 +3502,7 @@ function showPINManagement() {
 
             <div class="subtitle">
 
-                Admin Members can change both access PINs.
+                Admins can change both access PINs.
 
             </div>
 
@@ -4063,6 +4063,11 @@ async function initialisePWA() {
         message.textContent =
             "Unable to activate this device. Please try again.";
 
+        return;
+    }
+
+    if (data === "LOCKED") {
+        message.textContent = "This is locked now.";
         return;
     }
 

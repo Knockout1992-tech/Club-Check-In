@@ -301,8 +301,10 @@ async function setGMS(playerID, confirmed) {
 
         console.error("GMS update failed:", error);
 
-        alert(
-            "Unable to update GMS. Please check your Senior login and try again."
+        await appAlert(
+            "Unable to update GMS. Please check your Senior login and try again.",
+            "GMS update failed",
+            "danger"
         );
 
     }

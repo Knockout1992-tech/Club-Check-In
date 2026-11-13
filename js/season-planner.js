@@ -140,6 +140,7 @@ async function loadSeasonPlanner(requestedSeasonId = null) {
 }
 
 function spSetPage(page) {
+    if (page !== "availability-review") spStopAvailabilityRefresh();
     seasonPlannerPage = page;
     renderSeasonPlanner();
 }

@@ -541,10 +541,15 @@ function spRenderEventEditor() {
         const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
         return ag && (allowedNames.has(ag.age_group) || allowedNames.has(ag.display_name));
     }):items;
-    const checks=editableItems.map(e=>{
-        const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
-        return '<label class="sp-group-choice"><input type="checkbox" class="spEditGroup" value="'+e.id+'" checked> '+spEsc(ag?(ag.display_name||ag.age_group):e.age_group)+'</label>';
-    }).join("");
+    const checks=coachMode
+        ? editableItems.map(e=>{
+            const ag=seasonPlannerData.age_groups.find(g=>String(g.id)===String(e.age_group_id));
+            return '<label class="sp-group-choice"><input type="checkbox" class="spEditGroup" value="'+e.id+'" checked> '+spEsc(ag?(ag.display_name||ag.age_group):e.age_group)+'</label>';
+        }).join("")
+        : seasonPlannerData.age_groups.filter(g=>g.active!==false).map(g=>{
+            const existing=items.find(e=>String(e.age_group_id)===String(g.id));
+            return '<label class="sp-group-choice"><input type="checkbox" class="spEditGroup" value="'+g.id+'" data-event-id="'+(existing?existing.id:"")+'" '+(existing?"checked":"")+'> '+spEsc(g.display_name||g.age_group)+'</label>';
+        }).join("");
     const isHomeMatch=event.event_type==="match" && (event.match_location||"home")==="home";
     return '<section class="sp-event-editor-page">'+
         '<div class="sp-editor-page-heading"><div><div class="sp-eyebrow">SEASON CALENDAR</div><h2>Change event</h2><p>'+spDate(event.event_date)+' · '+spEsc(group?group.ageLabel:(event.display_name||event.age_group))+'</p></div></div>'+
@@ -570,7 +575,11 @@ async function saveSeasonPlannerEvent(id) {
     if(!event || event.event_date<=spToday())
         return appAlert("Past sessions cannot be changed.","Past session","warning");
     const v=k=>document.getElementById(k)?.value;
-    const ids=[...document.querySelectorAll(".spEditGroup:checked")].map(x=>Number(x.value));
+    const selectedGroups=[...document.querySelectorAll(".spEditGroup:checked")];
+    const ids=currentRole==="coach"
+        ? selectedGroups.map(x=>Number(x.value))
+        : selectedGroups.map(x=>Number(x.dataset.eventId)).filter(Boolean);
+    const ageGroupIds=currentRole==="coach"?[]:selectedGroups.map(x=>Number(x.value));
     const type=v("spEditType");
     const matchLocation=type==="match"?(v("spEditMatchLocation")||"home"):null;
     let venue=(v("spEditVenue")||"").trim();
@@ -599,24 +608,22 @@ async function saveSeasonPlannerEvent(id) {
                 requested_notes:(v("spEditNotes")||"").trim()||null, requested_availability_enabled:availabilityEnabled
             });
         } else {
-            ok=await spRPC("update_season_planner_event_group_shared",{
-                supplied_code:currentSeniorPIN, requested_event_ids:ids, requested_event_date:date,
-                requested_event_type:type, requested_title:title, requested_start_time:startTime,
-                requested_end_time:endTime, requested_venue:venue||null,
+            ok=await spRPC("update_season_planner_event_group_shared_v3",{
+                supplied_code:currentSeniorPIN, requested_source_event_id:Number(event.id),
+                requested_event_ids:ids, requested_age_group_ids:ageGroupIds,
+                requested_event_date:date, requested_event_type:type, requested_title:title,
+                requested_start_time:startTime, requested_end_time:endTime, requested_venue:venue||null,
                 requested_opposition:type==="match"?title:null, requested_match_location:matchLocation,
-                requested_notes:(v("spEditNotes")||"").trim()||null
+                requested_notes:(v("spEditNotes")||"").trim()||null,
+                requested_availability_enabled:availabilityEnabled
             });
-            if(ok===true) {
-                const availabilitySaved=await spRPC("set_season_event_availability",{supplied_code:currentSeniorPIN,requested_event_ids:ids,requested_enabled:availabilityEnabled});
-                if(availabilitySaved!==true) throw new Error("Event details were saved, but the availability setting could not be updated. Please reopen the event and check it.");
-            }
         }
         if(ok!==true) throw new Error(currentRole==="coach"?"This event could not be split safely. If parents have already responded to a shared event, ask a Senior user to make the change so existing responses are preserved.":"The selected sessions could not be updated. Check the date is within the season and all sessions are still in the future.");
         seasonPlannerEditingEventId=null;
         seasonPlannerPage="calendar";
         if(currentRole==="coach") await loadCoachSeasonPlanner(); else await loadSeasonPlanner(null,true);
         const availabilitySync = matchAdminCall("parent_home",{action:"sync_calendar"});
-        await appAlert("Updated "+ids.length+" age-group session record(s). Parent availability is updating in the background.","Events updated","success");
+        await appAlert("Updated "+(currentRole==="coach"?ids.length:ageGroupIds.length)+" age-group session(s). Parent availability is updating in the background.","Events updated","success");
         try {
             await availabilitySync;
         } catch(syncError) {

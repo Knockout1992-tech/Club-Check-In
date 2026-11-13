@@ -159,7 +159,7 @@ function showWelcome() {
                     class="role-button"
                     onclick="showPIN('senior')">
 
-                    Admin Member
+                    Admin
 
                 </button>
 ${getInstallButtonHTML()}

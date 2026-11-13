@@ -432,6 +432,10 @@ async function showCoachDashboard() {
 
             </div>
 
+            <div id="coachUpcomingSummary" class="coach-upcoming-summary">
+                <div class="coach-upcoming-loading">Loading upcoming events…</div>
+            </div>
+
             <div class="menu-grid coach-dashboard-menu">
 
                 <button
@@ -464,6 +468,100 @@ async function showCoachDashboard() {
 
     `);
 
+    loadCoachDashboardUpcoming(groups);
+
+}
+
+async function loadCoachDashboardUpcoming(groups) {
+    const host = document.getElementById("coachUpcomingSummary");
+    if (!host) return;
+
+    try {
+        const { data, error } = await supabaseClient.rpc("get_coach_season_planner", {
+            supplied_code: currentAccessPIN,
+            requested_age_groups: [...groups]
+        });
+        if (error) throw error;
+
+        const today = getTodayKey();
+        const events = (data?.events || [])
+            .filter(event => event.event_date >= today && event.event_type !== "cancelled")
+            .sort((a, b) => a.event_date.localeCompare(b.event_date) ||
+                String(a.start_time || "").localeCompare(String(b.start_time || "")));
+
+        host.innerHTML = "";
+
+        if (!events.length) {
+            const empty = document.createElement("div");
+            empty.className = "coach-upcoming-empty";
+            empty.textContent = "No upcoming events scheduled for your selected age groups.";
+            host.appendChild(empty);
+            return;
+        }
+
+        const first = events[0];
+        const groupKey = event => [
+            event.event_date, event.title, event.event_type, event.match_location || "",
+            event.start_time || "", event.end_time || "", event.venue || "",
+            event.notes || "", event.availability_enabled === false ? "off" : "on"
+        ].join("|");
+        const matching = events.filter(event => groupKey(event) === groupKey(first));
+        const allGroups = data?.age_groups || [];
+        const isClubWide = allGroups.length > 0 &&
+            new Set(matching.map(event => String(event.age_group_id))).size === allGroups.length;
+        const ageNames = [...new Set(matching.map(event =>
+            event.display_name || event.age_group
+        ).filter(Boolean))];
+        const ageLabel = isClubWide ? "All age groups" : ageNames.join(" · ");
+
+        const typeLabel = first.event_type === "match"
+            ? (first.match_location === "away" ? "Away match" : "Home match")
+            : ({ training: "Training", holiday: "Holiday / break", other: "Other event" }[first.event_type] || "Club event");
+        const dateLabel = new Date(first.event_date + "T12:00:00").toLocaleDateString("en-GB", {
+            weekday: "short", day: "numeric", month: "short"
+        });
+        const timeLabel = first.start_time
+            ? String(first.start_time).slice(0, 5) +
+                (first.end_time ? "–" + String(first.end_time).slice(0, 5) : "")
+            : "Time not set";
+
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "coach-upcoming-card";
+        card.addEventListener("click", () => showCoachSeasonPlanner());
+
+        const copy = document.createElement("span");
+        copy.className = "coach-upcoming-copy";
+
+        const eyebrow = document.createElement("small");
+        eyebrow.className = "coach-upcoming-eyebrow";
+        eyebrow.textContent = "UP NEXT";
+
+        const title = document.createElement("strong");
+        title.className = "coach-upcoming-title";
+        title.textContent = first.title || typeLabel;
+
+        const meta = document.createElement("span");
+        meta.className = "coach-upcoming-meta";
+        meta.textContent = [typeLabel, dateLabel, timeLabel, ageLabel, first.venue]
+            .filter(Boolean).join(" · ");
+
+        copy.append(eyebrow, title, meta);
+
+        const arrow = document.createElement("span");
+        arrow.className = "coach-upcoming-arrow";
+        arrow.textContent = "›";
+
+        card.append(copy, arrow);
+        host.appendChild(card);
+    } catch (error) {
+        console.warn("Coach upcoming events unavailable:", error);
+        host.innerHTML = "";
+        const fallback = document.createElement("div");
+        fallback.className = "coach-upcoming-empty";
+        fallback.textContent = "Upcoming events are temporarily unavailable.";
+        host.appendChild(fallback);
+    }
 }
 
 // Mult-age register ===========================

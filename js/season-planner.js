@@ -25,6 +25,34 @@ function spDate(value) {
     return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : value;
 }
 function spTime(value) { return value ? String(value).slice(0,5) : ""; }
+function spMapsUrl(address) {
+    const value=String(address||"").trim();
+    return value ? "https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(value) : "";
+}
+function shareSeasonPlannerEventWhatsApp(eventId) {
+    const event=(seasonPlannerData?.events||[]).find(x=>Number(x.id)===Number(eventId));
+    if(!event) return appAlert("This event could not be found.","Share unavailable","warning");
+    const group=spGroupCalendarEvents(seasonPlannerData.events.filter(x=>
+        x.event_date===event.event_date && spEventGroupKey(x)===spEventGroupKey(event)
+    )).find(g=>g.items.some(x=>Number(x.id)===Number(eventId)));
+    const date=new Date(event.event_date+"T12:00:00").toLocaleDateString("en-GB",{
+        weekday:"long",day:"numeric",month:"long",year:"numeric"
+    });
+    const venue=String(event.venue||"").trim();
+    const lines=[
+        "🏉 Rushden & Higham RUFC",
+        event.title,
+        date,
+        [spTime(event.start_time),spTime(event.end_time)].filter(Boolean).join(" – "),
+        venue ? "📍 Venue: "+venue : "",
+        venue ? "🗺️ Directions: "+spMapsUrl(venue) : "",
+        group?.ageLabel ? "Age groups: "+group.ageLabel : "",
+        event.notes ? "Notes: "+event.notes : "",
+        "Parent Home / availability: "+MATCH_AVAILABILITY_URL
+    ].filter(Boolean);
+    const message=lines.join("\n");
+    window.location.href="https://wa.me/?text="+encodeURIComponent(message);
+}
 function spToday() { return getTodayKey(); }
 function spDay(value) {
     return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][Number(value)] || "";
@@ -239,8 +267,9 @@ function spRenderCalendar(){
         const fixtureId=(g.items||[]).map(item=>seasonPlannerAvailabilityByEvent.get(Number(item.id))).find(Boolean);
         const availabilityOn=x.availability_enabled!==false&&!["holiday","cancelled"].includes(x.event_type);
         const edit=past?'<span class="sp-lock-note">Past session</span>':'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';
-        const actions=fixtureId?'<div class="sp-calendar-actions"><button class="secondary-button" onclick="spReviewAvailability('+fixtureId+')">Review availability</button>'+edit+'<button class="secondary-button" onclick="copyMatchFixtureLink('+fixtureId+')">Copy Fixture Link</button></div>':(availabilityOn?'<div class="sp-calendar-actions"><span class="sp-field-hint">Availability link will be created when a Senior user next opens the Season Calendar.</span>'+edit+'</div>':'<div class="sp-calendar-actions">'+edit+'</div>');
-        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+(x.venue?' · '+spEsc(x.venue):'')+'</div>'+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+actions+'</div></div>';
+        const mapLink=spMapsUrl(x.venue);
+        const actions='<div class="sp-calendar-actions">'+(fixtureId?'<button class="secondary-button" onclick="spReviewAvailability('+fixtureId+')">Review availability</button><button class="secondary-button" onclick="copyMatchFixtureLink('+fixtureId+')">Copy Fixture Link</button>':(availabilityOn?'<span class="sp-field-hint">Availability link will be created when a Senior user next opens the Season Calendar.</span>':''))+'<button class="secondary-button" onclick="shareSeasonPlannerEventWhatsApp('+x.id+')">Share via WhatsApp</button>'+edit+'</div>';
+        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+(past?'<span class="sp-locked-tag">Past</span>':'')+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+'</div>'+(x.venue?'<div class="sp-event-meta">Venue: '+spEsc(x.venue)+(mapLink?' · <a href="'+spEsc(mapLink)+'" target="_blank" rel="noopener">Open in Google Maps</a>':'')+'</div>':'')+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+actions+'</div></div>';
     }).join("")||'<div class="sp-empty">No events found for these filters.</div>';
     const toolbar=currentRole==="coach"
         ? '<div class="sp-calendar-toolbar"><div class="sp-field-hint">Showing '+spEsc((selectedAgeGroups||[]).join(" + "))+" and club-wide events</div><button class=\"secondary-button\" onclick=\"copyCentralMatchParentLink()\">Copy Parent Home Link</button></div>"
@@ -531,7 +560,7 @@ function spRenderEventEditor() {
         '<div class="form-group"><label for="spEditDate">Date</label><input id="spEditDate" type="date" min="'+(seasonPlannerData.season.start_date||"")+'" max="'+(seasonPlannerData.season.end_date||"")+'" value="'+event.event_date+'"></div>'+
         '<div class="sp-form-grid"><div class="form-group"><label for="spEditStart">Start time</label><input id="spEditStart" type="time" value="'+spTime(event.start_time)+'"></div><div class="form-group"><label for="spEditEnd">End time</label><input id="spEditEnd" type="time" value="'+spTime(event.end_time)+'"></div></div>'+
         '<div class="form-group" id="spMatchLocationWrap" style="display:'+(event.event_type==="match"?"block":"none")+'"><label for="spEditMatchLocation">Match location</label><select id="spEditMatchLocation" onchange="spUpdateMatchEditorFields()"><option value="home" '+((event.match_location||"home")==="home"?"selected":"")+'>Home</option><option value="away" '+(event.match_location==="away"?"selected":"") +'>Away</option></select></div>'+
-        '<div class="form-group"><label id="spEditVenueLabel" for="spEditVenue">'+(isHomeMatch?"Home venue":event.event_type==="match"?"Away venue / address":"Location")+'</label><input id="spEditVenue" maxlength="240" value="'+spEsc(event.venue||(isHomeMatch?"Rushden & Higham RUFC":""))+'" placeholder="'+(event.event_type==="match"&&!isHomeMatch?"Enter away ground name and address":"")+'" '+(isHomeMatch?'readonly':'')+'><div id="spEditVenueHint" class="sp-field-hint">'+(isHomeMatch?"The club home venue is set automatically.":event.event_type==="match"?"Enter the opposition's ground or full address.":"")+'</div></div>'+
+        '<div class="form-group"><label id="spEditVenueLabel" for="spEditVenue">'+(isHomeMatch?"Home venue":event.event_type==="match"?"Away venue / address":"Location")+'</label><textarea id="spEditVenue" maxlength="500" rows="3" placeholder="'+(event.event_type==="match"&&!isHomeMatch?"Enter away ground name and full address":"Enter venue or full address")+'" '+(isHomeMatch?'readonly':'')+'>'+spEsc(event.venue||(isHomeMatch?"Rushden & Higham RUFC":""))+'</textarea><div id="spEditVenueHint" class="sp-field-hint">'+(isHomeMatch?"The club home venue is set automatically.":event.event_type==="match"?"Enter the opposition's ground or full address.":"")+'</div></div>'+
         '<div class="form-group"><label for="spEditNotes">Notes</label><textarea id="spEditNotes" maxlength="1000" rows="3" placeholder="Add useful information for coaches and parents">'+spEsc(event.notes||"")+'</textarea></div>'+
         '<div class="form-group"><label class="sp-availability-setting"><span><strong>Request availability</strong><small>Parents will be asked to respond for this event.</small></span><span class="sp-switch"><input type="checkbox" id="spEditAvailability" '+(event.availability_enabled!==false && !["holiday","cancelled"].includes(event.event_type)?"checked":"")+' '+(["holiday","cancelled"].includes(event.event_type)?"disabled":"")+'><span class="sp-switch-track"></span></span></label><div class="sp-field-hint">On by default for training, matches and other events. Holidays and cancelled events cannot request availability.</div></div>'+ 
         '<div class="sp-editor-actions"><button class="primary-button" onclick="saveSeasonPlannerEvent('+event.id+')">Save changes</button> <button class="secondary-button" onclick="spSetPage(\'calendar\')">Cancel</button></div>'+

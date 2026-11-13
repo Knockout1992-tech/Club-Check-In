@@ -24,3 +24,17 @@ const supabaseClient =
             }
         }
     );
+
+// Keep the installation identifier current if the app regenerates it after
+// detecting a duplicate device registration.
+function setInstallationRequestHeader(installationID) {
+    const headers = supabaseClient.rest?.headers;
+    if (!headers) return;
+
+    const value = "club-check-in-installation=" + installationID;
+    if (typeof headers.set === "function") {
+        headers.set("x-client-info", value);
+    } else {
+        headers["x-client-info"] = value;
+    }
+}

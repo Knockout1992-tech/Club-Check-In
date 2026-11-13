@@ -435,6 +435,7 @@ async function showCoachDashboard() {
             <div id="coachUpcomingSummary" class="coach-upcoming-summary">
                 <div class="coach-upcoming-loading">Loading upcoming events…</div>
             </div>
+            <div id="coachAvailabilitySnapshot" class="dashboard-availability-host"></div>
 
             <div class="menu-grid coach-dashboard-menu">
 
@@ -469,7 +470,98 @@ async function showCoachDashboard() {
     `);
 
     loadCoachDashboardUpcoming(groups);
+    loadDashboardAvailabilitySnapshot("coachAvailabilitySnapshot", "coach", groups);
 
+}
+
+async function loadDashboardAvailabilitySnapshot(hostId, role, groups) {
+    const host = document.getElementById(hostId);
+    if (!host) return;
+    host.innerHTML = "";
+
+    try {
+        const plannerResult = role === "senior"
+            ? await supabaseClient.rpc("get_season_planner", {
+                supplied_code: currentSeniorPIN,
+                requested_season_id: null
+            })
+            : await supabaseClient.rpc("get_coach_season_planner", {
+                supplied_code: currentAccessPIN,
+                requested_age_groups: [...groups]
+            });
+
+        if (plannerResult.error) throw plannerResult.error;
+
+        const today = getTodayKey();
+        const events = (plannerResult.data?.events || [])
+            .filter(event =>
+                event.event_date >= today &&
+                event.availability_enabled === true &&
+                !["holiday", "cancelled"].includes(String(event.event_type || "").toLowerCase()) &&
+                event.linked_fixture_id
+            )
+            .sort((a, b) =>
+                a.event_date.localeCompare(b.event_date) ||
+                String(a.start_time || "").localeCompare(String(b.start_time || ""))
+            );
+
+        if (!events.length) return;
+
+        const fixturesResult = await matchAdminCall("admin_fixtures", { action: "list" });
+        const fixture = (fixturesResult.fixtures || []).find(item =>
+            Number(item.id) === Number(events[0].linked_fixture_id)
+        );
+        if (!fixture) return;
+
+        const available = Number(fixture.available_count || 0);
+        const unavailable = Number(fixture.unavailable_count || 0);
+        const event = events[0];
+
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "dashboard-availability-card";
+        card.addEventListener("click", () => {
+            if (role === "senior") showSeasonPlanner();
+            else showCoachSeasonPlanner();
+        });
+
+        const heading = document.createElement("span");
+        heading.className = "dashboard-availability-heading";
+        heading.textContent = "Player availability";
+
+        const eventName = document.createElement("span");
+        eventName.className = "dashboard-availability-event";
+        eventName.textContent = event.title || fixture.opposition || "Upcoming event";
+
+        const date = document.createElement("span");
+        date.className = "dashboard-availability-date";
+        date.textContent = new Date(event.event_date + "T12:00:00").toLocaleDateString("en-GB", {
+            weekday: "short", day: "numeric", month: "short"
+        });
+
+        const counts = document.createElement("span");
+        counts.className = "dashboard-availability-counts";
+
+        const availableCount = document.createElement("span");
+        availableCount.className = "dashboard-availability-available";
+        availableCount.textContent = available + " available";
+
+        const unavailableCount = document.createElement("span");
+        unavailableCount.className = "dashboard-availability-unavailable";
+        unavailableCount.textContent = unavailable + " unavailable";
+
+        counts.append(availableCount, unavailableCount);
+        card.append(heading, eventName, date, counts);
+
+        const hint = document.createElement("span");
+        hint.className = "dashboard-availability-hint";
+        hint.textContent = "Tap to open Season Calendar";
+        card.appendChild(hint);
+        host.appendChild(card);
+    } catch (error) {
+        console.warn("Dashboard availability snapshot unavailable:", error);
+        host.innerHTML = '<div class="dashboard-availability-error">Availability summary temporarily unavailable.</div>';
+    }
 }
 
 async function loadCoachDashboardUpcoming(groups) {
@@ -1913,6 +2005,8 @@ function showSeniorDashboard() {
 
             </div>
 
+            <div id="seniorAvailabilitySnapshot" class="dashboard-availability-host"></div>
+
             ${
                 archiveReviewCount > 0
                 ? `
@@ -2000,6 +2094,8 @@ function showSeniorDashboard() {
         </div>
 
     `);
+
+    loadDashboardAvailabilitySnapshot("seniorAvailabilitySnapshot", "senior", []);
 
 }
 

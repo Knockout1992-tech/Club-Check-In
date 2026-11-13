@@ -1236,14 +1236,58 @@ h2 {
     }
 }
 
-/* Correct Season Calendar layout: target the actual planner markup */
-.season-planner-shell #seasonPlannerContent .sp-calendar-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px;margin:4px 0 0}
+/* Season Calendar controls: consistent sizing with labels kept inside their buttons */
+.season-planner-shell #seasonPlannerContent .sp-calendar-toolbar{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:end;
+    gap:10px;
+    margin:4px 0 0;
+}
 .season-planner-shell #seasonPlannerContent .sp-calendar-toolbar .form-group{min-width:0;margin:0!important}
 .season-planner-shell #seasonPlannerContent .sp-calendar-toolbar select{width:100%;min-width:0}
-.season-planner-shell #seasonPlannerContent .sp-calendar-toolbar>button{white-space:nowrap;min-height:46px;margin:0}
-.season-planner-shell #seasonPlannerContent .sp-calendar-filter-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:12px 0 15px}
-.season-planner-shell #seasonPlannerContent .sp-calendar-actions{display:flex;flex-wrap:nowrap;align-items:stretch;gap:8px}
-.season-planner-shell #seasonPlannerContent .sp-calendar-actions button{flex:1 1 0;min-width:0;white-space:nowrap}
+.season-planner-shell #seasonPlannerContent .sp-calendar-toolbar>button{
+    box-sizing:border-box;
+    min-height:44px;
+    max-width:100%;
+    padding:9px 12px;
+    white-space:normal;
+    line-height:1.2;
+    text-align:center;
+}
+.season-planner-shell #seasonPlannerContent .sp-calendar-filter-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px 22px;
+    padding:12px 0 15px;
+}
+.season-planner-shell #seasonPlannerContent .sp-calendar-actions{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    align-items:stretch;
+    gap:8px;
+    width:100%;
+    margin-top:12px;
+}
+.season-planner-shell #seasonPlannerContent .sp-calendar-actions button{
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-width:0;
+    min-height:44px;
+    margin:0;
+    padding:8px 5px;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-align:center;
+    line-height:1.2;
+    font-size:12px;
+}
+.season-planner-shell #seasonPlannerContent .sp-calendar-actions .sp-field-hint{grid-column:1/-1}
+.season-planner-shell #seasonPlannerContent .sp-calendar-actions button:only-child{grid-column:1/-1}
 .sp-response-summary-head,.sp-response-summary{display:grid;grid-template-columns:minmax(74px,1.2fr) repeat(3,minmax(62px,.8fr));align-items:center;gap:8px}
 .sp-response-summary-head{padding:10px 0 7px;color:#666;font-size:11px;font-weight:700;text-align:center}
 .sp-response-summary-head span:first-child{text-align:left}
@@ -1255,10 +1299,10 @@ h2 {
 .sp-count-unsure{background:#fff3cd;color:#664d03}
 @media(max-width:520px){
 .season-planner-shell #seasonPlannerContent .sp-calendar-toolbar{grid-template-columns:minmax(0,1fr) auto;gap:7px}
-.season-planner-shell #seasonPlannerContent .sp-calendar-toolbar>button{padding:9px 10px;font-size:12px}
+.season-planner-shell #seasonPlannerContent .sp-calendar-toolbar>button{padding:8px 9px;font-size:11px}
 .season-planner-shell #seasonPlannerContent .sp-calendar-filter-row{flex-direction:row;align-items:center;gap:10px 16px}
 .season-planner-shell #seasonPlannerContent .sp-calendar-actions{gap:5px}
-.season-planner-shell #seasonPlannerContent .sp-calendar-actions button{padding:8px 5px;font-size:11px}
+.season-planner-shell #seasonPlannerContent .sp-calendar-actions button{min-height:44px;padding:7px 3px;font-size:11px}
 .sp-response-summary-head,.sp-response-summary{grid-template-columns:minmax(55px,1.1fr) repeat(3,minmax(45px,.8fr));gap:5px}
 .sp-response-summary-head{font-size:10px}
 .sp-response-summary>strong{font-size:12px}

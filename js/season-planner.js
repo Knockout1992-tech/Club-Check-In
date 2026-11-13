@@ -27,7 +27,10 @@ function spDate(value) {
 function spTime(value) { return value ? String(value).slice(0,5) : ""; }
 function spMapsUrl(address) {
     const value=String(address||"").trim();
-    return value ? "https://maps.google.com/?q="+encodeURIComponent(value) : "";
+    if (!value) return "";
+    // Venue names are normally entered before the first comma.
+    const searchValue=value.split(",")[0].trim() || value;
+    return "https://maps.google.com/?q="+encodeURIComponent(searchValue);
 }
 function shareSeasonPlannerEventWhatsApp(eventId) {
     const event=(seasonPlannerData?.events||[]).find(x=>Number(x.id)===Number(eventId));

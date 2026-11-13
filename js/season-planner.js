@@ -1,5 +1,5 @@
 /* =========================================================
-   SEASON PLANNER — SENIOR ADMIN
+   SEASON PLANNER — ADMIN
    Protected through Senior-PIN-verified Supabase RPCs.
    ========================================================= */
 

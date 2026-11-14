@@ -172,14 +172,14 @@ function renderRetentionRunSummary(summary,mode) {
     const rows=retentionSummaryRows(summary,"").filter(r=>!/^invitation rows (checked|deleted)$/i.test(r.label));
     let html="";
     if(hasInvitationCount) {
-        html+='<div class="retention-key-result"><strong>'+invitationCount.toLocaleString("en-GB")+'</strong><span>Invitations eligible for automatic removal</span></div>';
+        html+='<div class="retention-key-result"><strong>'+invitationCount.toLocaleString("en-GB")+'</strong><span>'+(invitationCount===1?"1 invitation is":"Invitations are")+' eligible for automatic removal</span></div>';
         html+='<p class="retention-no-changes">'+(invitationCount>0
-            ?'These invitations have been accepted, revoked/cancelled or expired. They are due to be removed at the next daily cleanup (03:15 UTC (04:15 during British Summer Time)).'
-            :'No accepted, revoked/cancelled or expired invitations are waiting for removal.')+'</p>';
+            ?'What this means: '+invitationCount.toLocaleString("en-GB")+' invitation record'+(invitationCount===1?" has":"s have")+' already been accepted, revoked/cancelled or expired. '+(invitationCount===1?"It is":"They are")+' no longer needed for a response and will be deleted by the next scheduled cleanup at 03:15 UTC (04:15 during British Summer Time), provided this rule remains switched on.'
+            :'What this means: there are currently no accepted, revoked/cancelled or expired invitation records waiting to be deleted.')+'</p>';
     }
     if(rows.length) html+='<ul class="retention-result-list">'+rows.map(r=>'<li><span>'+escapeHTML(retentionHumanLabel(r.label))+'</span><strong>'+r.value.toLocaleString("en-GB")+'</strong></li>').join("")+'</ul>';
-    if(!html) html='<p class="retention-no-changes">'+(preview?"No records were identified for removal or checking. Nothing has been changed":"No record changes were reported")+'</p>';
-    if(preview) html+='<p class="retention-no-changes">Preview only — no records have been changed or deleted</p>';
+    if(!html) html='<p class="retention-no-changes">'+(preview?"No records are due for action under the current rules. Nothing has been changed":"No record changes were reported")+'</p>';
+    if(preview) html+='<p class="retention-no-changes">Preview only — nothing has been changed or deleted.</p>';
     return html;
 }
 function showRetentionAdmin() {
@@ -204,7 +204,7 @@ function showRetentionAdmin() {
         '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
         (manual?'<p class="retention-manual-note">An administrator must check these records first. The app will not remove them automatically</p>':"")+'</section>';
       }).join("")||'<div class="empty">No record-keeping rules are available</div>')+
-      '</div><section class="retention-section"><h3>Preview check</h3><p>Check which records are due for action. This does not change or delete anything</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></section>'+
+      '</div><section class="retention-section"><h3>Preview check</h3><p>This is a safe practice run. It checks records against the rules above and shows what the system would act on. It does not change or delete any records.</p><p><strong>For invitations:</strong> it counts invitations that have already been accepted, revoked/cancelled or expired. Those are the only invitations eligible for automatic removal.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></section>'+
       '<section class="retention-section"><h3>Previous checks</h3>'+
       (runs.map(r=>'<div class="retention-history"><strong>'+escapeHTML(retentionFriendlyMode(r.run_mode))+' — '+escapeHTML(retentionFriendlyStatus(r.status))+'</strong><div class="subtitle">'+escapeHTML(retentionFriendlyDate(r.started_at))+'</div>'+renderRetentionRunSummary(r.summary,r.run_mode)+'</div>').join("")||'<div class="empty">No checks have been run yet</div>')+
       '</section><section class="retention-section"><h3>Changes to these rules</h3>'+

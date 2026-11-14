@@ -730,6 +730,9 @@ let latestCreatedFixtureLink = null;
 const MATCH_AVAILABILITY_URL =
     "https://club-match-availability.pages.dev/";
 
+const PARENT_PORTAL_URL =
+    "https://rhrfc-mini.pages.dev/";
+
 
 function matchAdminEscape(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -1448,7 +1451,7 @@ async function createMatchFixtureFromForm() {
 
 async function copyLatestCentralParentLink() {
     try {
-        await navigator.clipboard.writeText(MATCH_AVAILABILITY_URL);
+        await navigator.clipboard.writeText(PARENT_PORTAL_URL);
         await appAlert("The central parent home link has been copied.", "Link copied", "success");
     } catch (error) {
         console.error("Copy central link failed:", error);

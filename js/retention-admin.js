@@ -29,8 +29,30 @@ function showSystemAdminLogin() {
                 <div id="systemAdminPinError" class="error"></div>
                 <button class="primary-button" type="submit">Unlock System Admin</button>
             </form>
+            <button class="secondary-button" style="width:100%;margin-top:12px"
+                onclick="initialiseSystemAdmin()">First-time System Admin setup</button>
         </div>`);
     document.getElementById("systemAdminPinInput").focus();
+}
+
+async function initialiseSystemAdmin() {
+    const confirmed = await appConfirm(
+        "This will create the separate System Admin PIN using the temporary setup PIN. You must change it immediately after first access.",
+        "Set up System Admin?",
+        "Set up System Admin"
+    );
+    if (!confirmed) return;
+    const { data, error } = await supabaseClient.rpc("setup_system_admin_pin", {
+        supplied_senior_code: currentSeniorPIN,
+        requested_system_admin_pin: "1111"
+    });
+    if (error || data !== true) {
+        await appAlert(error?.message || "Unable to initialise System Admin.", "Setup failed", "danger");
+        return;
+    }
+    const input = document.getElementById("systemAdminPinInput");
+    if (input) input.value = "1111";
+    await unlockSystemAdmin();
 }
 
 async function unlockSystemAdmin() {

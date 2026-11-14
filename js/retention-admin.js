@@ -184,24 +184,24 @@ function showRetentionAdmin() {
       '<div class="retention-heading"><div><h2>System Admin</h2><div class="subtitle">Control how long club records are kept</div></div><button class="secondary-button small-button" onclick="showSystemAdminChangePin(false)">Change PIN</button></div>'+
       '<div class="retention-intro"><p>Choose how long records are kept and whether they are removed automatically.</p></div>'+
       renderClubPolicyEditor(retentionAdminData.policy_content||{})+
-      '<h3>Retention rules</h3><div class="retention-policy-list">'+
+      '<details class="admin-collapse"><summary>Retention rules — Configure how long records are kept</summary><div class="admin-collapse-body"><div class="retention-policy-list">'+
       (policies.map(p=>{
         const key=escapeHTML(p.policy_key);
         const amount=Number(p.retention_value)||0;
         const isInvitation=/invitation|invite/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
         const unit=String(p.retention_unit||"").replace(/s$/,"")+(amount===1?"":"s");
         const manual=String(p.action||"").toLowerCase()==="review"&&!/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
-        return '<section class="retention-policy"><div class="retention-policy-title"><strong>'+escapeHTML(p.record_type||retentionHumanLabel(p.policy_key))+'</strong><span class="retention-status '+(p.enforcement_enabled?"is-on":"")+'">'+(p.enforcement_enabled?"Automatic removal ON":"Automatic removal OFF")+'</span></div>'+
+        return '<details class="retention-policy admin-policy-item"><summary class="retention-policy-title"><strong>'+escapeHTML(p.record_type||retentionHumanLabel(p.policy_key))+'</strong><span class="retention-status '+(p.enforcement_enabled?"is-on":"")+'">'+(p.enforcement_enabled?"Automatic removal ON":"Automatic removal OFF")+'</span></summary>'+
         '<p class="retention-description">'+escapeHTML(retentionPolicyDescription(p))+'</p>'+
         (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
         '<label class="retention-active"><input type="checkbox" id="retention-enabled-'+key+'" '+(p.enabled?"checked":"")+'><span>This rule is active</span></label>'+
         '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
-        (manual?'<p class="retention-manual-note">Manual review required. These records are not removed automatically.</p>':(/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""))?'<p class="retention-manual-note">Automatic processing runs daily at 03:15 UTC when enforcement is enabled.</p>':""))+'</section>';
+        (manual?'<p class="retention-manual-note">Manual review required. These records are not removed automatically.</p>':(/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""))?'<p class="retention-manual-note">Automatic processing runs daily at 03:15 UTC when enforcement is enabled.</p>':""))+'</details>';
       }).join("")||'<div class="empty">No record-keeping rules are available</div>')+
-      '</div><section class="retention-section"><h3>Preview check</h3><p>Checks which records meet the rules above. It does not change or delete anything.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></section>'+
-      '<section class="retention-section"><h3>Previous checks</h3>'+
+      '</div></div></details><details class="admin-collapse"><summary>Preview check — See which records are ready for removal</summary><div class="admin-collapse-body"><p>Checks which records meet the rules above. It does not change or delete anything.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></div></details>'+
+      '<details class="admin-collapse"><summary>Previous checks — View earlier retention runs</summary><div class="admin-collapse-body">'+
       (runs.map(r=>'<div class="retention-history"><strong>'+escapeHTML(retentionFriendlyMode(r.run_mode))+' — '+escapeHTML(retentionFriendlyStatus(r.status))+'</strong><div class="subtitle">'+escapeHTML(retentionFriendlyDate(r.started_at))+'</div>'+renderRetentionRunSummary(r.summary,r.run_mode)+'</div>').join("")||'<div class="empty">No checks have been run yet</div>')+
-      '</section><button class="secondary-button" onclick="closeSystemAdmin()">Close System Admin</button></div>'
+      '</div></details><button class="secondary-button" onclick="closeSystemAdmin()">Close System Admin</button></div>'
     );
 }
 async function saveRetentionPolicy(key) {
@@ -264,7 +264,7 @@ function renderClubPolicyEditor(content) {
       :'<input id="policy-'+id+'" type="text" maxlength="1000" value="'+escapeHTML(value||"")+'">')+'</label>';
     const roleRows=roles.map((r,i)=>clubPolicyRoleMarkup(r.role,r.responsibility)).join("");
     return '<style>.retention-policy-editor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.retention-policy-field,.retention-role-editor label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}.retention-policy-field input,.retention-policy-field textarea,.retention-role-editor input,.retention-role-editor textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #bbb;border-radius:8px;font:inherit;background:#fff;color:#111}.retention-role-editor{display:grid;grid-template-columns:minmax(130px,.8fr) minmax(220px,2fr) auto;gap:10px;align-items:end;border:1px solid #ddd;border-radius:10px;padding:12px;margin:10px 0}.retention-role-editor button{white-space:nowrap}@media(max-width:600px){.retention-role-editor{grid-template-columns:1fr}}</style>'+
-      '<section class="retention-section" id="club-policy-editor"><h3>Privacy policy wording</h3>'+
+      '<details class="admin-collapse" id="club-policy-editor"><summary>Privacy policy wording — Edit public-facing wording and responsibilities</summary><div class="admin-collapse-body"><section class="retention-section"><h3>Privacy policy wording</h3>'+
       '<p>Update the public-facing wording here. Changes appear on the privacy policy page without editing website code.</p>'+
       '<div class="retention-policy-editor-grid">'+
       field("document_owner","Document owner",c.document_owner)+
@@ -281,7 +281,7 @@ function renderClubPolicyEditor(content) {
       '<h4>Roles and responsibilities</h4><div id="club-policy-roles">'+roleRows+'</div>'+
       '<button class="secondary-button small-button" onclick="addClubPolicyRole()">Add responsibility</button> '+
       '<button class="primary-button" onclick="saveClubPolicyContent()">Save privacy policy wording</button>'+
-      '<p class="retention-manual-note">Only System Admin can change this content. Changes are recorded in the system audit log.</p></section>';
+      '<p class="retention-manual-note">Only System Admin can change this content. Changes are recorded in the system audit log.</p></section></div></details>';
 }
 function clubPolicyRoleMarkup(role="",responsibility="") {
     return '<div class="retention-role-editor"><label><span>Role / contact</span><input class="policy-role-name" maxlength="100" value="'+escapeHTML(role)+'"></label><label><span>Responsibility</span><textarea class="policy-role-responsibility" rows="3" maxlength="600">'+escapeHTML(responsibility)+'</textarea></label><button class="red-button small-button" type="button" onclick="this.parentElement.remove()">Remove</button></div>';

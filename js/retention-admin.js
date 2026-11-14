@@ -142,12 +142,12 @@ function retentionHumanLabel(value) {
 function retentionPolicyDescription(p) {
     const key=String(p.policy_key||"").toLowerCase()+" "+String(p.record_type||"").toLowerCase();
     const action=String(p.action||"").toLowerCase();
-    if(/archiv/.test(key)) return "Keep archived player details for the period shown. An administrator must review the record before personal details are removed. Attendance history is kept.";
+    if(/archiv/.test(key)) return "Automatically anonymise archived player details after the configured number of completed seasons. Player IDs and attendance history remain linked.";
     if(/attendance/.test(key)) return "Remove individual attendance records after the period shown. Season totals and attendance history are kept";
     if(/cancel/.test(key)) return "Keep responses for cancelled matches for the period shown, then remove those responses";
     if(/invitation|invite/.test(key)) return "Remove an invitation after it has been accepted, cancelled or expired";
     if(/availability|match.response/.test(key)) return "Keep match availability responses for the period shown after the fixture date, then remove the responses";
-    if(/parent|family|account.link/.test(key)) return "Keep parent account links while they are needed. An administrator must review them before removal.";
+    if(/parent|family|account.link/.test(key)) return "Automatically remove parent accounts and family links after the configured period without meaningful activity. Successful availability updates and family-sharing changes reset the activity clock; sign-in and failed PIN attempts do not.";
     if(/security|audit|log/.test(key)) return "Keep club security records for the period shown, then remove them. Supplier-held records follow the supplier's own settings";
     if(action==="anonymise") return "Remove personal details after the period shown while keeping the remaining record";
     if(action==="review") return "An administrator must check these records before they are removed. They will not be removed automatically";
@@ -189,13 +189,13 @@ function showRetentionAdmin() {
         const amount=Number(p.retention_value)||0;
         const isInvitation=/invitation|invite/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
         const unit=String(p.retention_unit||"").replace(/s$/,"")+(amount===1?"":"s");
-        const manual=String(p.action||"").toLowerCase()==="review"||/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
+        const manual=String(p.action||"").toLowerCase()==="review"&&!/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
         return '<section class="retention-policy"><div class="retention-policy-title"><strong>'+escapeHTML(p.record_type||retentionHumanLabel(p.policy_key))+'</strong><span class="retention-status '+(p.enforcement_enabled?"is-on":"")+'">'+(p.enforcement_enabled?"Automatic removal ON":"Automatic removal OFF")+'</span></div>'+
         '<p class="retention-description">'+escapeHTML(retentionPolicyDescription(p))+'</p>'+
         (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
         '<label class="retention-active"><input type="checkbox" id="retention-enabled-'+key+'" '+(p.enabled?"checked":"")+'><span>This rule is active</span></label>'+
         '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
-        (manual?'<p class="retention-manual-note">Manual review required. These records are not removed automatically.</p>':"")+'</section>';
+        (manual?'<p class="retention-manual-note">Manual review required. These records are not removed automatically.</p>':(/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""))?'<p class="retention-manual-note">Automatic processing runs daily at 03:15 UTC when enforcement is enabled.</p>':""))+'</section>';
       }).join("")||'<div class="empty">No record-keeping rules are available</div>')+
       '</div><section class="retention-section"><h3>Preview check</h3><p>Checks which records meet the rules above. It does not change or delete anything.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></section>'+
       '<section class="retention-section"><h3>Previous checks</h3>'+

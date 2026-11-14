@@ -728,7 +728,7 @@ let matchAdminAgeGroups = [];
 let latestCreatedFixtureLink = null;
 
 const MATCH_AVAILABILITY_URL =
-    "https://club-match-availability.pages.dev/";
+    "https://rhrfc-mini.pages.dev/";
 
 const PARENT_PORTAL_URL =
     "https://rhrfc-mini.pages.dev/";

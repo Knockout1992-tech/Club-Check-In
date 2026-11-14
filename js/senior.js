@@ -728,7 +728,7 @@ let matchAdminAgeGroups = [];
 let latestCreatedFixtureLink = null;
 
 const MATCH_AVAILABILITY_URL =
-    "https://knockout1992-tech.github.io/Club-Match-Availability/";
+    "https://club-match-availability.pages.dev/";
 
 
 function matchAdminEscape(value) {

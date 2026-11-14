@@ -183,6 +183,7 @@ function showRetentionAdmin() {
       '<button class="back-button" onclick="closeSystemAdmin()">← Admin Dashboard</button>'+
       '<div class="retention-heading"><div><h2>System Admin</h2><div class="subtitle">Control how long club records are kept</div></div><button class="secondary-button small-button" onclick="showSystemAdminChangePin(false)">Change PIN</button></div>'+
       '<div class="retention-intro"><p>Choose how long records are kept and whether they are removed automatically.</p></div>'+
+      renderClubPolicyEditor(retentionAdminData.policy_content||{})+
       '<h3>Retention rules</h3><div class="retention-policy-list">'+
       (policies.map(p=>{
         const key=escapeHTML(p.policy_key);
@@ -250,4 +251,58 @@ async function refreshRetentionAdmin(message) {
     retentionAdminData = data;
     showRetentionAdmin();
     if (message) await appAlert(message, "System Admin", "success");
+}
+
+
+function renderClubPolicyEditor(content) {
+    const c=content||{};
+    const roles=Array.isArray(c.roles)?c.roles:[];
+    const field=(id,label,value,multi=false)=>'<label class="retention-policy-field"><span>'+label+'</span>'+(multi
+      ?'<textarea id="policy-'+id+'" rows="3">'+escapeHTML(value||"")+'</textarea>'
+      :'<input id="policy-'+id+'" type="text" maxlength="1000" value="'+escapeHTML(value||"")+'">')+'</label>';
+    const roleRows=roles.map((r,i)=>'<div class="retention-role-editor"><label><span>Role / contact</span><input id="policy-role-'+i+'" maxlength="100" value="'+escapeHTML(r.role||"")+'"></label><label><span>Responsibility</span><textarea id="policy-responsibility-'+i+'" rows="3" maxlength="600">'+escapeHTML(r.responsibility||"")+'</textarea></label></div>').join("");
+    return '<section class="retention-section" id="club-policy-editor"><h3>Privacy policy wording</h3>'+
+      '<p>Update the public-facing wording here. Changes appear on the privacy policy page without editing website code.</p>'+
+      '<div class="retention-policy-editor-grid">'+
+      field("document_owner","Document owner",c.document_owner)+
+      field("approval_status","Approval status",c.approval_status)+
+      field("draft_notice","Draft notice",c.draft_notice,true)+
+      field("privacy_contact","Privacy contact wording",c.privacy_contact,true)+
+      field("controller_description","Who is responsible?",c.controller_description,true)+
+      field("rights_contact_instruction","Privacy requests wording",c.rights_contact_instruction,true)+
+      field("incident_contact_instruction","Incident reporting wording",c.incident_contact_instruction,true)+
+      field("review_frequency","Review frequency",c.review_frequency,true)+
+      field("next_review","Next review wording",c.next_review,true)+
+      '</div><h4>Roles and responsibilities</h4>'+roleRows+
+      '<button class="primary-button" onclick="saveClubPolicyContent('+roles.length+')">Save privacy policy wording</button>'+
+      '<p class="retention-manual-note">Only System Admin can change this content. Changes are recorded in the system audit log.</p></section>';
+}
+
+async function saveClubPolicyContent(roleCount) {
+    if(!requireSystemAdminSession())return;
+    const get=id=>document.getElementById("policy-"+id)?.value?.trim()||"";
+    const roles=[];
+    for(let i=0;i<roleCount;i++){
+      const role=document.getElementById("policy-role-"+i)?.value?.trim()||"";
+      const responsibility=document.getElementById("policy-responsibility-"+i)?.value?.trim()||"";
+      if(!role){await appAlert("Every role needs a name. Remove unused rows before saving.","Check the role list","warning");return;}
+      roles.push({role,responsibility});
+    }
+    const content={
+      document_owner:get("document_owner"),
+      approval_status:get("approval_status"),
+      draft_notice:get("draft_notice"),
+      privacy_contact:get("privacy_contact"),
+      controller_description:get("controller_description"),
+      rights_contact_instruction:get("rights_contact_instruction"),
+      incident_contact_instruction:get("incident_contact_instruction"),
+      review_frequency:get("review_frequency"),
+      next_review:get("next_review"),
+      roles
+    };
+    const {data,error}=await supabaseClient.rpc("update_club_policy_content",{
+      system_admin_pin:currentSystemAdminPIN,requested_content:content
+    });
+    if(error){await appAlert(error.message,"Unable to save policy wording","danger");return;}
+    await refreshRetentionAdmin("Privacy policy wording saved.");
 }

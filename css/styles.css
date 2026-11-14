@@ -1363,3 +1363,6 @@ h2 {
 }
 .coach-upcoming-available { color:#287a4b; }
 .coach-upcoming-unavailable { color:#b4232f; }
+
+.sp-available-count{margin-top:8px;color:#287a4b;font-size:13px;line-height:1.4}
+.sp-available-count strong{font-weight:800}

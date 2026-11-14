@@ -142,12 +142,12 @@ function retentionHumanLabel(value) {
 function retentionPolicyDescription(p) {
     const key=String(p.policy_key||"").toLowerCase()+" "+String(p.record_type||"").toLowerCase();
     const action=String(p.action||"").toLowerCase();
-    if(/archiv/.test(key)) return "Keep archived player details for the period shown. After that, an administrator must check the player record before personal details are removed. Attendance history is kept";
+    if(/archiv/.test(key)) return "Keep archived player details for the period shown. An administrator must review the record before personal details are removed. Attendance history is kept.";
     if(/attendance/.test(key)) return "Remove individual attendance records after the period shown. Season totals and attendance history are kept";
     if(/cancel/.test(key)) return "Keep responses for cancelled matches for the period shown, then remove those responses";
     if(/invitation|invite/.test(key)) return "Remove an invitation after it has been accepted, cancelled or expired";
     if(/availability|match.response/.test(key)) return "Keep match availability responses for the period shown after the fixture date, then remove the responses";
-    if(/parent|family|account.link/.test(key)) return "Keep parent account links while they are needed. Once marked as no longer needed, an administrator must check them before removal";
+    if(/parent|family|account.link/.test(key)) return "Keep parent account links while they are needed. An administrator must review them before removal.";
     if(/security|audit|log/.test(key)) return "Keep club security records for the period shown, then remove them. Supplier-held records follow the supplier's own settings";
     if(action==="anonymise") return "Remove personal details after the period shown while keeping the remaining record";
     if(action==="review") return "An administrator must check these records before they are removed. They will not be removed automatically";
@@ -168,19 +168,12 @@ function renderRetentionRunSummary(summary,mode) {
     summary=summary&&typeof summary==="object"?summary:{};
     const preview=String(mode||"").toLowerCase()==="dry_run";
     const invitationCount=Number(summary.invitation_rows_checked);
-    const hasInvitationCount=Number.isFinite(invitationCount);
-    const rows=retentionSummaryRows(summary,"").filter(r=>!/^invitation rows (checked|deleted)$/i.test(r.label));
-    let html="";
-    if(hasInvitationCount) {
-        html+='<div class="retention-key-result"><strong>'+invitationCount.toLocaleString("en-GB")+'</strong><span>'+(invitationCount===1?"1 invitation is":"Invitations are")+' eligible for automatic removal</span></div>';
-        html+='<p class="retention-no-changes">'+(invitationCount>0
-            ?'What this means: '+invitationCount.toLocaleString("en-GB")+' invitation record'+(invitationCount===1?" has":"s have")+' already been accepted, revoked/cancelled or expired. '+(invitationCount===1?"It is":"They are")+' no longer needed for a response and will be deleted by the next scheduled cleanup at 03:15 UTC (04:15 during British Summer Time), provided this rule remains switched on.'
-            :'What this means: there are currently no accepted, revoked/cancelled or expired invitation records waiting to be deleted.')+'</p>';
+    if(preview && Number.isFinite(invitationCount)) {
+        return '<div class="retention-key-result"><strong>'+invitationCount.toLocaleString("en-GB")+'</strong><span>'+(invitationCount===1?"invitation":"invitations")+'</span></div><p class="retention-no-changes">'+(invitationCount>0?"Ready for automatic removal":"Nothing ready for automatic removal")+'</p>';
     }
-    if(rows.length) html+='<ul class="retention-result-list">'+rows.map(r=>'<li><span>'+escapeHTML(retentionHumanLabel(r.label))+'</span><strong>'+r.value.toLocaleString("en-GB")+'</strong></li>').join("")+'</ul>';
-    if(!html) html='<p class="retention-no-changes">'+(preview?"No records are due for action under the current rules. Nothing has been changed":"No record changes were reported")+'</p>';
-    if(preview) html+='<p class="retention-no-changes">Preview only — nothing has been changed or deleted.</p>';
-    return html;
+    const rows=retentionSummaryRows(summary,"").filter(r=>!/^invitation rows (checked|deleted)$/i.test(r.label));
+    if(rows.length) return '<ul class="retention-result-list">'+rows.map(r=>'<li><span>'+escapeHTML(retentionHumanLabel(r.label))+'</span><strong>'+r.value.toLocaleString("en-GB")+'</strong></li>').join("")+'</ul>';
+    return '<p class="retention-no-changes">'+(preview?"No records are ready for automatic removal":"No record changes were reported")+'</p>';
 }
 function showRetentionAdmin() {
     if (!requireSystemAdminSession() || !retentionAdminData) return;
@@ -189,8 +182,8 @@ function showRetentionAdmin() {
       '<div class="card retention-admin">'+
       '<button class="back-button" onclick="closeSystemAdmin()">← Admin Dashboard</button>'+
       '<div class="retention-heading"><div><h2>System Admin</h2><div class="subtitle">Control how long club records are kept</div></div><button class="secondary-button small-button" onclick="showSystemAdminChangePin(false)">Change PIN</button></div>'+
-      '<div class="retention-intro"><strong>How this works</strong><p>Set how long each type of record is kept. Automatic removal is separate and is currently OFF. A preview check never changes or deletes records</p></div>'+
-      '<h3>How long we keep records</h3><div class="retention-policy-list">'+
+      '<div class="retention-intro"><p>Choose how long records are kept and whether they are removed automatically.</p></div>'+
+      '<h3>Retention rules</h3><div class="retention-policy-list">'+
       (policies.map(p=>{
         const key=escapeHTML(p.policy_key);
         const amount=Number(p.retention_value)||0;
@@ -199,23 +192,14 @@ function showRetentionAdmin() {
         const manual=String(p.action||"").toLowerCase()==="review"||/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
         return '<section class="retention-policy"><div class="retention-policy-title"><strong>'+escapeHTML(p.record_type||retentionHumanLabel(p.policy_key))+'</strong><span class="retention-status '+(p.enforcement_enabled?"is-on":"")+'">'+(p.enforcement_enabled?"Automatic removal ON":"Automatic removal OFF")+'</span></div>'+
         '<p class="retention-description">'+escapeHTML(retentionPolicyDescription(p))+'</p>'+
-        (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div><p class="retention-no-changes">When this rule is active, eligible invitations are removed by the next daily cleanup at 03:15 UTC (04:15 during British Summer Time).</p>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
+        (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
         '<label class="retention-active"><input type="checkbox" id="retention-enabled-'+key+'" '+(p.enabled?"checked":"")+'><span>This rule is active</span></label>'+
         '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
-        (manual?'<p class="retention-manual-note">An administrator must check these records first. The app will not remove them automatically</p>':"")+'</section>';
+        (manual?'<p class="retention-manual-note">Manual review required. These records are not removed automatically.</p>':"")+'</section>';
       }).join("")||'<div class="empty">No record-keeping rules are available</div>')+
-      '</div><section class="retention-section"><h3>Preview check</h3><p>This is a safe practice run. It checks records against the rules above and shows what the system would act on. It does not change or delete any records.</p><p><strong>For invitations:</strong> it counts invitations that have already been accepted, revoked/cancelled or expired. Those are the only invitations eligible for automatic removal.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></section>'+
+      '</div><section class="retention-section"><h3>Preview check</h3><p>Checks which records meet the rules above. It does not change or delete anything.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></section>'+
       '<section class="retention-section"><h3>Previous checks</h3>'+
       (runs.map(r=>'<div class="retention-history"><strong>'+escapeHTML(retentionFriendlyMode(r.run_mode))+' — '+escapeHTML(retentionFriendlyStatus(r.status))+'</strong><div class="subtitle">'+escapeHTML(retentionFriendlyDate(r.started_at))+'</div>'+renderRetentionRunSummary(r.summary,r.run_mode)+'</div>').join("")||'<div class="empty">No checks have been run yet</div>')+
-      '</section><section class="retention-section"><h3>Changes to these rules</h3>'+
-      (changes.map(c=>{
-        const before=c.old_values||{},after=c.new_values||{};
-        const oldText=before.retention_value!==undefined?before.retention_value+" "+(before.retention_unit||after.retention_unit||""):"";
-        const newText=after.retention_value!==undefined?after.retention_value+" "+(after.retention_unit||before.retention_unit||""):"";
-        return '<div class="retention-history"><strong>'+escapeHTML(retentionHumanLabel(c.policy_key))+'</strong><div class="subtitle">'+escapeHTML(retentionFriendlyDate(c.changed_at))+'</div><p>'+(oldText&&newText?"Changed from "+escapeHTML(oldText)+" to "+escapeHTML(newText):"A setting for this rule was changed")+'</p></div>';
-      }).join("")||'<div class="empty">No rule changes have been recorded</div>')+
-      '</section><section class="retention-section"><h3>System activity</h3>'+
-      ((retentionAdminData.audit||[]).map(a=>'<div class="retention-history"><strong>'+escapeHTML(retentionHumanLabel(a.event_type))+' — '+escapeHTML(retentionFriendlyStatus(a.outcome))+'</strong><div class="subtitle">'+escapeHTML(retentionFriendlyDate(a.occurred_at))+'</div></div>').join("")||'<div class="empty">System Admin activity will appear here</div>')+
       '</section><button class="secondary-button" onclick="closeSystemAdmin()">Close System Admin</button></div>'
     );
 }

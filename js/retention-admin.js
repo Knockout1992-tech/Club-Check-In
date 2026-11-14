@@ -165,10 +165,22 @@ function retentionSummaryRows(obj,prefix) {
     return rows;
 }
 function renderRetentionRunSummary(summary,mode) {
-    const rows=retentionSummaryRows(summary||"","");
+    summary=summary&&typeof summary==="object"?summary:{};
     const preview=String(mode||"").toLowerCase()==="dry_run";
-    if(!rows.length) return '<p class="retention-no-changes">'+(preview?"No records were identified for removal or checking. Nothing has been changed":"No record changes were reported")+'</p>';
-    return '<ul class="retention-result-list">'+rows.map(r=>'<li><span>'+escapeHTML(retentionHumanLabel(r.label))+'</span><strong>'+r.value.toLocaleString("en-GB")+'</strong></li>').join("")+'</ul>'+(preview?'<p class="retention-no-changes">This was only a preview. No records were changed or deleted</p>':"");
+    const invitationCount=Number(summary.invitation_rows_checked);
+    const hasInvitationCount=Number.isFinite(invitationCount);
+    const rows=retentionSummaryRows(summary,"").filter(r=>!/^invitation rows (checked|deleted)$/i.test(r.label));
+    let html="";
+    if(hasInvitationCount) {
+        html+='<div class="retention-key-result"><strong>'+invitationCount.toLocaleString("en-GB")+'</strong><span>Invitations eligible for automatic removal</span></div>';
+        html+='<p class="retention-no-changes">'+(invitationCount>0
+            ?'These invitations have been accepted, revoked/cancelled or expired. They are due to be removed at the next daily cleanup (03:15 UK time).'
+            :'No accepted, revoked/cancelled or expired invitations are waiting for removal.')+'</p>';
+    }
+    if(rows.length) html+='<ul class="retention-result-list">'+rows.map(r=>'<li><span>'+escapeHTML(retentionHumanLabel(r.label))+'</span><strong>'+r.value.toLocaleString("en-GB")+'</strong></li>').join("")+'</ul>';
+    if(!html) html='<p class="retention-no-changes">'+(preview?"No records were identified for removal or checking. Nothing has been changed":"No record changes were reported")+'</p>';
+    if(preview) html+='<p class="retention-no-changes">Preview only — no records have been changed or deleted</p>';
+    return html;
 }
 function showRetentionAdmin() {
     if (!requireSystemAdminSession() || !retentionAdminData) return;
@@ -182,11 +194,12 @@ function showRetentionAdmin() {
       (policies.map(p=>{
         const key=escapeHTML(p.policy_key);
         const amount=Number(p.retention_value)||0;
+        const isInvitation=/invitation|invite/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
         const unit=String(p.retention_unit||"").replace(/s$/,"")+(amount===1?"":"s");
         const manual=String(p.action||"").toLowerCase()==="review"||/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
         return '<section class="retention-policy"><div class="retention-policy-title"><strong>'+escapeHTML(p.record_type||retentionHumanLabel(p.policy_key))+'</strong><span class="retention-status '+(p.enforcement_enabled?"is-on":"")+'">'+(p.enforcement_enabled?"Automatic removal ON":"Automatic removal OFF")+'</span></div>'+
         '<p class="retention-description">'+escapeHTML(retentionPolicyDescription(p))+'</p>'+
-        '<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>'+
+        (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div><p class="retention-no-changes">When this rule is active, eligible invitations are removed by the next daily cleanup at 03:15 UK time.</p>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
         '<label class="retention-active"><input type="checkbox" id="retention-enabled-'+key+'" '+(p.enabled?"checked":"")+'><span>This rule is active</span></label>'+
         '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
         (manual?'<p class="retention-manual-note">An administrator must check these records first. The app will not remove them automatically</p>':"")+'</section>';
@@ -210,9 +223,10 @@ async function saveRetentionPolicy(key) {
     if (!requireSystemAdminSession()) return;
     const policy=(retentionAdminData?.policies||[]).find(p=>p.policy_key===key);
     if(!policy){await appAlert("This rule could not be found. Refresh System Admin and try again","Unable to save","danger");return;}
-    const value=Number(document.getElementById("retention-value-"+key).value);
+    const valueInput=document.getElementById("retention-value-"+key);
+    const value=valueInput?Number(valueInput.value):Number(policy.retention_value)||0;
     const enabled=document.getElementById("retention-enabled-"+key).checked;
-    if(!Number.isInteger(value)||value<0||value>120){await appAlert("Enter a whole number from 0 to 120","Check the retention period","warning");return;}
+    if(valueInput&&(!Number.isInteger(value)||value<0||value>120)){await appAlert("Enter a whole number from 0 to 120","Check the retention period","warning");return;}
     const {error}=await supabaseClient.rpc("update_retention_policy",{system_admin_pin:currentSystemAdminPIN,requested_policy_key:key,requested_retention_value:value,requested_retention_unit:policy.retention_unit,requested_enabled:enabled});
     if(error){await appAlert(error.message,"Unable to save rule","danger");return;}
     await refreshRetentionAdmin("Rule saved successfully");

@@ -13,6 +13,9 @@ let seasonPlannerAvailabilityByEvent = new Map();
 let seasonPlannerAvailabilityData = null;
 let seasonPlannerAvailabilityTimer = null;
 let seasonPlannerAvailabilityBusy = false;
+let seasonPlannerCoachAvailableByFixture = new Map();
+let seasonPlannerCoachCountTimer = null;
+let seasonPlannerCoachCountBusy = false;
 
 function spEsc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({
@@ -100,6 +103,7 @@ async function loadCoachSeasonPlanner() {
         (seasonPlannerData.events || []).forEach(event => { if (event.linked_fixture_id) seasonPlannerAvailabilityByEvent.set(Number(event.id), Number(event.linked_fixture_id)); });
         seasonPlannerPage = "calendar";
         renderSeasonPlanner();
+        spStartCoachAvailabilityCounts();
     } catch (e) {
         root.innerHTML = '<div class="info-box">Unable to load the Coach Calendar.<br>' + spEsc(e.message || "Please try again.") + '</div><button class="primary-button" onclick="loadCoachSeasonPlanner()">Retry</button>';
     }
@@ -166,8 +170,10 @@ async function loadSeasonPlanner(requestedSeasonId = null, skipBackgroundSync = 
 
 function spSetPage(page) {
     if (page !== "availability-review") spStopAvailabilityRefresh();
+    if (page !== "calendar") spStopCoachAvailabilityCounts();
     seasonPlannerPage = page;
     renderSeasonPlanner();
+    if (page === "calendar" && currentRole === "coach") spStartCoachAvailabilityCounts();
 }
 function spBackHome() {
     return "";
@@ -261,7 +267,10 @@ function spRenderCalendar(){
     const groups=seasonPlannerData.age_groups,grouped=spGetCalendarGroups();
     const rows=grouped.map(g=>{
         const x=g.event,past=x.event_date<=spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set";
-        const fixtureId=(g.items||[]).map(item=>seasonPlannerAvailabilityByEvent.get(Number(item.id))).find(Boolean);
+        const fixtureIds=[...new Set((g.items||[]).map(item=>seasonPlannerAvailabilityByEvent.get(Number(item.id))).filter(Boolean).map(Number))];
+        const fixtureId=fixtureIds[0]||null;
+        const availableCount=fixtureIds.reduce((total,id)=>total+(seasonPlannerCoachAvailableByFixture.has(id)?seasonPlannerCoachAvailableByFixture.get(id):0),0);
+        const hasAvailableCount=currentRole==="coach"&&fixtureIds.length>0&&fixtureIds.every(id=>seasonPlannerCoachAvailableByFixture.has(id));
         const availabilityOn=x.availability_enabled!==false&&!["holiday","cancelled"].includes(x.event_type);
         const mapLink=spMapsUrl(x.venue);
         if(past){
@@ -269,12 +278,46 @@ function spRenderCalendar(){
         }
         const edit='<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';
         const actions='<div class="sp-calendar-actions">'+(fixtureId?'<button class="secondary-button" onclick="spReviewAvailability('+fixtureId+')">Review availability</button><button class="secondary-button" onclick="copyMatchFixtureLink('+fixtureId+')">Copy Fixture Link</button>':(availabilityOn?'<span class="sp-field-hint">Availability link will be created when an Admin next opens the Season Calendar.</span>':''))+'<button class="secondary-button" onclick="shareSeasonPlannerEventWhatsApp('+x.id+')">Share via WhatsApp</button>'+edit+'</div>';
-        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+'</div>'+(x.venue?'<div class="sp-event-meta">Venue: '+spEsc(x.venue)+(mapLink?' · <a href="'+spEsc(mapLink)+'" target="_blank" rel="noopener">Open in Google Maps</a>':'')+'</div>':'')+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+actions+'</div></div>';
+        return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+'</div>'+(x.venue?'<div class="sp-event-meta">Venue: '+spEsc(x.venue)+(mapLink?' · <a href="'+spEsc(mapLink)+'" target="_blank" rel="noopener">Open in Google Maps</a>':'')+'</div>':'')+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+(currentRole==="coach"&&availabilityOn&&fixtureIds.length?'<div class="sp-available-count">'+(hasAvailableCount?'<strong>'+availableCount+' Available</strong>':'<span>Loading availability…</span>')+'</div>':'')+actions+'</div></div>';
     }).join("")||'<div class="sp-empty">No events found for these filters.</div>';
     const toolbar=currentRole==="coach"
         ? '<div class="sp-calendar-toolbar"><div class="sp-field-hint">Showing '+spEsc((selectedAgeGroups||[]).join(" + "))+" and club-wide events</div><button class=\"secondary-button\" onclick=\"copyCentralMatchParentLink()\">Copy Parent Home Link</button></div>"
         : '<div class="sp-calendar-toolbar"><div class="form-group"><label for="spFilter">Age group</label><select id="spFilter" onchange="filterSeasonPlannerCalendar(this.value)"><option value="all">All age groups</option>'+groups.map(g=>'<option value="'+g.id+'">'+spEsc(g.display_name||g.age_group)+'</option>').join("")+'</select></div><button class="secondary-button" onclick="copyCentralMatchParentLink()">Copy Parent Home Link</button></div>';
     return toolbar+'<div class="sp-calendar-filter-row"><label><input type="checkbox" '+(seasonPlannerShowPast?'checked':'')+' onchange="toggleSeasonPlannerPast(this.checked)"> Show past sessions</label><label><input type="checkbox" '+(seasonPlannerShowCancelled?'checked':'')+' onchange="toggleSeasonPlannerCancelled(this.checked)"> Show cancelled events</label></div>'+rows;
+}
+
+function spStopCoachAvailabilityCounts() {
+    if (seasonPlannerCoachCountTimer) clearInterval(seasonPlannerCoachCountTimer);
+    seasonPlannerCoachCountTimer = null;
+}
+async function spRefreshCoachAvailabilityCounts() {
+    if (currentRole !== "coach" || seasonPlannerPage !== "calendar" || seasonPlannerCoachCountBusy) return;
+    const fixtureIds=[...new Set((seasonPlannerData?.events||[])
+        .filter(event=>event.event_date>spToday()&&event.availability_enabled!==false&&!["holiday","cancelled"].includes(event.event_type))
+        .map(event=>seasonPlannerAvailabilityByEvent.get(Number(event.id))).filter(Boolean).map(Number))];
+    if (!fixtureIds.length) return;
+    seasonPlannerCoachCountBusy=true;
+    try {
+        const results=await Promise.all(fixtureIds.map(async id=>{
+            const result=await matchAdminCall("admin_fixtures",{action:"detail",fixture_id:id});
+            const fixture=result.fixtures?.[0];
+            if(!fixture) throw new Error("Availability details unavailable for fixture "+id);
+            const total=(fixture.age_groups||[]).reduce((sum,group)=>sum+Number(group.available||0),0);
+            return [id,total];
+        }));
+        results.forEach(([id,total])=>seasonPlannerCoachAvailableByFixture.set(id,total));
+        if(seasonPlannerPage==="calendar") renderSeasonPlanner();
+    } catch(error) {
+        console.warn("Coach calendar availability counts could not be refreshed:",error);
+    } finally {
+        seasonPlannerCoachCountBusy=false;
+    }
+}
+function spStartCoachAvailabilityCounts() {
+    if(currentRole!=="coach"||seasonPlannerPage!=="calendar") return;
+    spStopCoachAvailabilityCounts();
+    spRefreshCoachAvailabilityCounts();
+    seasonPlannerCoachCountTimer=setInterval(spRefreshCoachAvailabilityCounts,30000);
 }
 
 function spStopAvailabilityRefresh() {

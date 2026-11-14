@@ -3,10 +3,23 @@
    Separate from the existing Senior PIN.
    ========================================================= */
 let currentSystemAdminPIN = null;
+let systemAdminExpiresAt = 0;
 let retentionAdminData = null;
+
+function requireSystemAdminSession() {
+    if (!currentSystemAdminPIN || Date.now() > systemAdminExpiresAt) {
+        currentSystemAdminPIN = null;
+        systemAdminExpiresAt = 0;
+        retentionAdminData = null;
+        showSystemAdminLogin();
+        return false;
+    }
+    return true;
+}
 
 function closeSystemAdmin() {
     currentSystemAdminPIN = null;
+    systemAdminExpiresAt = 0;
     retentionAdminData = null;
     showSeniorDashboard();
 }
@@ -17,6 +30,7 @@ function showSystemAdminLogin() {
         return;
     }
     currentSystemAdminPIN = null;
+    systemAdminExpiresAt = 0;
     renderShell(`
         <div class="card pin-card">
             <button class="back-button" onclick="showSeniorDashboard()">← Admin Dashboard</button>
@@ -75,6 +89,7 @@ async function unlockSystemAdmin() {
         return;
     }
     currentSystemAdminPIN = pin;
+    systemAdminExpiresAt = Date.now() + 10 * 60 * 1000;
     retentionAdminData = data;
     if (data.must_change_pin) {
         showSystemAdminChangePin(true);
@@ -114,6 +129,7 @@ async function saveSystemAdminPin() {
     });
     if (error || data !== true) { box.textContent = error?.message || "Unable to change PIN."; return; }
     currentSystemAdminPIN = next;
+    systemAdminExpiresAt = Date.now() + 10 * 60 * 1000;
     await appAlert("System Admin PIN changed successfully.", "PIN updated", "success");
     const refreshed = await supabaseClient.rpc("get_retention_admin_data", { system_admin_pin: currentSystemAdminPIN });
     if (refreshed.error) { closeSystemAdmin(); return; }
@@ -122,7 +138,7 @@ async function saveSystemAdminPin() {
 }
 
 function showRetentionAdmin() {
-    if (!currentSystemAdminPIN || !retentionAdminData) return showSystemAdminLogin();
+    if (!requireSystemAdminSession() || !retentionAdminData) return;
     const policies = retentionAdminData.policies || [];
     const runs = retentionAdminData.runs || [];
     const changes = retentionAdminData.changes || [];
@@ -172,6 +188,7 @@ function showRetentionAdmin() {
 }
 
 async function saveRetentionPolicy(key, enabled) {
+    if (!requireSystemAdminSession()) return;
     const value = Number(document.getElementById("retention-value-" + key).value);
     const unit = document.getElementById("retention-unit-" + key).value.trim();
     const { error } = await supabaseClient.rpc("update_retention_policy", {
@@ -186,6 +203,7 @@ async function saveRetentionPolicy(key, enabled) {
 }
 
 async function toggleRetentionEnforcement(key, enabled) {
+    if (!requireSystemAdminSession()) return;
     const message = enabled
         ? "This enables scheduled automatic processing for this policy. Only proceed once the rule has been reviewed and approved. Continue?"
         : "Turn off automatic enforcement for this policy?";
@@ -201,6 +219,7 @@ async function toggleRetentionEnforcement(key, enabled) {
 }
 
 async function runRetentionDryRun() {
+    if (!requireSystemAdminSession()) return;
     const target = document.getElementById("retentionDryRunResult");
     target.textContent = "Running dry-run…";
     const { data, error } = await supabaseClient.rpc("run_retention_admin_check", {
@@ -212,6 +231,7 @@ async function runRetentionDryRun() {
 }
 
 async function refreshRetentionAdmin(message) {
+    if (!requireSystemAdminSession()) return;
     const { data, error } = await supabaseClient.rpc("get_retention_admin_data", {
         system_admin_pin: currentSystemAdminPIN
     });

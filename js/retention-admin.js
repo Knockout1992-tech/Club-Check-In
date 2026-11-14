@@ -258,6 +258,7 @@ async function refreshRetentionAdmin(message) {
 function renderClubPolicyEditor(content) {
     const c=content||{};
     const roles=Array.isArray(c.roles)?c.roles:[];
+    const accessRoles=Array.isArray(c.access_roles)?c.access_roles:[];
     const field=(id,label,value,multi=false)=>'<label class="retention-policy-field"><span>'+label+'</span>'+(multi
       ?'<textarea id="policy-'+id+'" rows="3">'+escapeHTML(value||"")+'</textarea>'
       :'<input id="policy-'+id+'" type="text" maxlength="1000" value="'+escapeHTML(value||"")+'">')+'</label>';
@@ -275,8 +276,10 @@ function renderClubPolicyEditor(content) {
       field("incident_contact_instruction","Incident reporting wording",c.incident_contact_instruction,true)+
       field("review_frequency","Review frequency",c.review_frequency,true)+
       field("next_review","Next review wording",c.next_review,true)+
-      '</div><h4>Roles and responsibilities</h4><div id="club-policy-roles">'+roleRows+'</div>'+
-      '<button class="secondary-button small-button" onclick="addClubPolicyRole()">Add role / contact</button> '+
+      '</div><h4>Who can access information?</h4><div id="club-policy-access-roles">'+accessRoles.map(r=>clubPolicyAccessRoleMarkup(r.role,r.description)).join("")+'</div>'+
+      '<button class="secondary-button small-button" onclick="addClubPolicyAccessRole()">Add access role</button>'+
+      '<h4>Roles and responsibilities</h4><div id="club-policy-roles">'+roleRows+'</div>'+
+      '<button class="secondary-button small-button" onclick="addClubPolicyRole()">Add responsibility</button> '+
       '<button class="primary-button" onclick="saveClubPolicyContent()">Save privacy policy wording</button>'+
       '<p class="retention-manual-note">Only System Admin can change this content. Changes are recorded in the system audit log.</p></section>';
 }
@@ -287,8 +290,18 @@ function addClubPolicyRole() {
     if(!requireSystemAdminSession())return;
     const list=document.getElementById("club-policy-roles");
     if(!list)return;
-    if(list.querySelectorAll(".retention-role-editor").length>=12){appAlert("A maximum of 12 role/contact entries is allowed.","Role limit","warning");return;}
+    if(list.querySelectorAll(".retention-role-editor").length>=12){appAlert("A maximum of 12 responsibility entries is allowed.","Role limit","warning");return;}
     list.insertAdjacentHTML("beforeend",clubPolicyRoleMarkup("",""));
+}
+function clubPolicyAccessRoleMarkup(role="",description="") {
+    return '<div class="retention-role-editor"><label><span>Access group</span><input class="policy-access-role-name" maxlength="100" value="'+escapeHTML(role)+'"></label><label><span>What they can access</span><textarea class="policy-access-role-description" rows="3" maxlength="500">'+escapeHTML(description)+'</textarea></label><button class="red-button small-button" type="button" onclick="this.parentElement.remove()">Remove</button></div>';
+}
+function addClubPolicyAccessRole() {
+    if(!requireSystemAdminSession())return;
+    const list=document.getElementById("club-policy-access-roles");
+    if(!list)return;
+    if(list.querySelectorAll(".retention-role-editor").length>=10){appAlert("A maximum of 10 access groups is allowed.","Role limit","warning");return;}
+    list.insertAdjacentHTML("beforeend",clubPolicyAccessRoleMarkup("",""));
 }
 async function saveClubPolicyContent() {
     if(!requireSystemAdminSession())return;
@@ -301,7 +314,16 @@ async function saveClubPolicyContent() {
       });
     });
     if(roles.some(r=>!r.role)){await appAlert("Every role needs a name. Remove unused rows before saving.","Check the role list","warning");return;}
+    const access_roles=[];
+    document.querySelectorAll("#club-policy-access-roles .retention-role-editor").forEach(row=>{
+      access_roles.push({
+        role:row.querySelector(".policy-access-role-name")?.value?.trim()||"",
+        description:row.querySelector(".policy-access-role-description")?.value?.trim()||""
+      });
+    });
+    if(access_roles.some(r=>!r.role)){await appAlert("Every access group needs a name. Remove unused rows before saving.","Check access groups","warning");return;}
     const content={
+      access_roles,
       document_owner:get("document_owner"),
       approval_status:get("approval_status"),
       draft_notice:get("draft_notice"),

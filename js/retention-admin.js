@@ -74,7 +74,7 @@ async function unlockSystemAdmin() {
     const errorBox = document.getElementById("systemAdminPinError");
     const pin = input?.value || "";
     errorBox.textContent = "";
-    if (!/^\d{4,8}$/.test(pin)) {
+    if (!/^\d{4}$/.test(pin)) {
         errorBox.textContent = "Enter your System Admin PIN.";
         return;
     }
@@ -122,7 +122,7 @@ async function saveSystemAdminPin() {
     const box = document.getElementById("changeSystemAdminPinError");
     box.textContent = "";
     if (next !== confirm) { box.textContent = "The PIN entries do not match."; return; }
-    if (!/^\d{6,8}$/.test(next)) { box.textContent = "Use exactly 4 digits."; return; }
+    if (!/^\d{4}$/.test(next)) { box.textContent = "Use exactly 4 digits."; return; }
     const { data, error } = await supabaseClient.rpc("change_system_admin_pin", {
         current_system_admin_pin: currentSystemAdminPIN,
         new_system_admin_pin: next

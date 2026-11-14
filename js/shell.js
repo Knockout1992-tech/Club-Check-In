@@ -68,6 +68,10 @@ function renderShell(
 
         </main>
 
+        <footer class="app-policy-footer">
+            <a href="https://rhrfc-mini.pages.dev/policies/" target="_blank" rel="noopener noreferrer">Privacy &amp; Data Protection</a>
+        </footer>
+
     `;
 
 }

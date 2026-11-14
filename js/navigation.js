@@ -164,6 +164,8 @@ function showWelcome() {
                 </button>
 ${getInstallButtonHTML()}
 
+                <a class="policy-link" href="https://rhrfc-mini.pages.dev/policies/" target="_blank" rel="noopener noreferrer">Privacy &amp; Data Protection</a>
+
                 <div class="welcome-version">
                     ${APP_VERSION}
                 </div>

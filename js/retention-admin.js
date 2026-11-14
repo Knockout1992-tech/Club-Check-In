@@ -254,14 +254,16 @@ async function refreshRetentionAdmin(message) {
 }
 
 
+
 function renderClubPolicyEditor(content) {
     const c=content||{};
     const roles=Array.isArray(c.roles)?c.roles:[];
     const field=(id,label,value,multi=false)=>'<label class="retention-policy-field"><span>'+label+'</span>'+(multi
       ?'<textarea id="policy-'+id+'" rows="3">'+escapeHTML(value||"")+'</textarea>'
       :'<input id="policy-'+id+'" type="text" maxlength="1000" value="'+escapeHTML(value||"")+'">')+'</label>';
-    const roleRows=roles.map((r,i)=>'<div class="retention-role-editor"><label><span>Role / contact</span><input id="policy-role-'+i+'" maxlength="100" value="'+escapeHTML(r.role||"")+'"></label><label><span>Responsibility</span><textarea id="policy-responsibility-'+i+'" rows="3" maxlength="600">'+escapeHTML(r.responsibility||"")+'</textarea></label></div>').join("");
-    return '<section class="retention-section" id="club-policy-editor"><h3>Privacy policy wording</h3>'+
+    const roleRows=roles.map((r,i)=>clubPolicyRoleMarkup(r.role,r.responsibility)).join("");
+    return '<style>.retention-policy-editor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.retention-policy-field,.retention-role-editor label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}.retention-policy-field input,.retention-policy-field textarea,.retention-role-editor input,.retention-role-editor textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #bbb;border-radius:8px;font:inherit;background:#fff;color:#111}.retention-role-editor{display:grid;grid-template-columns:minmax(130px,.8fr) minmax(220px,2fr) auto;gap:10px;align-items:end;border:1px solid #ddd;border-radius:10px;padding:12px;margin:10px 0}.retention-role-editor button{white-space:nowrap}@media(max-width:600px){.retention-role-editor{grid-template-columns:1fr}}</style>'+
+      '<section class="retention-section" id="club-policy-editor"><h3>Privacy policy wording</h3>'+
       '<p>Update the public-facing wording here. Changes appear on the privacy policy page without editing website code.</p>'+
       '<div class="retention-policy-editor-grid">'+
       field("document_owner","Document owner",c.document_owner)+
@@ -273,21 +275,32 @@ function renderClubPolicyEditor(content) {
       field("incident_contact_instruction","Incident reporting wording",c.incident_contact_instruction,true)+
       field("review_frequency","Review frequency",c.review_frequency,true)+
       field("next_review","Next review wording",c.next_review,true)+
-      '</div><h4>Roles and responsibilities</h4>'+roleRows+
-      '<button class="primary-button" onclick="saveClubPolicyContent('+roles.length+')">Save privacy policy wording</button>'+
+      '</div><h4>Roles and responsibilities</h4><div id="club-policy-roles">'+roleRows+'</div>'+
+      '<button class="secondary-button small-button" onclick="addClubPolicyRole()">Add role / contact</button> '+
+      '<button class="primary-button" onclick="saveClubPolicyContent()">Save privacy policy wording</button>'+
       '<p class="retention-manual-note">Only System Admin can change this content. Changes are recorded in the system audit log.</p></section>';
 }
-
-async function saveClubPolicyContent(roleCount) {
+function clubPolicyRoleMarkup(role="",responsibility="") {
+    return '<div class="retention-role-editor"><label><span>Role / contact</span><input class="policy-role-name" maxlength="100" value="'+escapeHTML(role)+'"></label><label><span>Responsibility</span><textarea class="policy-role-responsibility" rows="3" maxlength="600">'+escapeHTML(responsibility)+'</textarea></label><button class="red-button small-button" type="button" onclick="this.parentElement.remove()">Remove</button></div>';
+}
+function addClubPolicyRole() {
+    if(!requireSystemAdminSession())return;
+    const list=document.getElementById("club-policy-roles");
+    if(!list)return;
+    if(list.querySelectorAll(".retention-role-editor").length>=12){appAlert("A maximum of 12 role/contact entries is allowed.","Role limit","warning");return;}
+    list.insertAdjacentHTML("beforeend",clubPolicyRoleMarkup("",""));
+}
+async function saveClubPolicyContent() {
     if(!requireSystemAdminSession())return;
     const get=id=>document.getElementById("policy-"+id)?.value?.trim()||"";
     const roles=[];
-    for(let i=0;i<roleCount;i++){
-      const role=document.getElementById("policy-role-"+i)?.value?.trim()||"";
-      const responsibility=document.getElementById("policy-responsibility-"+i)?.value?.trim()||"";
-      if(!role){await appAlert("Every role needs a name. Remove unused rows before saving.","Check the role list","warning");return;}
-      roles.push({role,responsibility});
-    }
+    document.querySelectorAll("#club-policy-roles .retention-role-editor").forEach(row=>{
+      roles.push({
+        role:row.querySelector(".policy-role-name")?.value?.trim()||"",
+        responsibility:row.querySelector(".policy-role-responsibility")?.value?.trim()||""
+      });
+    });
+    if(roles.some(r=>!r.role)){await appAlert("Every role needs a name. Remove unused rows before saving.","Check the role list","warning");return;}
     const content={
       document_owner:get("document_owner"),
       approval_status:get("approval_status"),
@@ -300,7 +313,7 @@ async function saveClubPolicyContent(roleCount) {
       next_review:get("next_review"),
       roles
     };
-    const {data,error}=await supabaseClient.rpc("update_club_policy_content",{
+    const {error}=await supabaseClient.rpc("update_club_policy_content",{
       system_admin_pin:currentSystemAdminPIN,requested_content:content
     });
     if(error){await appAlert(error.message,"Unable to save policy wording","danger");return;}

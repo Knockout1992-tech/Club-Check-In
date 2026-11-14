@@ -163,9 +163,10 @@ function showRetentionAdmin() {
                         <div class="retention-edit-row">
                             <label>Period <input type="number" min="0" max="120" id="retention-value-${escapeHTML(p.policy_key)}" value="${p.retention_value}"></label>
                             <label>Unit <input type="text" id="retention-unit-${escapeHTML(p.policy_key)}" value="${escapeHTML(p.retention_unit)}"></label>
+                            <label><span>Policy active</span><input type="checkbox" id="retention-enabled-${escapeHTML(p.policy_key)}" ${p.enabled ? "checked" : ""}></label>
                         </div>
                         <div class="retention-actions">
-                            <button class="secondary-button small-button" onclick="saveRetentionPolicy('${escapeHTML(p.policy_key)}',${p.enabled})">Save policy</button>
+                            <button class="secondary-button small-button" onclick="saveRetentionPolicy('${escapeHTML(p.policy_key)}')">Save policy</button>
                             <button class="${p.enforcement_enabled ? "red-button" : "secondary-button"} small-button"
                                 onclick="toggleRetentionEnforcement('${escapeHTML(p.policy_key)}',${!p.enforcement_enabled})">
                                 ${p.enforcement_enabled ? "Disable enforcement" : "Enable enforcement"}
@@ -187,10 +188,11 @@ function showRetentionAdmin() {
         </div>`);
 }
 
-async function saveRetentionPolicy(key, enabled) {
+async function saveRetentionPolicy(key) {
     if (!requireSystemAdminSession()) return;
     const value = Number(document.getElementById("retention-value-" + key).value);
     const unit = document.getElementById("retention-unit-" + key).value.trim();
+    const enabled = document.getElementById("retention-enabled-" + key).checked;
     const { error } = await supabaseClient.rpc("update_retention_policy", {
         system_admin_pin: currentSystemAdminPIN,
         requested_policy_key: key,

@@ -174,7 +174,7 @@ function renderRetentionRunSummary(summary,mode) {
     if(hasInvitationCount) {
         html+='<div class="retention-key-result"><strong>'+invitationCount.toLocaleString("en-GB")+'</strong><span>Invitations eligible for automatic removal</span></div>';
         html+='<p class="retention-no-changes">'+(invitationCount>0
-            ?'These invitations have been accepted, revoked/cancelled or expired. They are due to be removed at the next daily cleanup (03:15 UK time).'
+            ?'These invitations have been accepted, revoked/cancelled or expired. They are due to be removed at the next daily cleanup (03:15 UTC (04:15 during British Summer Time)).'
             :'No accepted, revoked/cancelled or expired invitations are waiting for removal.')+'</p>';
     }
     if(rows.length) html+='<ul class="retention-result-list">'+rows.map(r=>'<li><span>'+escapeHTML(retentionHumanLabel(r.label))+'</span><strong>'+r.value.toLocaleString("en-GB")+'</strong></li>').join("")+'</ul>';
@@ -199,7 +199,7 @@ function showRetentionAdmin() {
         const manual=String(p.action||"").toLowerCase()==="review"||/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
         return '<section class="retention-policy"><div class="retention-policy-title"><strong>'+escapeHTML(p.record_type||retentionHumanLabel(p.policy_key))+'</strong><span class="retention-status '+(p.enforcement_enabled?"is-on":"")+'">'+(p.enforcement_enabled?"Automatic removal ON":"Automatic removal OFF")+'</span></div>'+
         '<p class="retention-description">'+escapeHTML(retentionPolicyDescription(p))+'</p>'+
-        (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div><p class="retention-no-changes">When this rule is active, eligible invitations are removed by the next daily cleanup at 03:15 UK time.</p>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
+        (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div><p class="retention-no-changes">When this rule is active, eligible invitations are removed by the next daily cleanup at 03:15 UTC (04:15 during British Summer Time).</p>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
         '<label class="retention-active"><input type="checkbox" id="retention-enabled-'+key+'" '+(p.enabled?"checked":"")+'><span>This rule is active</span></label>'+
         '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
         (manual?'<p class="retention-manual-note">An administrator must check these records first. The app will not remove them automatically</p>':"")+'</section>';

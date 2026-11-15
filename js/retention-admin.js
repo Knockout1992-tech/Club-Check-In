@@ -268,9 +268,9 @@ function renderClubPolicyEditor(content) {
     const c=content||{};
     const roles=Array.isArray(c.roles)?c.roles:[];
     const accessRoles=Array.isArray(c.access_roles)?c.access_roles:[];
-    const field=(id,label,value,multi=false)=>'<label class="retention-policy-field"><span>'+label+'</span>'+(multi
+    const field=(id,label,value,multi=false,type="text")=>'<label class="retention-policy-field"><span>'+label+'</span>'+(multi
       ?'<textarea id="policy-'+id+'" rows="3">'+escapeHTML(value||"")+'</textarea>'
-      :'<input id="policy-'+id+'" type="text" maxlength="1000" value="'+escapeHTML(value||"")+'">')+'</label>';
+      :'<input id="policy-'+id+'" type="'+type+'" maxlength="1000" value="'+escapeHTML(value||"")+'">')+'</label>';
     const roleRows=roles.map((r,i)=>clubPolicyRoleMarkup(r.role,r.responsibility)).join("");
     return '<style>.retention-policy-editor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.retention-policy-field,.retention-role-editor label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}.retention-policy-field input,.retention-policy-field textarea,.retention-role-editor input,.retention-role-editor textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #bbb;border-radius:8px;font:inherit;background:#fff;color:#111}.retention-role-editor{display:grid;grid-template-columns:minmax(130px,.8fr) minmax(220px,2fr) auto;gap:10px;align-items:end;border:1px solid #ddd;border-radius:10px;padding:12px;margin:10px 0}.retention-role-editor button{white-space:nowrap}@media(max-width:600px){.retention-role-editor{grid-template-columns:1fr}}</style>'+
       '<details class="admin-collapse" id="club-policy-editor"><summary>Privacy policy wording — Edit public-facing wording and responsibilities</summary><div class="admin-collapse-body"><section class="retention-section"><h3>Privacy policy wording</h3>'+
@@ -278,14 +278,14 @@ function renderClubPolicyEditor(content) {
       '<div class="retention-policy-editor-grid">'+
       field("document_owner","Document owner",c.document_owner)+
       field("approval_status","Approval status",c.approval_status)+
-      field("approval_date","Approval date (YYYY-MM-DD)",c.approval_date)+
+      field("approval_date","Approval date",c.approval_date,false,"date")+
       field("draft_notice","Draft notice",c.draft_notice,true)+
       field("privacy_contact","Privacy contact wording",c.privacy_contact,true)+
-      field("controller_description","Who is responsible?",c.controller_description,true)+
+      field("controller_description","Data controller name",c.controller_description)+
       field("rights_contact_instruction","Privacy requests wording",c.rights_contact_instruction,true)+
       field("incident_contact_instruction","Incident reporting wording",c.incident_contact_instruction,true)+
       field("review_frequency","Review frequency",c.review_frequency,true)+
-      field("next_review","Next review wording",c.next_review,true)+
+      field("next_review","Next review date / wording",c.next_review,true)+
       '</div><h4>Who can access information?</h4><div id="club-policy-access-roles">'+accessRoles.map(r=>clubPolicyAccessRoleMarkup(r.role,r.description)).join("")+'</div>'+
       '<button class="secondary-button small-button" onclick="addClubPolicyAccessRole()">Add access role</button>'+
       '<h4>Roles and responsibilities</h4><div id="club-policy-roles">'+roleRows+'</div>'+
@@ -332,11 +332,19 @@ async function saveClubPolicyContent() {
       });
     });
     if(access_roles.some(r=>!r.role)){await appAlert("Every access group needs a name. Remove unused rows before saving.","Check access groups","warning");return;}
+    const approvalStatus=get("approval_status");
+    const approvalDate=get("approval_date");
+    if(/^approved\b/i.test(approvalStatus) && !approvalDate){
+      await appAlert("An approval date is required when the status is Approved.","Approval date required","warning");return;
+    }
+    if(approvalDate && !/^approved\b/i.test(approvalStatus)){
+      await appAlert("Set the approval status to Approved before entering an approval date.","Check approval status","warning");return;
+    }
     const content={
       access_roles,
       document_owner:get("document_owner"),
-      approval_status:get("approval_status"),
-      approval_date:get("approval_date"),
+      approval_status:approvalStatus,
+      approval_date:approvalDate,
       draft_notice:get("draft_notice"),
       privacy_contact:get("privacy_contact"),
       controller_description:get("controller_description"),

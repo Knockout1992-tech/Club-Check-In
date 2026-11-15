@@ -154,12 +154,25 @@ async function pdmPreviewErasure() {
     document.getElementById("pdmEraseHost").innerHTML='<h4>Deletion preview</h4><pre class="pdm-json">'+pdmEscape(JSON.stringify(data.records,null,2))+'</pre>'+
       (data.can_erase?'<p>Eligible for deletion. No active retention holds were found.</p>':'<p class="pdm-bad">Deletion blocked. '+pdmEscape((data.blockers||[]).map(x=>x.message).join(" "))+'</p>')+
       '<p class="pdm-note">'+pdmEscape(data.retained_aggregate_note)+'</p>'+
-      (data.can_erase?'<label>Type '+pdmEscape(data.request_ref)+' to confirm<input id="pdmConfirmRef"></label><button class="red-button" onclick="pdmExecuteErasure()">Permanently erase identified records</button>':'');
+      (data.can_erase?'<label><input type="checkbox" id="pdmCheckExceptions"> I have reviewed legal, safeguarding, insurance and claims retention exceptions, and created any required retention holds.</label><label>Erasure review notes<textarea id="pdmErasureReviewNotes" rows="2" placeholder="Record why erasure is appropriate and any records retained"></textarea></label><label>Type '+pdmEscape(data.request_ref)+' to confirm<input id="pdmConfirmRef"></label><button class="red-button" onclick="pdmExecuteErasure()">Permanently erase identified records</button>':'');
 }
 async function pdmExecuteErasure() {
     if(!pdmReady()||!pdmCurrentRequest||!pdmErasurePreview?.can_erase)return;
     const ref=document.getElementById("pdmConfirmRef")?.value?.trim()||"";
     if(ref!==pdmCurrentRequest.request_ref){await appAlert("The request reference does not match.","Confirmation required","warning");return;}
+    const reviewNotes=document.getElementById("pdmErasureReviewNotes")?.value?.trim()||"";
+    if(!document.getElementById("pdmCheckExceptions")?.checked||reviewNotes.length<10){
+      await appAlert("Confirm the legal and safeguarding review and record a short reason before erasure.","Erasure review required","warning");return;
+    }
+    const reviewUpdate=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
+      p_status:pdmCurrentRequest.status,p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
+      p_scope_notes:[pdmCurrentRequest.scope_notes||"", "Erasure review: "+reviewNotes].filter(Boolean).join("\n"),
+      p_extension_reason:null,p_extension_notified_at:null,p_decision:pdmCurrentRequest.decision||null,
+      p_response_notes:pdmCurrentRequest.response_notes||null,p_sent_at:pdmCurrentRequest.sent_at||null,
+      p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:pdmCurrentRequest.completed_at||null});
+    if(reviewUpdate.error||reviewUpdate.data===null||!reviewUpdate.data.success){
+      await appAlert(reviewUpdate.error?.message||reviewUpdate.data?.message||"Unable to record erasure review.","Erasure not started","danger");return;
+    }
     const ok=await appConfirm("This permanently removes the identified personal records. This cannot be undone. Continue only if the request, identity, authority and retention checks have been approved.","Permanent erasure","Erase records");
     if(!ok)return;
     const {data,error}=await supabaseClient.rpc("execute_personal_data_erasure",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,p_confirm_reference:ref});

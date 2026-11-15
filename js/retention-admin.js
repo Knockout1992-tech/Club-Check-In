@@ -374,9 +374,10 @@ async function loadSystemAdminAuditLog() {
         supplied_pin: currentSystemAdminPIN,
         requested_limit: 200
     });
-    if (error || !Array.isArray(data)) {
-        console.error("Security audit log load failed:", error);
-        await appAlert("The security log could not be loaded. Please try again.", "Unable to load security log", "danger");
+    if (error || !Array.isArray(data) || data.length === 0) {
+        console.error("Security audit log load failed or System Admin verification expired:", error);
+        await appAlert("System Admin verification failed or the security log could not be loaded. Please sign in again.", "Unable to load security log", "warning");
+        closeSystemAdmin();
         return;
     }
     systemAdminAuditEntries = data;

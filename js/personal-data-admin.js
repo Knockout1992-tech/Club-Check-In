@@ -113,6 +113,9 @@ function renderPdmRequestDetail() {
 async function pdmLoadBundle() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const r=pdmCurrentRequest;
+    if(r.identity_status!=="verified"||!["verified","not_applicable"].includes(r.authority_status)){
+      await appAlert("Verify the requester’s identity and, where applicable, their authority before preparing a personal data copy.","Verification required","warning");return;
+    }
     const {data,error}=await supabaseClient.rpc("get_personal_data_subject_bundle",{p_system_admin_pin:currentSystemAdminPIN,
       p_subject_type:r.subject_type,p_subject_reference:r.subject_reference,p_subject_name:r.subject_name,p_subject_locator:r.subject_locator||{}});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to build data copy.","Access request","warning");return;}
@@ -181,6 +184,9 @@ function pdmDraftResponse() {
 }
 async function pdmRecordSent() {
     if(!pdmReady()||!pdmCurrentRequest)return;
+    if(pdmCurrentRequest.identity_status!=="verified"||!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)){
+      await appAlert("Verify the requester’s identity and authority before issuing a response.","Verification required","warning");return;
+    }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status||"verified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",

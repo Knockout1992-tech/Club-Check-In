@@ -6,6 +6,9 @@ let currentSystemAdminPIN = null;
 let systemAdminExpiresAt = 0;
 let retentionAdminData = null;
 let systemAdminAuditEntries = [];
+let systemAdminAuditCursor = null;
+let systemAdminAuditCursorHistory = [];
+let systemAdminAuditHasMore = false;
 
 function requireSystemAdminSession() {
     if (!currentSystemAdminPIN || Date.now() > systemAdminExpiresAt) {
@@ -448,19 +451,31 @@ async function saveClubPolicyContent() {
 // CENTRAL SECURITY AUDIT LOG
 // =========================================================
 
-async function loadSystemAdminAuditLog() {
+async function loadSystemAdminAuditLog(cursor = null, navigation = "reset") {
     if (!requireSystemAdminSession()) return;
-    const { data, error } = await supabaseClient.rpc("get_system_admin_audit_log", {
+    if (navigation === "reset") {
+        systemAdminAuditCursorHistory = [];
+        cursor = null;
+    } else if (navigation === "next") {
+        systemAdminAuditCursorHistory.push(systemAdminAuditCursor);
+    } else if (navigation === "previous") {
+        cursor = systemAdminAuditCursorHistory.pop() ?? null;
+    }
+    const { data, error } = await supabaseClient.rpc("get_system_admin_audit_log_page", {
         supplied_pin: currentSystemAdminPIN,
-        requested_limit: 200
+        requested_limit: 201,
+        before_occurred_at: cursor?.occurred_at ?? null,
+        before_id: cursor?.id ?? null
     });
-    if (error || !Array.isArray(data) || data.length === 0) {
-        console.error("Security audit log load failed or System Admin verification expired:", error);
-        await appAlert("System Admin verification failed or the security log could not be loaded. Please sign in again.", "Unable to load security log", "warning");
+    if (error || !Array.isArray(data)) {
+        console.error("Security audit log load failed:", error);
+        await appAlert("The security log could not be loaded. Your System Admin session may have expired.", "Unable to load security log", "warning");
         closeSystemAdmin();
         return;
     }
-    systemAdminAuditEntries = data;
+    systemAdminAuditCursor = cursor;
+    systemAdminAuditHasMore = data.length > 200;
+    systemAdminAuditEntries = data.slice(0, 200);
     showSystemAdminAuditLog();
 }
 
@@ -476,8 +491,8 @@ function showSystemAdminAuditLog() {
     renderShell(
         '<div class="card retention-admin security-audit-page">' +
         '<button class="back-button" onclick="showRetentionAdmin()">← System Admin</button>' +
-        '<div class="retention-heading"><div><h2>Security Audit Log</h2><div class="subtitle">Latest 200 security events across the club system.</div></div>' +
-        '<button class="secondary-button small-button" onclick="loadSystemAdminAuditLog()">Refresh</button></div>' +
+        '<div class="retention-heading"><div><h2>Security Audit Log</h2><div class="subtitle">Browse the complete retained security history, 200 events per page.</div></div>' +
+        '<button class="secondary-button small-button" onclick="loadSystemAdminAuditLog(null, \'reset\')">Refresh</button></div>' +
         '<style>' +
         '.audit-filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:16px 0}' +
         '.audit-filter-grid label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600}' +
@@ -500,6 +515,11 @@ function showSystemAdminAuditLog() {
         '<label>Search event<input id="auditEventSearch" type="search" placeholder="e.g. PIN, fixture" oninput="filterSystemAdminAuditLog()"></label>' +
         '</div>' +
         '<div id="systemAdminAuditResult"></div>' +
+        '<div class="audit-pagination" style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin:16px 0;flex-wrap:wrap">' +
+        '<button class="secondary-button" onclick="loadSystemAdminAuditLog(null, \'previous\')" ' + (systemAdminAuditCursorHistory.length ? '' : 'disabled') + '>← Newer records</button>' +
+        '<span class="subtitle">200 records per page</span>' +
+        '<button class="secondary-button" onclick="loadSystemAdminAuditLog({occurred_at: systemAdminAuditEntries[systemAdminAuditEntries.length-1]?.occurred_at, id: systemAdminAuditEntries[systemAdminAuditEntries.length-1]?.id}, \'next\')" ' + (systemAdminAuditHasMore ? '' : 'disabled') + '>Older records →</button>' +
+        '</div>' +
         '<button class="secondary-button" onclick="showRetentionAdmin()">Back to System Admin</button>' +
         '</div>'
     );
@@ -515,7 +535,7 @@ function filterSystemAdminAuditLog() {
         (!source || item.source_system === source) &&
         (!severity || item.severity === severity) &&
         (!outcome || item.outcome === outcome) &&
-        (!search || String(item.event_type || "").toLowerCase().includes(search))
+        (!search || [item.reference_number, item.event_type, item.actor_reference, item.source_system].some(value => String(value || "").toLowerCase().includes(search)))
     );
     const target = document.getElementById("systemAdminAuditResult");
     if (!target) return;
@@ -529,9 +549,10 @@ function filterSystemAdminAuditLog() {
             const details = item.details && typeof item.details === "object"
                 ? JSON.stringify(item.details, null, 2) : String(item.details || "{}");
             const meta = [
+                item.reference_number ? "Record ref: " + item.reference_number : "Record ref: SEC-" + String(item.id).padStart(8, "0"),
                 item.source_system,
                 item.actor_type ? "Actor: " + item.actor_type : "",
-                item.actor_reference ? "Reference: " + item.actor_reference : ""
+                item.actor_reference ? "Actor reference: " + item.actor_reference : ""
             ].filter(Boolean).join(" · ");
             return '<article class="audit-event">' +
                 '<div class="audit-event-head"><div><div class="audit-event-title">' + escapeHTML(title) + '</div>' +

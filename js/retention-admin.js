@@ -278,6 +278,7 @@ function renderClubPolicyEditor(content) {
       '<div class="retention-policy-editor-grid">'+
       field("document_owner","Document owner",c.document_owner)+
       field("approval_status","Approval status",c.approval_status)+
+      field("approval_date","Approval date (YYYY-MM-DD)",c.approval_date)+
       field("draft_notice","Draft notice",c.draft_notice,true)+
       field("privacy_contact","Privacy contact wording",c.privacy_contact,true)+
       field("controller_description","Who is responsible?",c.controller_description,true)+

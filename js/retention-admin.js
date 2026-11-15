@@ -196,6 +196,7 @@ function showRetentionAdmin() {
       '<div class="retention-heading"><div><h2>System Admin</h2><div class="subtitle">Control how long club records are kept</div></div><button class="secondary-button small-button" onclick="showSystemAdminChangePin(false)">Change PIN</button></div>'+
       '<div class="retention-intro"><p>Choose how long records are kept and whether they are removed automatically.</p></div>'+
       '<div class="retention-audit-launch"><div><strong>Security Audit Log</strong><p>Review security events across Club Check-In and Match Availability.</p></div><button class="primary-button small-button" onclick="loadSystemAdminAuditLog()">Open Security Log</button></div>'+
+      '<div class="retention-holds-launch"><div><strong>Retention Holds</strong><p>Protect specific records where there is a safeguarding, insurance, legal or incident-related reason to retain them.</p></div><button class="primary-button small-button" onclick="showRetentionHolds()">Manage holds</button></div>'+
       renderClubPolicyEditor(retentionAdminData.policy_content||{})+
       '<details class="admin-collapse"><summary>Retention rules — Configure how long records are kept</summary><div class="admin-collapse-body"><div class="retention-policy-list">'+
       (policies.map(p=>{
@@ -217,6 +218,83 @@ function showRetentionAdmin() {
       '</div></details><button class="secondary-button" onclick="closeSystemAdmin()">Close System Admin</button></div>'
     );
 }
+
+function retentionHoldTargetOptions() {
+    return [
+        ["attendance_individual","attendance_records","Individual attendance record"],
+        ["match_availability","match_availability","Match availability response"],
+        ["cancelled_fixture_responses","match_availability","Cancelled fixture response"],
+        ["invitation_tokens","match_parent_family_invitations","Parent family invitation (legacy)"],
+        ["invitation_tokens","match_parent_family_invites","Parent family invitation"],
+        ["security_logs","installation_access_attempts","Installation security log (all events for installation)"],
+        ["parent_portal_security_audit","system_admin_audit_log","Parent Portal security audit event"],
+        ["parent_family_links","match_parent_access","Parent account"],
+        ["archived_players","players","Archived player"]
+    ];
+}
+function showRetentionHolds() {
+    if (!requireSystemAdminSession() || !retentionAdminData) return;
+    const holds=Array.isArray(retentionAdminData.holds)?retentionAdminData.holds:[];
+    const options=retentionHoldTargetOptions().map(x=>'<option value="'+escapeHTML(x[0]+'|'+x[1])+'">'+escapeHTML(x[2])+'</option>').join("");
+    const rows=holds.map(h=>{
+        const active=h.status==="active";
+        return '<article class="retention-hold-item">'+
+          '<div class="retention-hold-heading"><strong>'+escapeHTML(retentionHumanLabel(h.category))+' hold</strong><span class="retention-status '+(active?"is-on":"")+'">'+(active?"Active":"Released")+'</span></div>'+
+          '<div class="retention-hold-meta">'+escapeHTML(retentionHumanLabel(h.policy_key))+' · '+escapeHTML(h.target_table)+' · Ref '+escapeHTML(h.target_reference)+'</div>'+
+          '<p>'+escapeHTML(h.reason||"No reason recorded")+'</p>'+
+          '<div class="retention-hold-meta">Created '+escapeHTML(retentionFriendlyDate(h.created_at))+' · Review due '+escapeHTML(retentionFriendlyDate(h.review_due_at))+'</div>'+
+          (h.last_reviewed_at?'<div class="retention-hold-meta">Last reviewed '+escapeHTML(retentionFriendlyDate(h.last_reviewed_at))+' · '+escapeHTML(h.review_notes||"")+'</div>':"")+
+          (active?'<div class="retention-hold-actions"><label>Next review date<input type="date" id="hold-review-date-'+h.id+'" min="'+new Date().toISOString().slice(0,10)+'"></label><label>Review note<input type="text" id="hold-review-note-'+h.id+'" maxlength="2000" placeholder="Why the hold remains necessary"></label><button class="secondary-button small-button" onclick="reviewRetentionHold('+h.id+')">Record review</button><label>Release reason<input type="text" id="hold-release-reason-'+h.id+'" maxlength="2000" placeholder="Why the hold can end"></label><button class="red-button small-button" onclick="releaseRetentionHold('+h.id+')">Release hold</button></div>':'<div class="retention-hold-meta">Released '+escapeHTML(retentionFriendlyDate(h.released_at))+' · '+escapeHTML(h.release_reason||"")+'</div>')+
+          '</article>';
+    }).join("");
+    renderShell('<div class="card retention-admin"><button class="back-button" onclick="showRetentionAdmin()">← System Admin</button><h2>Retention Holds</h2><p class="subtitle">An active hold prevents the retention process from deleting or anonymising the selected record. Holds remain active until explicitly released, even if the review date passes.</p>'+
+      '<style>.retention-hold-form,.retention-hold-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}.retention-hold-form label,.retention-hold-actions label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}.retention-hold-form input,.retention-hold-form select,.retention-hold-form textarea,.retention-hold-actions input{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--border,#ccc);border-radius:7px;background:var(--card,#fff);color:inherit}.retention-hold-item{border:1px solid var(--border,#ddd);border-radius:9px;padding:13px;margin:12px 0}.retention-hold-heading{display:flex;justify-content:space-between;gap:10px}.retention-hold-meta{font-size:12px;opacity:.75;margin-top:6px;overflow-wrap:anywhere}.retention-hold-actions{padding-top:10px;border-top:1px solid var(--border,#ddd)}.retention-hold-item p{margin:8px 0;overflow-wrap:anywhere}@media(min-width:650px){.retention-hold-form{grid-template-columns:1fr 1fr}.retention-hold-form .wide{grid-column:1/-1}.retention-hold-actions{grid-template-columns:1fr 1fr}.retention-hold-actions button{align-self:end}}</style>'+
+      '<details class="admin-collapse" open><summary>Create a retention hold</summary><div class="admin-collapse-body"><p>Use the record reference shown by the relevant admin screen or audit record. Do not enter PINs, PIN hashes or authentication tokens.</p>'+
+      '<div class="retention-hold-form"><label class="wide">Record type<select id="newRetentionHoldTarget">'+options+'</select></label><label>Record reference<input id="newRetentionHoldReference" maxlength="200" placeholder="Record ID or installation ID"></label><label>Reason category<select id="newRetentionHoldCategory"><option value="safeguarding">Safeguarding</option><option value="insurance">Insurance</option><option value="legal">Legal</option><option value="incident">Incident</option></select></label><label class="wide">Reason for retention<textarea id="newRetentionHoldReason" rows="3" maxlength="2000" placeholder="Explain why this record must be retained"></textarea></label><label>Review due date<input id="newRetentionHoldReview" type="date" min="'+new Date().toISOString().slice(0,10)+'"></label></div><button class="primary-button" style="margin-top:14px" onclick="createRetentionHold()">Create hold</button></div></details>'+
+      '<h3>Existing holds</h3>'+(rows||'<div class="empty">No retention holds have been recorded.</div>')+
+      '<button class="secondary-button" onclick="showRetentionAdmin()">Back to System Admin</button></div>');
+}
+async function callRetentionHold(args) {
+    if(!requireSystemAdminSession())return false;
+    const {data,error}=await supabaseClient.rpc("manage_retention_hold",{p_system_admin_pin:currentSystemAdminPIN,...args});
+    if(error || data===null){
+        await appAlert(error?.message||"System Admin verification failed. Please sign in again.","Retention hold not updated","danger");
+        if(data===null)closeSystemAdmin();
+        return false;
+    }
+    if(!data.success){await appAlert(data.message||"The retention hold could not be updated.","Unable to update hold","warning");return false;}
+    await appAlert(data.message||"Retention hold updated.","Retention hold updated","success");
+    await refreshRetentionAdmin();
+    showRetentionHolds();
+    return true;
+}
+async function createRetentionHold() {
+    const target=(document.getElementById("newRetentionHoldTarget")?.value||"").split("|");
+    const reference=document.getElementById("newRetentionHoldReference")?.value?.trim()||"";
+    const category=document.getElementById("newRetentionHoldCategory")?.value||"";
+    const reason=document.getElementById("newRetentionHoldReason")?.value?.trim()||"";
+    const review=document.getElementById("newRetentionHoldReview")?.value||"";
+    if(target.length!==2||!reference||!reason||reason.length<10||!review){await appAlert("Enter a record reference, a reason of at least 10 characters and a review date.","Complete the hold details","warning");return;}
+    const reviewDate=new Date(review+"T23:59:00");
+    if(Number.isNaN(reviewDate.getTime())||reviewDate<=new Date()){await appAlert("Choose a future review date.","Check review date","warning");return;}
+    await callRetentionHold({p_action:"create",p_policy_key:target[0],p_target_table:target[1],p_target_reference:reference,p_category:category,p_reason:reason,p_review_due_at:reviewDate.toISOString()});
+}
+async function reviewRetentionHold(id) {
+    const review=document.getElementById("hold-review-date-"+id)?.value||"";
+    const notes=document.getElementById("hold-review-note-"+id)?.value?.trim()||"";
+    if(!review||notes.length<10){await appAlert("Choose a future review date and enter a review note of at least 10 characters.","Review details required","warning");return;}
+    const date=new Date(review+"T23:59:00");
+    if(Number.isNaN(date.getTime())||date<=new Date()){await appAlert("Choose a future review date.","Check review date","warning");return;}
+    await callRetentionHold({p_action:"review",p_hold_id:id,p_review_due_at:date.toISOString(),p_review_notes:notes});
+}
+async function releaseRetentionHold(id) {
+    const reason=document.getElementById("hold-release-reason-"+id)?.value?.trim()||"";
+    if(reason.length<10){await appAlert("Enter a release reason of at least 10 characters.","Release reason required","warning");return;}
+    const ok=await appConfirm("Releasing this hold returns the record to its normal retention rule. If it is already overdue, the next retention run may process it. Continue?","Release retention hold","Release hold");
+    if(!ok)return;
+    await callRetentionHold({p_action:"release",p_hold_id:id,p_release_reason:reason});
+}
+
 async function saveRetentionPolicy(key) {
     if (!requireSystemAdminSession()) return;
     const policy=(retentionAdminData?.policies||[]).find(p=>p.policy_key===key);

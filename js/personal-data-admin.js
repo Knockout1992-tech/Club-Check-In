@@ -143,7 +143,7 @@ async function pdmDownloadReadableBundle() {
     const blob=new Blob([html],{type:"text/html;charset=utf-8"});const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;a.download=(pdmCurrentRequest?.request_ref||"personal-data")+"-report.html";a.click();URL.revokeObjectURL(url);
 }
-function pdmPreviewErasure() {
+async function pdmPreviewErasure() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const {data,error}=await supabaseClient.rpc("preview_personal_data_erasure",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to preview deletion.","Deletion preview","warning");return;}

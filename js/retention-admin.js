@@ -194,15 +194,17 @@ function showRetentionAdmin() {
     if (!requireSystemAdminSession() || !retentionAdminData) return;
     const policies=retentionAdminData.policies||[], runs=retentionAdminData.runs||[], changes=retentionAdminData.changes||[];
     renderShell(
-      '<div class="card retention-admin">'+
+      '<div class="card retention-admin system-admin-home">'+css+
       '<button class="back-button" onclick="closeSystemAdmin()">← Admin Dashboard</button>'+
-      '<div class="retention-heading"><div><h2>System Admin</h2><div class="subtitle">Control how long club records are kept</div></div><button class="secondary-button small-button" onclick="showSystemAdminChangePin(false)">Change PIN</button></div>'+
-      '<div class="retention-intro"><p>Choose how long records are kept and whether they are removed automatically.</p></div>'+
-      '<div class="retention-audit-launch"><div><strong>Security Audit Log</strong><p>Review security events across Club Check-In and Match Availability.</p></div><button class="primary-button small-button" onclick="loadSystemAdminAuditLog()">Open Security Log</button></div>'+
-      '<div class="retention-holds-launch"><div><strong>Retention Holds</strong><p>Protect specific records where there is a safeguarding, insurance, legal or incident-related reason to retain them.</p></div><button class="primary-button small-button" onclick="showRetentionHolds()">Manage holds</button></div>'+
-      '<div class="retention-holds-launch"><div><strong>Personal Data Management</strong><p>Record access and erasure requests, prepare data copies and responses, and manage individual rights requests.</p></div><button class="primary-button small-button" onclick="showPersonalDataManagement()">Open data requests</button></div>'+
+      '<div class="retention-heading"><div><h2>System Admin</h2><div class="subtitle">Security, personal data and record-keeping controls</div></div><button class="secondary-button small-button" onclick="showSystemAdminChangePin(false)">Change PIN</button></div>'+
+      '<section class="system-admin-section"><h3>Security &amp; data requests</h3><div class="system-admin-tools">'+
+      '<article class="system-admin-tool"><div class="system-admin-tool-icon">⌕</div><div class="system-admin-tool-copy"><strong>Security Audit Log</strong><p>Review security events across Club Check-In and Match Availability.</p></div><button class="primary-button small-button" onclick="loadSystemAdminAuditLog()">Open security log</button></article>'+
+      '<article class="system-admin-tool"><div class="system-admin-tool-icon">▣</div><div class="system-admin-tool-copy"><strong>Personal Data Management</strong><p>Handle access, erasure and other individual data requests.</p></div><button class="primary-button small-button" onclick="showPersonalDataManagement()">Open data requests</button></article>'+
+      '<article class="system-admin-tool"><div class="system-admin-tool-icon">⌑</div><div class="system-admin-tool-copy"><strong>Retention Holds</strong><p>Protect records that must be retained for safeguarding, legal, insurance or incident reasons.</p></div><button class="secondary-button small-button" onclick="showRetentionHolds()">Manage holds</button></article>'+
+      '</div></section>'+
+      '<section class="system-admin-section"><h3>Retention &amp; privacy settings</h3>'+
       renderClubPolicyEditor(retentionAdminData.policy_content||{})+
-      '<details class="admin-collapse"><summary>Retention rules — Configure how long records are kept</summary><div class="admin-collapse-body"><div class="retention-policy-list">'+
+      '<details class="admin-collapse"><summary>Retention rules <span>Configure how long each record type is kept</span></summary><div class="admin-collapse-body"><div class="retention-policy-list">'+
       (policies.map(p=>{
         const key=escapeHTML(p.policy_key);
         const amount=Number(p.retention_value)||0;
@@ -216,10 +218,11 @@ function showRetentionAdmin() {
         '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
         (manual?'<p class="retention-manual-note">Manual review required. These records are not removed automatically.</p>':(/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""))?'<p class="retention-manual-note">Automatic processing runs daily at 03:15 UTC when enforcement is enabled.</p>':""))+'</details>';
       }).join("")||'<div class="empty">No record-keeping rules are available</div>')+
-      '</div></div></details><details class="admin-collapse"><summary>Preview check — See which records are ready for removal</summary><div class="admin-collapse-body"><p>Checks which records meet the rules above. It does not change or delete anything.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></div></details>'+
-      '<details class="admin-collapse"><summary>Previous checks — View earlier retention runs</summary><div class="admin-collapse-body">'+
+      '</div></div></details>'+
+      '<details class="admin-collapse"><summary>Preview check <span>Check eligibility without changing or deleting records</span></summary><div class="admin-collapse-body"><p>Checks which records meet the rules above. It does not change or delete anything.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></div></details>'+
+      '<details class="admin-collapse"><summary>Previous checks <span>View earlier retention runs</span></summary><div class="admin-collapse-body">'+
       (runs.map(r=>'<div class="retention-history"><strong>'+escapeHTML(retentionFriendlyMode(r.run_mode))+' — '+escapeHTML(retentionFriendlyStatus(r.status))+'</strong><div class="subtitle">'+escapeHTML(retentionFriendlyDate(r.started_at))+'</div>'+renderRetentionRunSummary(r.summary,r.run_mode)+'</div>').join("")||'<div class="empty">No checks have been run yet</div>')+
-      '</div></details><button class="secondary-button" onclick="closeSystemAdmin()">Close System Admin</button></div>'
+      '</div></details></section></div>'
     );
 }
 

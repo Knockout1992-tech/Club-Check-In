@@ -149,6 +149,7 @@ function retentionPolicyDescription(p) {
     if(/invitation|invite/.test(key)) return "Remove an invitation after it has been accepted, cancelled or expired";
     if(/availability|match.response/.test(key)) return "Keep match availability responses for the period shown after the fixture date, then remove the responses";
     if(/parent|family|account.link/.test(key)) return "Automatically remove parent accounts and family links after the configured period without meaningful activity. Successful availability updates and family-sharing changes reset the activity clock; sign-in and failed PIN attempts do not.";
+    if(/parent_portal_security_audit/.test(key)) return "Keep Parent Portal security and access audit events for the configured period, then automatically delete them. PINs, PIN hashes and authentication tokens must never be recorded.";
     if(/security|audit|log/.test(key)) return "Keep club security records for the period shown, then remove them. Supplier-held records follow the supplier's own settings";
     if(action==="anonymise") return "Remove personal details after the period shown while keeping the remaining record";
     if(action==="review") return "An administrator must check these records before they are removed. They will not be removed automatically";
@@ -174,6 +175,7 @@ function renderRetentionRunSummary(summary,mode) {
         ["Cancelled fixture responses","cancelled_responses_checked"],
         ["Invitation tokens","invitation_rows_checked"],
         ["Security logs","security_logs_checked"],
+        ["Parent Portal security & access audit","parent_portal_security_audit_checked"],
         ["Inactive parent accounts","inactive_parent_accounts_checked"],
         ["Archived player records","archived_players_eligible"]
     ];

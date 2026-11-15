@@ -204,7 +204,7 @@ async function pdmRecordSent() {
     if(pdmCurrentRequest.request_type==="erasure"&&!pdmCurrentRequest.erasure_executed_at&&pdmCurrentRequest.status!=="refused"){
       await appAlert("Complete the deletion preview and authorised erasure first, or record a refusal with the reason, before sending an erasure response.","Erasure outcome required","warning");return;
     }
-    if(pdmCurrentRequest.identity_status!=="verified"||!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)){
+    if(pdmCurrentRequest.identity_status!=="verified"||(!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)&&pdmCurrentRequest.status!=="refused")){
       await appAlert("Verify the requester’s identity and authority before issuing a response.","Verification required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";

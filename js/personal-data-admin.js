@@ -179,6 +179,10 @@ function pdmDraftResponse() {
     host.innerHTML='<label>Response draft<textarea id="pdmResponseText" rows="14">'+pdmEscape(body)+'</textarea></label>'+
       '<button class="secondary-button" onclick="GenUI.copy(document.getElementById(\'pdmResponseText\').value)">Copy response</button>'+
       '<label>Sent by<select id="pdmSentMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select></label>'+
+      (r.request_type==="access"?'<label><input type="checkbox" id="pdmCheckExport"> I have securely attached or supplied the data copy.</label>':'')+
+      '<label><input type="checkbox" id="pdmCheckThirdParty"> I have checked and redacted information about other people where required.</label>'+
+      '<label><input type="checkbox" id="pdmCheckAccuracy"> I have checked the response against the current privacy notice, actual purposes, lawful bases, recipients, retention periods and any international transfer information.</label>'+
+
       '<p class="pdm-note">Review the wording, attach the access export where applicable, check for third-party data, then send through the verified contact route. Record the actual sent date and method.</p>'+
       '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button>';
 }
@@ -188,6 +192,10 @@ async function pdmRecordSent() {
       await appAlert("Verify the requester’s identity and authority before issuing a response.","Verification required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
+    if(!document.getElementById("pdmCheckThirdParty")?.checked||!document.getElementById("pdmCheckAccuracy")?.checked||
+       (pdmCurrentRequest.request_type==="access"&&(!pdmBundle||!document.getElementById("pdmCheckExport")?.checked))){
+      await appAlert("Complete the disclosure checks and, for an access request, confirm the data copy has been securely supplied before recording the response as sent.","Pre-send checks required","warning");return;
+    }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status||"verified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
       p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:null,p_extension_notified_at:null,

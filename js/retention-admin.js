@@ -167,13 +167,22 @@ function retentionSummaryRows(obj,prefix) {
 function renderRetentionRunSummary(summary,mode) {
     summary=summary&&typeof summary==="object"?summary:{};
     const preview=String(mode||"").toLowerCase()==="dry_run";
-    const invitationCount=Number(summary.invitation_rows_checked);
-    if(preview && Number.isFinite(invitationCount)) {
-        return '<div class="retention-key-result"><strong>'+invitationCount.toLocaleString("en-GB")+'</strong><span>'+(invitationCount===1?"invitation":"invitations")+'</span></div><p class="retention-no-changes">'+(invitationCount>0?"Ready for automatic removal":"Nothing ready for automatic removal")+'</p>';
-    }
-    const rows=retentionSummaryRows(summary,"").filter(r=>!/^invitation rows (checked|deleted)$/i.test(r.label));
-    if(rows.length) return '<ul class="retention-result-list">'+rows.map(r=>'<li><span>'+escapeHTML(retentionHumanLabel(r.label))+'</span><strong>'+r.value.toLocaleString("en-GB")+'</strong></li>').join("")+'</ul>';
-    return '<p class="retention-no-changes">'+(preview?"No records are ready for automatic removal":"No record changes were reported")+'</p>';
+    const categories=[
+        ["Attendance records","attendance_checked"],
+        ["Match availability responses","match_availability_checked"],
+        ["Cancelled fixture responses","cancelled_responses_checked"],
+        ["Invitation tokens","invitation_rows_checked"],
+        ["Security logs","security_logs_checked"],
+        ["Inactive parent accounts","inactive_parent_accounts_checked"],
+        ["Archived player records","archived_players_eligible"]
+    ];
+    const rows=categories.map(([label,key])=>{
+        const count=Number(summary[key]??0);
+        return '<div class="retention-result-row"><span>'+escapeHTML(label)+'</span><strong>'+count.toLocaleString("en-GB")+'</strong></div>';
+    }).join("");
+    return '<style>.retention-preview-heading{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border,#ddd)}.retention-preview-heading span{font-size:13px;opacity:.75}.retention-result-grid{display:grid;grid-template-columns:1fr;gap:0;margin-top:10px}.retention-result-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:10px 2px;border-bottom:1px solid var(--border,#ddd)}.retention-result-row:last-child{border-bottom:0}.retention-result-row strong{font-variant-numeric:tabular-nums;min-width:34px;text-align:right}</style>'+
+      '<div class="retention-result-grid">'+rows+'</div>'+
+      '<p class="retention-no-changes">'+(preview?"Preview only — no records were changed or deleted.":"Record changes are shown in the run details.")+'</p>';
 }
 function showRetentionAdmin() {
     if (!requireSystemAdminSession() || !retentionAdminData) return;
@@ -239,7 +248,7 @@ async function runRetentionDryRun() {
     const {data,error}=await supabaseClient.rpc("run_retention_admin_check",{system_admin_pin:currentSystemAdminPIN});
     if(error){target.innerHTML='<p class="retention-error">The preview check could not be completed. Please try again</p>';return;}
     const summary=data?.summary||data?.counts||data?.result||data||{};
-    target.innerHTML='<div class="retention-preview-result"><strong>Preview check completed</strong><div class="subtitle">'+escapeHTML(retentionFriendlyDate(new Date().toISOString()))+'</div>'+renderRetentionRunSummary(summary,"dry_run")+'</div>';
+    target.innerHTML='<div class="retention-preview-result"><div class="retention-preview-heading"><strong>Preview check completed successfully</strong><span>'+escapeHTML(retentionFriendlyDate(new Date().toISOString()))+'</span></div>'+renderRetentionRunSummary(summary,"dry_run")+'</div>';
     await refreshRetentionAdmin();
 }
 async function refreshRetentionAdmin(message) {

@@ -10,19 +10,44 @@ AUTO-CLOSE PREVIOUS REGISTERS
 
 async function autoClosePreviousAttendanceRegisters() {
 
-const { data, error } =
-    await supabaseClient.rpc(
-        "auto_close_previous_attendance_registers"
-    );
+    if (
+        !currentAccessPIN ||
+        !["coach", "senior"].includes(currentRole)
+    ) {
+        return false;
+    }
 
-if (error) {
+    try {
+        const { data, error } = await supabaseClient.rpc(
+            "auto_close_previous_attendance_registers",
+            {
+                supplied_code: currentAccessPIN,
+                supplied_role: currentRole,
+                supplied_installation_id: getInstallationID()
+            }
+        );
 
-    console.error(
-        "Supabase attendance auto-close failed:",
-        error
-    );
+        if (error) {
+            console.error(
+                "Supabase attendance auto-close failed:",
+                error
+            );
+            return false;
+        }
 
-    return false;
+        console.log(
+            "Attendance registers auto-closed:",
+            data
+        );
+
+        return true;
+    } catch (error) {
+        console.error(
+            "Attendance auto-close request failed:",
+            error
+        );
+        return false;
+    }
 }
 
 console.log(

@@ -190,7 +190,7 @@ function pdmDraftResponse() {
       "\n\nIf you remain dissatisfied, you may raise a concern with the Information Commissioner's Office (ICO).\n\nKind regards,\nRHRUFC Club Committee";
     const host=document.getElementById("pdmResponseHost");
     host.innerHTML='<label>Response draft<textarea id="pdmResponseText" rows="14">'+pdmEscape(body)+'</textarea></label>'+
-      '<button class="secondary-button" onclick="GenUI.copy(document.getElementById(\'pdmResponseText\').value)">Copy response</button>'+
+      '<button class="secondary-button" onclick="pdmCopyResponse()">Copy response</button>'+
       '<label>Sent by<select id="pdmSentMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select></label>'+
       (r.request_type==="access"?'<label><input type="checkbox" id="pdmCheckExport"> I have securely attached or supplied the data copy.</label>':'')+
       '<label><input type="checkbox" id="pdmCheckThirdParty"> I have checked and redacted information about other people where required.</label>'+

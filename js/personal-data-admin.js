@@ -103,10 +103,10 @@ function renderPdmRequestDetail() {
     const panel=document.createElement("section");panel.id="pdmRequestDetail";panel.className="pdm-section";
     panel.innerHTML='<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(r.request_type)+'</h3>'+
       '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDate(r.extended_due_at||r.due_at)+'</p>'+
-      '<div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button>'+
+      '<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button>'+
       (r.request_type==="erasure"?'<button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button>':'')+'</div>'+
       '<div id="pdmBundleHost"></div><div id="pdmEraseHost"></div>'+
-      '<div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
+      '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
       '<div id="pdmResponseHost"></div>';
     host.querySelector("#pdmRequestDetail")?.remove();host.appendChild(panel);
 }
@@ -120,8 +120,9 @@ async function pdmLoadBundle() {
       p_subject_type:r.subject_type,p_subject_reference:r.subject_reference,p_subject_name:r.subject_name,p_subject_locator:r.subject_locator||{}});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to build data copy.","Access request","warning");return;}
     pdmBundle=data;const host=document.getElementById("pdmBundleHost");
-    host.innerHTML='<p><strong>Data copy preview</strong></p><p class="pdm-note">Check the scope and remove any third-party information before sending. This preview is not automatically sent.</p>'+
-      '<div class="pdm-actions"><button class="primary-button small-button" onclick="pdmDownloadBundle()">Download JSON data copy</button><button class="secondary-button small-button" onclick="pdmDownloadReadableBundle()">Download readable report</button></div><pre class="pdm-json">'+pdmEscape(JSON.stringify(data,null,2))+'</pre>';
+    host.innerHTML='<div class="pdm-subsection"><h4>Data copy prepared</h4><p class="pdm-note">Review the records carefully and remove or redact information about other people where required. Preparing this copy does not send it to the requester.</p>'+
+      '<div class="pdm-actions"><button class="primary-button small-button" onclick="pdmDownloadReadableBundle()">Download readable report</button><button class="secondary-button small-button" onclick="pdmDownloadBundle()">Download technical JSON</button></div>'+
+      '<details class="pdm-technical"><summary>Show technical data preview</summary><pre class="pdm-json">'+pdmEscape(JSON.stringify(data,null,2))+'</pre></details></div>';
 }
 function pdmDownloadBundle() {
     if(!pdmBundle||!pdmReady())return;

@@ -181,7 +181,7 @@ function pdmDraftResponse() {
       '<label>Sent by<select id="pdmSentMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select></label>'+
       (r.request_type==="access"?'<label><input type="checkbox" id="pdmCheckExport"> I have securely attached or supplied the data copy.</label>':'')+
       '<label><input type="checkbox" id="pdmCheckThirdParty"> I have checked and redacted information about other people where required.</label>'+
-      '<label><input type="checkbox" id="pdmCheckAccuracy"> I have checked the controller contact details, purposes and lawful bases, data sources, recipients, retention periods, international transfer safeguards and any automated decision-making against the club's current records.</label>'+
+      '<label><input type="checkbox" id="pdmCheckAccuracy"> I have checked the controller contact details, purposes and lawful bases, data sources, recipients, retention periods, international transfer safeguards and any automated decision-making against the the club privacy notice and supplier records.</label>'+
 
       '<p class="pdm-note">Review the wording, attach the access export where applicable, check for third-party data, then send through the verified contact route. Record the actual sent date and method.</p>'+
       '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button>';

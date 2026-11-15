@@ -1772,6 +1772,7 @@ async function viewMatchFixture(fixtureId, silentRefresh = false) {
                         ? children.map(child => {
 
                             const duplicate =
+                                currentRole === "senior" &&
                                 child.duplicate_review_status === "pending";
 
                             const childID = Number(child.id);

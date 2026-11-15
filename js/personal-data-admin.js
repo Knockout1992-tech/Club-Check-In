@@ -89,10 +89,9 @@ async function pdmCreateRequest() {
 }
 async function pdmOpenRequest(id) {
     if(!pdmReady())return;
-    const {data,error}=await supabaseClient.from("personal_data_requests").select("*").eq("id",id).maybeSingle();
-    // Direct table access is intentionally denied; retrieve through the protected RPC list and use selected summary.
-    if(error||!data){const item=pdmRequests.find(x=>Number(x.id)===Number(id));if(!item){await appAlert("Request could not be loaded.","Personal Data Management","warning");return;}pdmCurrentRequest=item;}
-    else pdmCurrentRequest=data;
+    const {data,error}=await supabaseClient.rpc("get_personal_data_request_detail",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:id});
+    if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Request could not be loaded.","Personal Data Management","warning");return;}
+    pdmCurrentRequest=data.request;
     pdmBundle=null;pdmErasurePreview=null;
     renderPdmRequestDetail();
 }
@@ -107,7 +106,7 @@ function renderPdmRequestDetail() {
       '<div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button>'+
       (r.request_type==="erasure"?'<button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button>':'')+'</div>'+
       '<div id="pdmBundleHost"></div><div id="pdmEraseHost"></div>'+
-      '<div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button></div>'+
+      '<div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
       '<div id="pdmResponseHost"></div>';
     host.querySelector("#pdmRequestDetail")?.remove();host.appendChild(panel);
 }
@@ -152,7 +151,7 @@ function pdmDraftResponse() {
     const r=pdmCurrentRequest;
     const subject=r.request_type==="access"?"Your personal data access request":r.request_type==="erasure"?"Your personal data erasure request":"Your data protection request";
     const body="Dear "+r.requester_name+",\n\nThank you for your request received on "+pdmDate(r.received_at)+".\n\n"+
-      (r.request_type==="access"?"Please find attached the copy of personal data held by Rushden & Higham RUFC within the systems covered by this request. The accompanying information explains the purposes of processing, categories of data, recipients, retention and your rights.":r.request_type==="erasure"?
+      (r.request_type==="access"?"Please find attached the copy of personal data held by Rushden & Higham RUFC within the systems covered by this request.\\n\\nThe club uses this information to administer rugby participation, registers, fixtures, availability, family access and related club administration. The data may include parent account details, child/player details, age group, attendance, availability responses, family-sharing relationships and relevant security records.\\n\\nInformation may be accessed by authorised club coaches, administrators and system administrators according to their roles, and processed by the club's hosting and technical service providers. Records are retained under the club's published retention schedule, subject to legal, safeguarding and other applicable requirements.\\n\\nYou may have rights to request rectification, erasure, restriction or object to processing, depending on the circumstances. You may complain to the Information Commissioner’s Office. This response should be checked against the club's current privacy notice and actual supplier arrangements before issue.":r.request_type==="erasure"?
       "We have reviewed your request. Outcome: "+(r.decision||"Please insert the approved outcome.")+".\n\nWhere information has not been erased, the reason and applicable retention basis are: "+(r.response_notes||"Please insert the specific reason and legal basis."):"We have reviewed your request. Please see the outcome and explanation below:\n\n"+(r.response_notes||"Please insert the decision and reasons."))+
       "\n\nIf you remain dissatisfied, you may raise a concern with the Information Commissioner's Office (ICO).\n\nKind regards,\nRHRUFC Club Committee";
     const host=document.getElementById("pdmResponseHost");
@@ -163,8 +162,7 @@ function pdmDraftResponse() {
 }
 async function pdmRecordSent() {
     if(!pdmReady()||!pdmCurrentRequest)return;
-    const method=prompt("How was the response sent? (email, letter, phone or club_contact_route)","club_contact_route");
-    if(!method)return;
+    const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status||"verified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
       p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:null,p_extension_notified_at:null,
@@ -183,5 +181,25 @@ async function pdmUpdateStatus() {
       p_response_notes:pdmCurrentRequest.response_notes||null,p_sent_at:pdmCurrentRequest.sent_at||null,p_sent_via:pdmCurrentRequest.sent_via||null,
       p_completed_at:pdmCurrentRequest.completed_at||null});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to update request.","Update failed","warning");return;}
+    await showPersonalDataManagement();
+}
+
+async function pdmNotifyExtension() {
+    if(!pdmReady()||!pdmCurrentRequest)return;
+    const reason=prompt("Explain why this request is complex or involves multiple requests (at least 10 characters).");
+    if(!reason||reason.trim().length<10)return;
+    const notified=prompt("Enter the date you notified the requester (YYYY-MM-DD).",new Date().toISOString().slice(0,10));
+    if(!notified)return;
+    const when=new Date(notified+"T12:00:00");
+    if(Number.isNaN(when.getTime())||when>new Date()||when>new Date(pdmCurrentRequest.received_at).setMonth(new Date(pdmCurrentRequest.received_at).getMonth()+1)){
+      await appAlert("The extension must be notified within the first month of receipt.","Extension not recorded","warning");return;
+    }
+    const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
+      p_status:"extension_notified",p_identity_status:pdmCurrentRequest.identity_status||"unverified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
+      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:reason.trim(),p_extension_notified_at:when.toISOString(),
+      p_decision:pdmCurrentRequest.decision||null,p_response_notes:pdmCurrentRequest.response_notes||null,
+      p_sent_at:pdmCurrentRequest.sent_at||null,p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:null});
+    if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to record extension.","Extension not recorded","warning");return;}
+    await appAlert("Extension recorded. The revised deadline is "+pdmDate(data.extended_due_at)+". Ensure the requester was actually notified and retain a copy of that notice.","Extension recorded","success");
     await showPersonalDataManagement();
 }

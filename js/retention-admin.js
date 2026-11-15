@@ -190,11 +190,52 @@ function renderRetentionRunSummary(summary,mode) {
       '<div class="retention-result-grid">'+rows+'</div>'+
       '<p class="retention-no-changes">'+(preview?"Preview only — no records were changed or deleted.":"Record changes are shown in the run details.")+'</p>';
 }
+const systemAdminDashboardStyles = `<style>
+.system-admin-home{max-width:920px;margin:0 auto;padding:clamp(14px,3vw,26px)}
+.system-admin-home .retention-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 22px}
+.system-admin-home .retention-heading h2{margin:0 0 5px}
+.system-admin-home .system-admin-section{margin:20px 0 0;padding:18px;border:1px solid var(--border,#dedede);border-radius:14px;background:var(--card,#fff)}
+.system-admin-home .system-admin-section>h3{font-size:17px;margin:0 0 14px}
+.system-admin-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.system-admin-tool{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0;padding:15px;border:1px solid var(--border,#dedede);border-radius:11px;background:var(--background,#fafafa)}
+.system-admin-tool:first-child{grid-column:1/-1}
+.system-admin-tool-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:rgba(100,100,100,.12);font-size:20px}
+.system-admin-tool-copy{flex:1;min-width:0}
+.system-admin-tool-copy strong{display:block;font-size:15px}
+.system-admin-tool-copy p{font-size:13px;line-height:1.45;margin:5px 0 0;opacity:.75}
+.system-admin-tool button{width:100%;min-height:43px;margin-top:auto}
+.system-admin-home .admin-collapse{margin:10px 0;border:1px solid var(--border,#ddd);border-radius:10px;overflow:hidden;background:var(--card,#fff)}
+.system-admin-home .admin-collapse>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 15px;font-weight:700;cursor:pointer;list-style:none}
+.system-admin-home .admin-collapse>summary::-webkit-details-marker{display:none}
+.system-admin-home .admin-collapse>summary:after{content:"+";font-size:20px;font-weight:400;opacity:.65}
+.system-admin-home .admin-collapse[open]>summary:after{content:"−"}
+.system-admin-home .admin-collapse>summary span{display:block;margin-left:auto;text-align:right;font-size:12px;font-weight:400;opacity:.65}
+.system-admin-home .admin-collapse-body{padding:0 14px 15px}
+.system-admin-home .retention-policy-editor-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.system-admin-home .retention-policy-list{display:grid;gap:9px}
+.system-admin-home .retention-policy{margin:0}
+.system-admin-home .retention-history{padding:12px 0;border-bottom:1px solid var(--border,#ddd)}
+.system-admin-home .retention-history:last-child{border-bottom:0}
+@media(max-width:560px){
+ .system-admin-home{padding:12px}
+ .system-admin-home .retention-heading{align-items:flex-start}
+ .system-admin-home .system-admin-section{padding:13px}
+ .system-admin-tools{grid-template-columns:1fr}
+ .system-admin-tool:first-child{grid-column:auto}
+ .system-admin-tool{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:11px;align-items:center;padding:13px}
+ .system-admin-tool-icon{grid-row:1;grid-column:1}
+ .system-admin-tool-copy{grid-row:1;grid-column:2}
+ .system-admin-tool button{grid-column:1/-1}
+ .system-admin-home .admin-collapse>summary{align-items:flex-start;flex-wrap:wrap}
+ .system-admin-home .admin-collapse>summary span{width:100%;margin:0;text-align:left}
+}
+</style>`;
+
 function showRetentionAdmin() {
     if (!requireSystemAdminSession() || !retentionAdminData) return;
     const policies=retentionAdminData.policies||[], runs=retentionAdminData.runs||[], changes=retentionAdminData.changes||[];
     renderShell(
-      '<div class="card retention-admin system-admin-home">'+css+
+      '<div class="card retention-admin system-admin-home">'+systemAdminDashboardStyles+
       '<button class="back-button" onclick="closeSystemAdmin()">← Admin Dashboard</button>'+
       '<div class="retention-heading"><div><h2>System Admin</h2><div class="subtitle">Security, personal data and record-keeping controls</div></div><button class="secondary-button small-button" onclick="showSystemAdminChangePin(false)">Change PIN</button></div>'+
       '<section class="system-admin-section"><h3>Security &amp; data requests</h3><div class="system-admin-tools">'+

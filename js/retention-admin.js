@@ -506,8 +506,8 @@ function showSystemAdminAuditLog() {
         '.audit-event details{margin-top:9px}.audit-event pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;background:rgba(127,127,127,.10);padding:9px;border-radius:6px;max-height:220px;overflow:auto}' +
         '.audit-hold-action{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px;min-width:0}' +
         '.audit-hold-form{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:14px;margin-top:10px;border:1px solid var(--border,#ddd);border-radius:9px;min-width:0;box-sizing:border-box}' +
-        '.audit-hold-form label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:13px;font-weight:600;line-height:1.4}' +
-        '.audit-hold-form input,.audit-hold-form select,.audit-hold-form textarea{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;padding:11px;border:1px solid var(--border,#ccc);border-radius:7px;background:var(--card,#fff);color:inherit;font:inherit;font-weight:400}' +
+        '.audit-hold-form label{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;align-items:stretch!important;gap:6px;min-width:0;width:100%;font-size:13px;font-weight:600;line-height:1.4;box-sizing:border-box}' +
+        '.audit-hold-form input,.audit-hold-form select,.audit-hold-form textarea{display:block!important;position:static!important;float:none!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;box-sizing:border-box;padding:11px;border:1px solid var(--border,#ccc);border-radius:7px;background:var(--card,#fff);color:inherit;font:inherit;font-weight:400}' +
         '.audit-hold-form textarea{resize:vertical;min-height:90px}' +
         '.audit-hold-form .wide{grid-column:1/-1}' +
         '.audit-hold-form button{width:100%;min-height:44px;white-space:normal}' +

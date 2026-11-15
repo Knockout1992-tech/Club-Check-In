@@ -504,6 +504,14 @@ function showSystemAdminAuditLog() {
         '.audit-severity{display:inline-block;border-radius:20px;padding:3px 8px;font-size:11px;font-weight:700;text-transform:uppercase;background:#e8e8e8;color:#222}' +
         '.audit-severity.warning{background:#fff0c2;color:#704d00}.audit-severity.critical,.audit-severity.error{background:#f8d7da;color:#842029}' +
         '.audit-event details{margin-top:9px}.audit-event pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;background:rgba(127,127,127,.10);padding:9px;border-radius:6px;max-height:220px;overflow:auto}' +
+        '.audit-hold-action{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px;min-width:0}' +
+        '.audit-hold-form{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:14px;margin-top:10px;border:1px solid var(--border,#ddd);border-radius:9px;min-width:0;box-sizing:border-box}' +
+        '.audit-hold-form label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:13px;font-weight:600;line-height:1.4}' +
+        '.audit-hold-form input,.audit-hold-form select,.audit-hold-form textarea{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;padding:11px;border:1px solid var(--border,#ccc);border-radius:7px;background:var(--card,#fff);color:inherit;font:inherit;font-weight:400}' +
+        '.audit-hold-form textarea{resize:vertical;min-height:90px}' +
+        '.audit-hold-form .wide{grid-column:1/-1}' +
+        '.audit-hold-form button{width:100%;min-height:44px;white-space:normal}' +
+        '@media(min-width:650px){.audit-hold-form{grid-template-columns:repeat(2,minmax(0,1fr))}.audit-hold-form .wide{grid-column:1/-1}.audit-hold-form button{width:auto;justify-self:start}}' +
         '.audit-empty{padding:20px;text-align:center;opacity:.7}' +
         '.retention-audit-launch{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:14px;border:1px solid var(--border,#ddd);border-radius:9px;margin:16px 0}' +
         '.retention-audit-launch p{margin:5px 0 0;font-size:13px;opacity:.75}' +

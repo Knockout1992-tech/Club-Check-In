@@ -5,6 +5,7 @@
 let currentSystemAdminPIN = null;
 let systemAdminExpiresAt = 0;
 let retentionAdminData = null;
+let systemAdminAuditEntries = [];
 
 function requireSystemAdminSession() {
     if (!currentSystemAdminPIN || Date.now() > systemAdminExpiresAt) {
@@ -192,6 +193,7 @@ function showRetentionAdmin() {
       '<button class="back-button" onclick="closeSystemAdmin()">← Admin Dashboard</button>'+
       '<div class="retention-heading"><div><h2>System Admin</h2><div class="subtitle">Control how long club records are kept</div></div><button class="secondary-button small-button" onclick="showSystemAdminChangePin(false)">Change PIN</button></div>'+
       '<div class="retention-intro"><p>Choose how long records are kept and whether they are removed automatically.</p></div>'+
+      '<div class="retention-audit-launch"><div><strong>Security Audit Log</strong><p>Review security events across Club Check-In and Match Availability.</p></div><button class="primary-button small-button" onclick="loadSystemAdminAuditLog()">Open Security Log</button></div>'+
       renderClubPolicyEditor(retentionAdminData.policy_content||{})+
       '<details class="admin-collapse"><summary>Retention rules — Configure how long records are kept</summary><div class="admin-collapse-body"><div class="retention-policy-list">'+
       (policies.map(p=>{
@@ -359,4 +361,103 @@ async function saveClubPolicyContent() {
     });
     if(error){await appAlert(error.message,"Unable to save policy wording","danger");return;}
     await refreshRetentionAdmin("Privacy policy wording saved.");
+}
+
+ 
+// =========================================================
+// CENTRAL SECURITY AUDIT LOG
+// =========================================================
+
+async function loadSystemAdminAuditLog() {
+    if (!requireSystemAdminSession()) return;
+    const { data, error } = await supabaseClient.rpc("get_system_admin_audit_log", {
+        supplied_pin: currentSystemAdminPIN,
+        requested_limit: 200
+    });
+    if (error || !Array.isArray(data)) {
+        console.error("Security audit log load failed:", error);
+        await appAlert("The security log could not be loaded. Please try again.", "Unable to load security log", "danger");
+        return;
+    }
+    systemAdminAuditEntries = data;
+    showSystemAdminAuditLog();
+}
+
+function showSystemAdminAuditLog() {
+    if (!requireSystemAdminSession()) return;
+    const entries = Array.isArray(systemAdminAuditEntries) ? systemAdminAuditEntries : [];
+    const unique = field => [...new Set(entries.map(item => String(item[field] || "")).filter(Boolean))].sort();
+    const options = (values, label) =>
+        '<option value="">All ' + label + '</option>' +
+        values.map(value => '<option value="' + escapeHTML(value) + '">' +
+            escapeHTML(value.replace(/_/g, " ")) + '</option>').join("");
+
+    renderShell(
+        '<div class="card retention-admin security-audit-page">' +
+        '<button class="back-button" onclick="showRetentionAdmin()">← System Admin</button>' +
+        '<div class="retention-heading"><div><h2>Security Audit Log</h2><div class="subtitle">Latest 200 security events across the club system.</div></div>' +
+        '<button class="secondary-button small-button" onclick="loadSystemAdminAuditLog()">Refresh</button></div>' +
+        '<style>' +
+        '.audit-filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:16px 0}' +
+        '.audit-filter-grid label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600}' +
+        '.audit-filter-grid select,.audit-filter-grid input{width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--border,#ccc);border-radius:7px;background:var(--card,#fff);color:inherit}' +
+        '.audit-event{border:1px solid var(--border,#ddd);border-radius:9px;padding:12px;margin:10px 0}' +
+        '.audit-event-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}' +
+        '.audit-event-title{font-weight:700;text-transform:capitalize;overflow-wrap:anywhere}' +
+        '.audit-event-meta{font-size:12px;opacity:.75;margin-top:5px;line-height:1.5}' +
+        '.audit-severity{display:inline-block;border-radius:20px;padding:3px 8px;font-size:11px;font-weight:700;text-transform:uppercase;background:#e8e8e8;color:#222}' +
+        '.audit-severity.warning{background:#fff0c2;color:#704d00}.audit-severity.critical,.audit-severity.error{background:#f8d7da;color:#842029}' +
+        '.audit-event details{margin-top:9px}.audit-event pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;background:rgba(127,127,127,.10);padding:9px;border-radius:6px;max-height:220px;overflow:auto}' +
+        '.audit-empty{padding:20px;text-align:center;opacity:.7}' +
+        '.retention-audit-launch{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:14px;border:1px solid var(--border,#ddd);border-radius:9px;margin:16px 0}' +
+        '.retention-audit-launch p{margin:5px 0 0;font-size:13px;opacity:.75}' +
+        '</style>' +
+        '<div class="audit-filter-grid">' +
+        '<label>Application<select id="auditSourceFilter" onchange="filterSystemAdminAuditLog()">' + options(unique("source_system"), "applications") + '</select></label>' +
+        '<label>Severity<select id="auditSeverityFilter" onchange="filterSystemAdminAuditLog()">' + options(unique("severity"), "severities") + '</select></label>' +
+        '<label>Outcome<select id="auditOutcomeFilter" onchange="filterSystemAdminAuditLog()">' + options(unique("outcome"), "outcomes") + '</select></label>' +
+        '<label>Search event<input id="auditEventSearch" type="search" placeholder="e.g. PIN, fixture" oninput="filterSystemAdminAuditLog()"></label>' +
+        '</div>' +
+        '<div id="systemAdminAuditResult"></div>' +
+        '<button class="secondary-button" onclick="showRetentionAdmin()">Back to System Admin</button>' +
+        '</div>'
+    );
+    filterSystemAdminAuditLog();
+}
+
+function filterSystemAdminAuditLog() {
+    const source = document.getElementById("auditSourceFilter")?.value || "";
+    const severity = document.getElementById("auditSeverityFilter")?.value || "";
+    const outcome = document.getElementById("auditOutcomeFilter")?.value || "";
+    const search = (document.getElementById("auditEventSearch")?.value || "").trim().toLowerCase();
+    const filtered = systemAdminAuditEntries.filter(item =>
+        (!source || item.source_system === source) &&
+        (!severity || item.severity === severity) &&
+        (!outcome || item.outcome === outcome) &&
+        (!search || String(item.event_type || "").toLowerCase().includes(search))
+    );
+    const target = document.getElementById("systemAdminAuditResult");
+    if (!target) return;
+    if (!filtered.length) {
+        target.innerHTML = '<div class="audit-empty">No security events match these filters.</div>';
+        return;
+    }
+    target.innerHTML = '<div class="subtitle">' + filtered.length + ' event(s) shown</div>' +
+        filtered.map(item => {
+            const title = String(item.event_type || "Unknown event").replace(/[_-]+/g, " ");
+            const details = item.details && typeof item.details === "object"
+                ? JSON.stringify(item.details, null, 2) : String(item.details || "{}");
+            const meta = [
+                item.source_system,
+                item.actor_type ? "Actor: " + item.actor_type : "",
+                item.actor_reference ? "Reference: " + item.actor_reference : ""
+            ].filter(Boolean).join(" · ");
+            return '<article class="audit-event">' +
+                '<div class="audit-event-head"><div><div class="audit-event-title">' + escapeHTML(title) + '</div>' +
+                '<div class="audit-event-meta">' + escapeHTML(retentionFriendlyDate(item.occurred_at)) + '<br>' + escapeHTML(meta) +
+                '</div></div><div><span class="audit-severity ' + escapeHTML(String(item.severity || "info").toLowerCase()) + '">' +
+                escapeHTML(item.severity || "info") + '</span><div class="audit-event-meta">Outcome: ' + escapeHTML(item.outcome || "unknown") + '</div></div></div>' +
+                '<details><summary>Event details</summary><pre>' + escapeHTML(details) + '</pre></details>' +
+                '</article>';
+        }).join("");
 }

@@ -277,3 +277,17 @@ async function pdmSaveExtension() {
     await appAlert("Extension recorded. Revised deadline: "+pdmDate(data.extended_due_at)+". Ensure the requester was actually notified and retain a copy of that notice.","Extension recorded","success");
     await showPersonalDataManagement();
 }
+
+async function pdmCopyResponse() {
+    if(!pdmReady())return;
+    const field=document.getElementById("pdmResponseText");
+    if(!field)return;
+    try {
+      await navigator.clipboard.writeText(field.value);
+      await appAlert("Response copied. Review it and send it through the club's official contact route.","Copied","success");
+    } catch(error) {
+      field.focus();field.select();
+      const copied=document.execCommand("copy");
+      await appAlert(copied?"Response copied. Review it and send it through the club's official contact route.":"Copy was blocked. Select and copy the response manually.","Copy response",copied?"success":"warning");
+    }
+}

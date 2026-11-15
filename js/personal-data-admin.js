@@ -33,7 +33,7 @@ function renderPersonalDataManagement() {
     renderShell('<div class="card retention-admin pdm-page">'+
       '<button class="back-button" onclick="showRetentionAdmin()">← System Admin</button>'+
       '<h2>Personal Data Management</h2><div class="subtitle">Manage data protection requests across Club Check-In and the Parent Portal.</div>'+
-      '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and send the response within the applicable deadline.</div>'+
+      '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and respond within the applicable deadline. Do not store copies of identity documents here; record the verification outcome only. The club must approve a retention period for request case records.</div>'+
       '<section class="pdm-section"><h3>Find a parent or child</h3><div class="pdm-search"><input id="pdmSearchTerm" type="search" placeholder="Enter at least 2 characters"><button class="primary-button" onclick="pdmSearch()">Search</button></div><div id="pdmSearchResults"></div></section>'+
       '<section class="pdm-section"><h3>Open requests</h3><button class="secondary-button small-button" onclick="showPersonalDataManagement()">Refresh requests</button>'+
       (rows||'<div class="empty">No data requests have been recorded.</div>')+'</section>'+

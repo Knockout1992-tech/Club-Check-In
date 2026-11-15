@@ -175,6 +175,7 @@ function pdmDraftResponse() {
     const host=document.getElementById("pdmResponseHost");
     host.innerHTML='<label>Response draft<textarea id="pdmResponseText" rows="14">'+pdmEscape(body)+'</textarea></label>'+
       '<button class="secondary-button" onclick="GenUI.copy(document.getElementById(\'pdmResponseText\').value)">Copy response</button>'+
+      '<label>Sent by<select id="pdmSentMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select></label>'+
       '<p class="pdm-note">Review the wording, attach the access export where applicable, check for third-party data, then send through the verified contact route. Record the actual sent date and method.</p>'+
       '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button>';
 }

@@ -50,14 +50,6 @@ async function autoClosePreviousAttendanceRegisters() {
     }
 }
 
-console.log(
-    "Attendance registers auto-closed:",
-    data
-);
-
-return true;
-
-}
 
 /* =========================================================
 LOAD TODAY'S REGISTER

@@ -111,7 +111,7 @@ async function saveSystemAdminPin() {
     systemAdminExpiresAt = Date.now() + 10 * 60 * 1000;
     await appAlert("System Admin PIN changed successfully.", "PIN updated", "success");
     const refreshed = await supabaseClient.rpc("get_retention_admin_data", { system_admin_pin: currentSystemAdminPIN });
-    if (refreshed.error) { closeSystemAdmin(); return; }
+    if (refreshed.error || !refreshed.data) { closeSystemAdmin(); return; }
     retentionAdminData = refreshed.data;
     showRetentionAdmin();
 }
@@ -223,8 +223,8 @@ async function saveRetentionPolicy(key) {
     const value=valueInput?Number(valueInput.value):Number(policy.retention_value)||0;
     const enabled=document.getElementById("retention-enabled-"+key).checked;
     if(valueInput&&(!Number.isInteger(value)||value<0||value>120)){await appAlert("Enter a whole number from 0 to 120","Check the retention period","warning");return;}
-    const {error}=await supabaseClient.rpc("update_retention_policy",{system_admin_pin:currentSystemAdminPIN,requested_policy_key:key,requested_retention_value:value,requested_retention_unit:policy.retention_unit,requested_enabled:enabled});
-    if(error){await appAlert(error.message,"Unable to save rule","danger");return;}
+    const {data,error}=await supabaseClient.rpc("update_retention_policy",{system_admin_pin:currentSystemAdminPIN,requested_policy_key:key,requested_retention_value:value,requested_retention_unit:policy.retention_unit,requested_enabled:enabled});
+    if(error || data === null){await appAlert(error?.message || "System Admin verification failed. Please sign in again.","Unable to save rule","danger");closeSystemAdmin();return;}
     await refreshRetentionAdmin("Rule saved successfully");
 }
 async function toggleRetentionEnforcement(key, enabled) {
@@ -234,12 +234,12 @@ async function toggleRetentionEnforcement(key, enabled) {
         : "Turn off automatic enforcement for this policy?";
     const ok = await appConfirm(message, "Confirm enforcement change", enabled ? "Enable enforcement" : "Disable enforcement");
     if (!ok) return;
-    const { error } = await supabaseClient.rpc("set_retention_enforcement", {
+    const { data, error } = await supabaseClient.rpc("set_retention_enforcement", {
         system_admin_pin: currentSystemAdminPIN,
         requested_policy_key: key,
         requested_enforcement: enabled
     });
-    if (error) { await appAlert(error.message, "Unable to change enforcement", "danger"); return; }
+    if (error || data === null) { await appAlert(error?.message || "System Admin verification failed. Please sign in again.", "Unable to change enforcement", "danger"); closeSystemAdmin(); return; }
     await refreshRetentionAdmin("Enforcement setting updated.");
 }
 
@@ -248,7 +248,7 @@ async function runRetentionDryRun() {
     const target=document.getElementById("retentionDryRunResult");
     target.innerHTML='<p class="retention-running">Checking records…</p>';
     const {data,error}=await supabaseClient.rpc("run_retention_admin_check",{system_admin_pin:currentSystemAdminPIN});
-    if(error){target.innerHTML='<p class="retention-error">The preview check could not be completed. Please try again</p>';return;}
+    if(error || data === null){target.innerHTML='<p class="retention-error">System Admin verification failed or the preview could not be completed. Please sign in again.</p>';closeSystemAdmin();return;}
     const summary=data?.summary||data?.counts||data?.result||data||{};
     target.innerHTML='<div class="retention-preview-result"><div class="retention-preview-heading"><strong>Preview check completed successfully</strong><span>'+escapeHTML(retentionFriendlyDate(new Date().toISOString()))+'</span></div>'+renderRetentionRunSummary(summary,"dry_run")+'</div>';
     await refreshRetentionAdmin();
@@ -258,7 +258,7 @@ async function refreshRetentionAdmin(message) {
     const { data, error } = await supabaseClient.rpc("get_retention_admin_data", {
         system_admin_pin: currentSystemAdminPIN
     });
-    if (error) { await appAlert(error.message, "System Admin session ended", "warning"); closeSystemAdmin(); return; }
+    if (error || !data) { await appAlert(error?.message || "System Admin verification failed. Please sign in again.", "System Admin session ended", "warning"); closeSystemAdmin(); return; }
     retentionAdminData = data;
     showRetentionAdmin();
     if (message) await appAlert(message, "System Admin", "success");
@@ -356,10 +356,10 @@ async function saveClubPolicyContent() {
       next_review:get("next_review"),
       roles
     };
-    const {error}=await supabaseClient.rpc("update_club_policy_content",{
+    const {data,error}=await supabaseClient.rpc("update_club_policy_content",{
       system_admin_pin:currentSystemAdminPIN,requested_content:content
     });
-    if(error){await appAlert(error.message,"Unable to save policy wording","danger");return;}
+    if(error || data === null){await appAlert(error?.message || "System Admin verification failed. Please sign in again.","Unable to save policy wording","danger");closeSystemAdmin();return;}
     await refreshRetentionAdmin("Privacy policy wording saved.");
 }
 

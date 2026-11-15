@@ -118,14 +118,32 @@ async function pdmLoadBundle() {
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to build data copy.","Access request","warning");return;}
     pdmBundle=data;const host=document.getElementById("pdmBundleHost");
     host.innerHTML='<p><strong>Data copy preview</strong></p><p class="pdm-note">Check the scope and remove any third-party information before sending. This preview is not automatically sent.</p>'+
-      '<button class="primary-button small-button" onclick="pdmDownloadBundle()">Download JSON data copy</button><pre class="pdm-json">'+pdmEscape(JSON.stringify(data,null,2))+'</pre>';
+      '<div class="pdm-actions"><button class="primary-button small-button" onclick="pdmDownloadBundle()">Download JSON data copy</button><button class="secondary-button small-button" onclick="pdmDownloadReadableBundle()">Download readable report</button></div><pre class="pdm-json">'+pdmEscape(JSON.stringify(data,null,2))+'</pre>';
 }
 function pdmDownloadBundle() {
     if(!pdmBundle||!pdmReady())return;
     const blob=new Blob([JSON.stringify(pdmBundle,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(pdmCurrentRequest.request_ref||"personal-data")+".json";a.click();URL.revokeObjectURL(url);
 }
-async function pdmPreviewErasure() {
+async function pdmDownloadReadableBundle() {
+    if(!pdmBundle||!pdmReady())return;
+    const render=(key,value)=>{
+      if(value===null||typeof value!=="object")return '<p><strong>'+pdmEscape(key.replace(/_/g," "))+'</strong>: '+pdmEscape(value??"Not recorded")+'</p>';
+      if(Array.isArray(value)){
+        if(!value.length)return '<h3>'+pdmEscape(key.replace(/_/g," "))+'</h3><p>None recorded.</p>';
+        if(typeof value[0]==="object"){
+          const cols=[...new Set(value.flatMap(row=>Object.keys(row)))];
+          return '<h3>'+pdmEscape(key.replace(/_/g," "))+'</h3><div class="table-wrap"><table><thead><tr>'+cols.map(c=>'<th>'+pdmEscape(c.replace(/_/g," "))+'</th>').join("")+'</tr></thead><tbody>'+value.map(row=>'<tr>'+cols.map(c=>'<td>'+pdmEscape(row[c]??"")+'</td>').join("")+'</tr>').join("")+'</tbody></table></div>';
+        }
+        return '<h3>'+pdmEscape(key.replace(/_/g," "))+'</h3><ul>'+value.map(x=>'<li>'+pdmEscape(x)+'</li>').join("")+'</ul>';
+      }
+      return '<section><h3>'+pdmEscape(key.replace(/_/g," "))+'</h3>'+Object.entries(value).map(([k,v])=>render(k,v)).join("")+'</section>';
+    };
+    const html='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Personal data copy</title><style>body{font:14px Arial,sans-serif;max-width:1100px;margin:32px auto;padding:0 18px;color:#222}h1{font-size:24px}h2{font-size:18px;margin-top:26px}h3{font-size:15px;margin-top:20px;text-transform:capitalize}p{line-height:1.5}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;margin:10px 0}th,td{border:1px solid #ccc;padding:7px;text-align:left;vertical-align:top}th{background:#f2f2f2}section{margin:14px 0}@media print{body{margin:0;max-width:none}}</style></head><body><h1>Personal data copy</h1><p>Rushden &amp; Higham RUFC · '+pdmEscape(pdmCurrentRequest?.request_ref||"")+'</p><p>Prepared '+pdmEscape(new Date().toLocaleString("en-GB"))+'</p><p><strong>Review before disclosure:</strong> check the identity and authority of the requester and remove or redact information about other people where required.</p>'+Object.entries(pdmBundle).map(([k,v])=>render(k,v)).join("")+'</body></html>';
+    const blob=new Blob([html],{type:"text/html;charset=utf-8"});const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=(pdmCurrentRequest?.request_ref||"personal-data")+"-report.html";a.click();URL.revokeObjectURL(url);
+}
+function pdmPreviewErasure() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const {data,error}=await supabaseClient.rpc("preview_personal_data_erasure",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to preview deletion.","Deletion preview","warning");return;}
@@ -151,7 +169,7 @@ function pdmDraftResponse() {
     const r=pdmCurrentRequest;
     const subject=r.request_type==="access"?"Your personal data access request":r.request_type==="erasure"?"Your personal data erasure request":"Your data protection request";
     const body="Dear "+r.requester_name+",\n\nThank you for your request received on "+pdmDate(r.received_at)+".\n\n"+
-      (r.request_type==="access"?"Please find attached the copy of personal data held by Rushden & Higham RUFC within the systems covered by this request.\\n\\nThe club uses this information to administer rugby participation, registers, fixtures, availability, family access and related club administration. The data may include parent account details, child/player details, age group, attendance, availability responses, family-sharing relationships and relevant security records.\\n\\nInformation may be accessed by authorised club coaches, administrators and system administrators according to their roles, and processed by the club's hosting and technical service providers. Records are retained under the club's published retention schedule, subject to legal, safeguarding and other applicable requirements.\\n\\nYou may have rights to request rectification, erasure, restriction or object to processing, depending on the circumstances. You may complain to the Information Commissioner’s Office. This response should be checked against the club's current privacy notice and actual supplier arrangements before issue.":r.request_type==="erasure"?
+      (r.request_type==="access"?"Please find attached the copy of personal data held by Rushden & Higham RUFC within the systems covered by this request.\\n\\nThe club uses this information to administer rugby participation, registers, fixtures, availability, family access and related club administration. The data may include parent account details, child/player details, age group, attendance, availability responses, family-sharing relationships and relevant security records.\\n\\nInformation may be accessed by authorised club coaches, administrators and system administrators according to their roles, and processed by the club's hosting and technical service providers. Records are retained under the club's published retention schedule, subject to legal, safeguarding and other applicable requirements.\\n\\nBefore sending, complete and verify the following from the current privacy notice and supplier records: the club's controller contact details and lawful basis for each purpose; specific recipients and service providers; any international transfers and safeguards; the source of any data not obtained directly from you; applicable retention periods; and whether automated decision-making or profiling is used.\\n\\nYou may have rights to request rectification, erasure, restriction, portability or object to processing, depending on the circumstances. You may complain to the Information Commissioner’s Office.":r.request_type==="erasure"?
       "We have reviewed your request. Outcome: "+(r.decision||"Please insert the approved outcome.")+".\n\nWhere information has not been erased, the reason and applicable retention basis are: "+(r.response_notes||"Please insert the specific reason and legal basis."):"We have reviewed your request. Please see the outcome and explanation below:\n\n"+(r.response_notes||"Please insert the decision and reasons."))+
       "\n\nIf you remain dissatisfied, you may raise a concern with the Information Commissioner's Office (ICO).\n\nKind regards,\nRHRUFC Club Committee";
     const host=document.getElementById("pdmResponseHost");

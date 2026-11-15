@@ -197,8 +197,8 @@ function spGetCalendarGroups(options={}) {
     const upcomingOnly=options.upcomingOnly===true;
     const filtered=seasonPlannerData.events.filter(x=>
         (seasonPlannerAgeFilter==="all"||String(x.age_group_id)===String(seasonPlannerAgeFilter)) &&
-        (upcomingOnly ? x.event_date>spToday() && x.event_type!=="cancelled" :
-            (seasonPlannerShowPast||x.event_date>spToday()) &&
+        (upcomingOnly ? x.event_date>=spToday() && x.event_type!=="cancelled" :
+            (seasonPlannerShowPast||x.event_date>=spToday()) &&
             (seasonPlannerShowCancelled||x.event_type!=="cancelled"))
     );
     return spGroupCalendarEvents(filtered);
@@ -266,7 +266,7 @@ function spGroupCalendarEvents(events){const grouped=new Map();events.forEach(ev
 function spRenderCalendar(){
     const groups=seasonPlannerData.age_groups,grouped=spGetCalendarGroups();
     const rows=grouped.map(g=>{
-        const x=g.event,past=x.event_date<=spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set";
+        const x=g.event,past=x.event_date<spToday(),time=x.start_time?spTime(x.start_time)+(x.end_time?"–"+spTime(x.end_time):""):"Time not set";
         const fixtureIds=[...new Set((g.items||[]).map(item=>seasonPlannerAvailabilityByEvent.get(Number(item.id))).filter(Boolean).map(Number))];
         const fixtureId=fixtureIds[0]||null;
         const availableCount=fixtureIds.reduce((total,id)=>total+(seasonPlannerCoachAvailableByFixture.has(id)?seasonPlannerCoachAvailableByFixture.get(id):0),0);
@@ -276,7 +276,7 @@ function spRenderCalendar(){
         if(past){
             return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+' sp-calendar-past"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+' <span class="sp-locked-tag">Past</span></div></div>';
         }
-        const edit='<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>';
+        const edit=x.event_date>spToday()?'<button class="secondary-button" onclick="editSeasonPlannerEvent('+x.id+')">Change</button>':'';
         const actions='<div class="sp-calendar-actions">'+(fixtureId?'<button class="secondary-button" onclick="spReviewAvailability('+fixtureId+')">Review availability</button><button class="secondary-button" onclick="copyMatchFixtureLink('+fixtureId+')">Copy Fixture Link</button>':(availabilityOn?'<span class="sp-field-hint">Availability link will be created when an Admin next opens the Season Calendar.</span>':''))+'<button class="secondary-button" onclick="shareSeasonPlannerEventWhatsApp('+x.id+')">Share via WhatsApp</button>'+edit+'</div>';
         return '<div class="sp-calendar-row sp-calendar-'+spEventCategory(x.event_type,x.match_location)+'"><div class="sp-calendar-main"><div class="sp-calendar-date">'+spDate(x.event_date)+'</div><strong>'+spEsc(x.title)+'</strong> '+spTypeBadge(x.event_type,x.match_location)+'<div class="sp-event-meta">'+spEsc(g.ageLabel)+' · '+spEsc(time)+'</div>'+(x.venue?'<div class="sp-event-meta">Venue: '+spEsc(x.venue)+(mapLink?' · <a href="'+spEsc(mapLink)+'" target="_blank" rel="noopener">Open in Google Maps</a>':'')+'</div>':'')+(g.notes?'<div class="sp-event-meta">'+spEsc(g.notes)+'</div>':'')+(currentRole==="coach"&&availabilityOn&&fixtureIds.length?'<div class="sp-available-count">'+(hasAvailableCount?'<strong>'+availableCount+' Available</strong>':'<span>Loading availability…</span>')+'</div>':'')+actions+'</div></div>';
     }).join("")||'<div class="sp-empty">No events found for these filters.</div>';
@@ -293,7 +293,7 @@ function spStopCoachAvailabilityCounts() {
 async function spRefreshCoachAvailabilityCounts() {
     if (currentRole !== "coach" || seasonPlannerPage !== "calendar" || seasonPlannerCoachCountBusy) return;
     const fixtureIds=[...new Set((seasonPlannerData?.events||[])
-        .filter(event=>event.event_date>spToday()&&event.availability_enabled!==false&&!["holiday","cancelled"].includes(event.event_type))
+        .filter(event=>event.event_date>=spToday()&&event.availability_enabled!==false&&!["holiday","cancelled"].includes(event.event_type))
         .map(event=>seasonPlannerAvailabilityByEvent.get(Number(event.id))).filter(Boolean).map(Number))];
     if (!fixtureIds.length) return;
     seasonPlannerCoachCountBusy=true;

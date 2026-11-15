@@ -201,7 +201,11 @@ if (!playersLoaded) {
     return;
 }
 
-// Step 5: Open the correct screen.
+// Step 5: Run the protected daily register housekeeping.
+// A housekeeping failure must not prevent an otherwise valid login.
+await autoClosePreviousAttendanceRegisters();
+
+// Step 6: Open the correct screen.
 if (currentRole === "coach") {
     showCoachAgeGroups();
     return;

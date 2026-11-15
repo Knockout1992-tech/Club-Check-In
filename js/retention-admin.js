@@ -9,6 +9,9 @@ let systemAdminAuditEntries = [];
 let systemAdminAuditCursor = null;
 let systemAdminAuditCursorHistory = [];
 let systemAdminAuditHasMore = false;
+let systemAdminAuditAllEntries = null;
+let systemAdminAuditAllLoading = false;
+let systemAdminAuditAllPromise = null;
 
 function requireSystemAdminSession() {
     if (!currentSystemAdminPIN || Date.now() > systemAdminExpiresAt) {
@@ -500,6 +503,8 @@ async function loadSystemAdminAuditLog(cursor = null, navigation = "reset") {
     if (!requireSystemAdminSession()) return;
     if (navigation === "reset") {
         systemAdminAuditCursorHistory = [];
+        systemAdminAuditAllEntries = null;
+        systemAdminAuditAllPromise = null;
         cursor = null;
     } else if (navigation === "next") {
         systemAdminAuditCursorHistory.push(systemAdminAuditCursor);
@@ -612,7 +617,7 @@ function getAuditRetentionHoldTarget(item) {
 
 async function openAuditRetentionHold(auditId) {
     if (!requireSystemAdminSession()) return;
-    const item = systemAdminAuditEntries.find(entry => Number(entry.id) === Number(auditId));
+    const item = (systemAdminAuditAllEntries || systemAdminAuditEntries).find(entry => Number(entry.id) === Number(auditId));
     const targetInfo = getAuditRetentionHoldTarget(item);
     if (!item || !targetInfo) {
         await appAlert("This audit entry is not linked to a record that supports retention holds.", "Cannot place hold", "warning");
@@ -687,24 +692,88 @@ async function submitAuditRetentionHold(auditId) {
     await loadSystemAdminAuditLog(systemAdminAuditCursor, "stay");
 }
 
-function filterSystemAdminAuditLog() {
+async function loadAllSystemAdminAuditEntries() {
+    if (Array.isArray(systemAdminAuditAllEntries)) return systemAdminAuditAllEntries;
+    if (systemAdminAuditAllPromise) return systemAdminAuditAllPromise;
+
+    systemAdminAuditAllLoading = true;
+    systemAdminAuditAllPromise = (async () => {
+        const all = [];
+        let cursor = null;
+        while (true) {
+            if (!requireSystemAdminSession()) throw new Error("System Admin session expired.");
+            const { data, error } = await supabaseClient.rpc("get_system_admin_audit_log_page", {
+                supplied_pin: currentSystemAdminPIN,
+                requested_limit: 201,
+                before_occurred_at: cursor?.occurred_at ?? null,
+                before_id: cursor?.id ?? null
+            });
+            if (error || !Array.isArray(data)) throw new Error(error?.message || "The complete audit history could not be loaded.");
+            const page = data.slice(0, 200);
+            all.push(...page);
+            if (data.length <= 200) break;
+            const last = page[page.length - 1];
+            if (!last || (cursor && last.id === cursor.id)) throw new Error("Audit history paging stopped unexpectedly.");
+            cursor = { occurred_at: last.occurred_at, id: last.id };
+        }
+        systemAdminAuditAllEntries = all;
+        return all;
+    })();
+
+    try {
+        return await systemAdminAuditAllPromise;
+    } finally {
+        systemAdminAuditAllLoading = false;
+        systemAdminAuditAllPromise = null;
+    }
+}
+
+function refreshSystemAdminAuditFilterOptions(entries) {
+    const update = (id, field, label) => {
+        const select = document.getElementById(id);
+        if (!select) return;
+        const selected = select.value;
+        const values = [...new Set(entries.map(item => String(item[field] || "")).filter(Boolean))].sort();
+        select.innerHTML = '<option value="">All ' + label + '</option>' +
+            values.map(value => '<option value="' + escapeHTML(value) + '">' +
+                escapeHTML(value.replace(/_/g, " ")) + '</option>').join("");
+        select.value = values.includes(selected) ? selected : "";
+    };
+    update("auditSourceFilter", "source_system", "applications");
+    update("auditSeverityFilter", "severity", "severities");
+    update("auditOutcomeFilter", "outcome", "outcomes");
+}
+
+async function filterSystemAdminAuditLog() {
     const source = document.getElementById("auditSourceFilter")?.value || "";
     const severity = document.getElementById("auditSeverityFilter")?.value || "";
     const outcome = document.getElementById("auditOutcomeFilter")?.value || "";
     const search = (document.getElementById("auditEventSearch")?.value || "").trim().toLowerCase();
-    const filtered = systemAdminAuditEntries.filter(item =>
+    const target = document.getElementById("systemAdminAuditResult");
+    if (!target) return;
+    if (!Array.isArray(systemAdminAuditAllEntries)) {
+        target.innerHTML = '<div class="audit-empty">Loading all pages of the retained security history…</div>';
+        try {
+            const all = await loadAllSystemAdminAuditEntries();
+            refreshSystemAdminAuditFilterOptions(all);
+            const pagination = document.querySelector(".audit-pagination");
+            if (pagination) pagination.style.display = "none";
+        } catch (error) {
+            target.innerHTML = '<div class="audit-empty">Could not search all audit pages. ' + escapeHTML(error.message || "Please refresh and try again.") + '</div>';
+            return;
+        }
+    }
+    const filtered = systemAdminAuditAllEntries.filter(item =>
         (!source || item.source_system === source) &&
         (!severity || item.severity === severity) &&
         (!outcome || item.outcome === outcome) &&
         (!search || [item.reference_number, item.event_type, item.actor_reference, item.source_system].some(value => String(value || "").toLowerCase().includes(search)))
     );
-    const target = document.getElementById("systemAdminAuditResult");
-    if (!target) return;
     if (!filtered.length) {
         target.innerHTML = '<div class="audit-empty">No security events match these filters.</div>';
         return;
     }
-    target.innerHTML = '<div class="subtitle">' + filtered.length + ' event(s) shown</div>' +
+    target.innerHTML = '<div class="subtitle">' + filtered.length + ' matching event(s) across all ' + systemAdminAuditAllEntries.length + ' retained records</div>' +
         filtered.map(item => {
             const title = String(item.event_type || "Unknown event").replace(/[_-]+/g, " ");
             const details = item.details && typeof item.details === "object"

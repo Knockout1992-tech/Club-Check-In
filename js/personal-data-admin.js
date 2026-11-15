@@ -190,35 +190,60 @@ async function pdmRecordSent() {
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to record response.","Update failed","warning");return;}
     await showPersonalDataManagement();
 }
-async function pdmUpdateStatus() {
+function pdmUpdateStatus() {
     if(!pdmReady()||!pdmCurrentRequest)return;
-    const status=prompt("Enter status: received, awaiting_identity, awaiting_authority, in_review, extension_notified, ready_to_send, completed, partially_completed, refused, withdrawn",pdmCurrentRequest.status||"in_review");
-    if(!status)return;
+    const host=document.getElementById("pdmResponseHost");
+    const statuses=["received","awaiting_identity","awaiting_authority","in_review","extension_notified","ready_to_send","partially_completed","refused","withdrawn"];
+    host.innerHTML='<div class="pdm-form"><label>Request status<select id="pdmStatus">'+statuses.map(x=>'<option value="'+x+'">'+x.replace(/_/g," ")+'</option>').join("")+'</select></label>'+
+      '<label>Identity check<select id="pdmIdentityStatus"><option value="unverified">Unverified</option><option value="verified">Verified</option><option value="more_information_required">More information required</option><option value="not_applicable">Not applicable</option></select></label>'+
+      '<label>Authority to act<select id="pdmAuthorityStatus"><option value="not_applicable">Not applicable</option><option value="unverified">Unverified</option><option value="verified">Verified</option><option value="not_authorised">Not authorised</option></select></label>'+
+      '<label>Decision / outcome<input id="pdmDecision" maxlength="500"></label><label>Review notes<textarea id="pdmResponseNotes" rows="3" maxlength="4000"></textarea></label>'+
+      '<label>Scope notes<textarea id="pdmScopeNotes" rows="2" maxlength="2000"></textarea></label>'+
+      '<button class="primary-button" onclick="pdmSaveProgress()">Save progress</button></div>';
+    document.getElementById("pdmStatus").value=pdmCurrentRequest.status||"in_review";
+    document.getElementById("pdmIdentityStatus").value=pdmCurrentRequest.identity_status||"unverified";
+    document.getElementById("pdmAuthorityStatus").value=pdmCurrentRequest.authority_status||"not_applicable";
+    document.getElementById("pdmDecision").value=pdmCurrentRequest.decision||"";
+    document.getElementById("pdmResponseNotes").value=pdmCurrentRequest.response_notes||"";
+    document.getElementById("pdmScopeNotes").value=pdmCurrentRequest.scope_notes||"";
+}
+async function pdmSaveProgress() {
+    if(!pdmReady()||!pdmCurrentRequest)return;
+    const v=id=>document.getElementById(id)?.value||"";
+    const status=v("pdmStatus");
+    if(status==="completed"){await appAlert("Use Prepare response and Record as sent to complete a request.","Response required","warning");return;}
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
-      p_status:status,p_identity_status:pdmCurrentRequest.identity_status||"unverified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
-      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:null,p_extension_notified_at:null,p_decision:pdmCurrentRequest.decision||null,
-      p_response_notes:pdmCurrentRequest.response_notes||null,p_sent_at:pdmCurrentRequest.sent_at||null,p_sent_via:pdmCurrentRequest.sent_via||null,
-      p_completed_at:pdmCurrentRequest.completed_at||null});
+      p_status:status,p_identity_status:v("pdmIdentityStatus"),p_authority_status:v("pdmAuthorityStatus"),
+      p_scope_notes:v("pdmScopeNotes"),p_extension_reason:null,p_extension_notified_at:null,
+      p_decision:v("pdmDecision"),p_response_notes:v("pdmResponseNotes"),
+      p_sent_at:pdmCurrentRequest.sent_at||null,p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:pdmCurrentRequest.completed_at||null});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to update request.","Update failed","warning");return;}
     await showPersonalDataManagement();
 }
-
-async function pdmNotifyExtension() {
+function pdmNotifyExtension() {
     if(!pdmReady()||!pdmCurrentRequest)return;
-    const reason=prompt("Explain why this request is complex or involves multiple requests (at least 10 characters).");
-    if(!reason||reason.trim().length<10)return;
-    const notified=prompt("Enter the date you notified the requester (YYYY-MM-DD).",new Date().toISOString().slice(0,10));
-    if(!notified)return;
+    const host=document.getElementById("pdmResponseHost");
+    host.innerHTML='<div class="pdm-form"><p>A complex request or multiple requests may justify up to two additional months. The requester must be told, with reasons, within the first month.</p>'+
+      '<label>Reason for extension<textarea id="pdmExtensionReason" rows="3" maxlength="2000" required></textarea></label>'+
+      '<label>Date the requester was notified<input id="pdmExtensionDate" type="date" value="'+new Date().toISOString().slice(0,10)+'" required></label>'+
+      '<button class="primary-button" onclick="pdmSaveExtension()">Record extension notice</button></div>';
+}
+async function pdmSaveExtension() {
+    if(!pdmReady()||!pdmCurrentRequest)return;
+    const reason=document.getElementById("pdmExtensionReason")?.value?.trim()||"";
+    const notified=document.getElementById("pdmExtensionDate")?.value||"";
+    if(reason.length<10||!notified){await appAlert("Enter the reason and date the requester was notified.","Extension details required","warning");return;}
     const when=new Date(notified+"T12:00:00");
-    if(Number.isNaN(when.getTime())||when>new Date()||when>new Date(pdmCurrentRequest.received_at).setMonth(new Date(pdmCurrentRequest.received_at).getMonth()+1)){
+    const deadline=new Date(pdmCurrentRequest.received_at);deadline.setMonth(deadline.getMonth()+1);
+    if(Number.isNaN(when.getTime())||when>new Date()||when>deadline){
       await appAlert("The extension must be notified within the first month of receipt.","Extension not recorded","warning");return;
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:"extension_notified",p_identity_status:pdmCurrentRequest.identity_status||"unverified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
-      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:reason.trim(),p_extension_notified_at:when.toISOString(),
+      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:reason,p_extension_notified_at:when.toISOString(),
       p_decision:pdmCurrentRequest.decision||null,p_response_notes:pdmCurrentRequest.response_notes||null,
       p_sent_at:pdmCurrentRequest.sent_at||null,p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:null});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to record extension.","Extension not recorded","warning");return;}
-    await appAlert("Extension recorded. The revised deadline is "+pdmDate(data.extended_due_at)+". Ensure the requester was actually notified and retain a copy of that notice.","Extension recorded","success");
+    await appAlert("Extension recorded. Revised deadline: "+pdmDate(data.extended_due_at)+". Ensure the requester was actually notified and retain a copy of that notice.","Extension recorded","success");
     await showPersonalDataManagement();
 }

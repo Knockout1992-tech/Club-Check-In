@@ -526,6 +526,71 @@ function showSystemAdminAuditLog() {
     filterSystemAdminAuditLog();
 }
 
+
+async function openAuditRetentionHold(auditId) {
+    if (!requireSystemAdminSession()) return;
+    const item = systemAdminAuditEntries.find(entry => Number(entry.id) === Number(auditId));
+    if (!item || item.source_system !== "match_availability_parent_portal") {
+        await appAlert("This audit entry is not eligible for a direct retention hold.", "Cannot place hold", "warning");
+        return;
+    }
+
+    const target = document.getElementById("audit-hold-form-" + Number(auditId));
+    if (!target) return;
+    target.innerHTML =
+        '<div class="retention-hold-form audit-hold-form">' +
+        '<p class="subtitle wide">Holding ' + escapeHTML(item.reference_number || ("SEC-" + String(item.id).padStart(8, "0"))) + ' — Parent Portal audit event</p>' +
+        '<label>Reason category<select id="audit-hold-category-' + Number(auditId) + '">' +
+        '<option value="safeguarding">Safeguarding</option><option value="insurance">Insurance</option><option value="legal">Legal</option><option value="incident" selected>Incident</option></select></label>' +
+        '<label>Review due date<input type="date" id="audit-hold-date-' + Number(auditId) + '" min="' + new Date().toISOString().slice(0,10) + '"></label>' +
+        '<label class="wide">Reason for retaining this event<textarea id="audit-hold-reason-' + Number(auditId) + '" rows="3" maxlength="2000" placeholder="Explain why this audit event must be retained"></textarea></label>' +
+        '<div class="wide"><button class="primary-button small-button" onclick="submitAuditRetentionHold(' + Number(auditId) + ')">Save retention hold</button> ' +
+        '<button class="secondary-button small-button" onclick="document.getElementById(\'audit-hold-form-' + Number(auditId) + '\').innerHTML=\'\'">Cancel</button></div></div>';
+}
+
+async function submitAuditRetentionHold(auditId) {
+    if (!requireSystemAdminSession()) return;
+    const item = systemAdminAuditEntries.find(entry => Number(entry.id) === Number(auditId));
+    if (!item || item.source_system !== "match_availability_parent_portal") return;
+
+    const category = document.getElementById("audit-hold-category-" + auditId)?.value || "";
+    const reason = document.getElementById("audit-hold-reason-" + auditId)?.value?.trim() || "";
+    const review = document.getElementById("audit-hold-date-" + auditId)?.value || "";
+    if (!review || reason.length < 10) {
+        await appAlert("Choose a review date and enter a reason of at least 10 characters.", "Complete the hold details", "warning");
+        return;
+    }
+    const reviewDate = new Date(review + "T23:59:00");
+    if (Number.isNaN(reviewDate.getTime()) || reviewDate <= new Date()) {
+        await appAlert("Choose a future review date.", "Check review date", "warning");
+        return;
+    }
+
+    const { data, error } = await supabaseClient.rpc("manage_retention_hold", {
+        p_system_admin_pin: currentSystemAdminPIN,
+        p_action: "create",
+        p_policy_key: "parent_portal_security_audit",
+        p_target_table: "system_admin_audit_log",
+        p_target_reference: String(item.id),
+        p_category: category,
+        p_reason: reason,
+        p_review_due_at: reviewDate.toISOString()
+    });
+
+    if (error || data === null) {
+        await appAlert(error?.message || "System Admin verification failed. Please sign in again.", "Retention hold not created", "danger");
+        if (data === null) closeSystemAdmin();
+        return;
+    }
+    if (!data.success) {
+        await appAlert(data.message || "The retention hold could not be created.", "Unable to create hold", "warning");
+        return;
+    }
+
+    await appAlert("Retention hold created for " + (item.reference_number || ("SEC-" + String(item.id).padStart(8, "0"))) + ".", "Retention hold created", "success");
+    await loadSystemAdminAuditLog(systemAdminAuditCursor, "stay");
+}
+
 function filterSystemAdminAuditLog() {
     const source = document.getElementById("auditSourceFilter")?.value || "";
     const severity = document.getElementById("auditSeverityFilter")?.value || "";
@@ -560,6 +625,9 @@ function filterSystemAdminAuditLog() {
                 '</div></div><div><span class="audit-severity ' + escapeHTML(String(item.severity || "info").toLowerCase()) + '">' +
                 escapeHTML(item.severity || "info") + '</span><div class="audit-event-meta">Outcome: ' + escapeHTML(item.outcome || "unknown") + '</div></div></div>' +
                 '<details><summary>Event details</summary><pre>' + escapeHTML(details) + '</pre></details>' +
+                (item.source_system === "match_availability_parent_portal"
+                    ? '<div class="audit-hold-action"><button class="secondary-button small-button" onclick="openAuditRetentionHold(' + Number(item.id) + ')">Place retention hold</button><div id="audit-hold-form-' + Number(item.id) + '"></div></div>'
+                    : '') +
                 '</article>';
         }).join("");
 }

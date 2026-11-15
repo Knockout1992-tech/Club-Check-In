@@ -200,6 +200,7 @@ function showRetentionAdmin() {
       '<div class="retention-intro"><p>Choose how long records are kept and whether they are removed automatically.</p></div>'+
       '<div class="retention-audit-launch"><div><strong>Security Audit Log</strong><p>Review security events across Club Check-In and Match Availability.</p></div><button class="primary-button small-button" onclick="loadSystemAdminAuditLog()">Open Security Log</button></div>'+
       '<div class="retention-holds-launch"><div><strong>Retention Holds</strong><p>Protect specific records where there is a safeguarding, insurance, legal or incident-related reason to retain them.</p></div><button class="primary-button small-button" onclick="showRetentionHolds()">Manage holds</button></div>'+
+      '<div class="retention-holds-launch"><div><strong>Personal Data Management</strong><p>Record access and erasure requests, prepare data copies and responses, and manage individual rights requests.</p></div><button class="primary-button small-button" onclick="showPersonalDataManagement()">Open data requests</button></div>'+
       renderClubPolicyEditor(retentionAdminData.policy_content||{})+
       '<details class="admin-collapse"><summary>Retention rules — Configure how long records are kept</summary><div class="admin-collapse-body"><div class="retention-policy-list">'+
       (policies.map(p=>{

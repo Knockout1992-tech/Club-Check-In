@@ -326,6 +326,7 @@ async function saveClubPolicyContent() {
       access_roles,
       document_owner:get("document_owner"),
       approval_status:get("approval_status"),
+      approval_date:get("approval_date"),
       draft_notice:get("draft_notice"),
       privacy_contact:get("privacy_contact"),
       controller_description:get("controller_description"),

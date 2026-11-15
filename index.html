@@ -3951,8 +3951,6 @@ function showInitialAccess() {
    AUTHORISED STARTUP
    ========================================================= */
 
-let autoCloseInterval = null;
-
 async function completeAuthorisedStartup() {
 
     // 1. Load age groups before restoring saved data
@@ -3969,22 +3967,7 @@ async function completeAuthorisedStartup() {
     // 3. Load the current season
     await loadCurrentSeasonFromSupabase();
 
-    // 4. Run the existing register housekeeping
-    await autoClosePreviousAttendanceRegisters();
-
-    // 5. Start the periodic housekeeping once
-    if (autoCloseInterval === null) {
-
-        autoCloseInterval = setInterval(
-            async () => {
-                await autoClosePreviousAttendanceRegisters();
-            },
-            60000
-        );
-
-    }
-
-    // 6. Display the welcome screen and monitor access
+    // 4. Display the welcome screen and monitor access
     showWelcome();
     startInstallationAccessMonitoring();
 

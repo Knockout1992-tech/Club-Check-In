@@ -98,7 +98,6 @@ const fs = require("node:fs");
   await page.waitForSelector("#pdmTimeline .pdm-timeline");
   assert.doesNotMatch(await page.locator("#pdmRequestDetail").innerText(), /Build data copy/);
   await page.evaluate(() => window.pdmDraftResponse());
-  assert.equal(await page.locator("#pdmCheckExport").count(), 1, "Portability responses must include a delivery confirmation");
   assert.doesNotMatch(await page.locator("#pdmResponseText").inputValue(), /\[Explain the specific reason|\[Explain any information retained/,
     "Generated response must not duplicate the decision rationale");
   assert.match(await page.locator("#pdmResponseReason").getAttribute("placeholder"), /what information remains held/i);
@@ -130,6 +129,10 @@ const fs = require("node:fs");
   await page.locator("#pdmCheckExport").check();
   await page.evaluate(() => window.pdmRecordSent());
   assert.equal(calls.filter(x => x.name === "record_personal_data_response").length, completedBeforeAccess + 1);
+  activeRequest = { ...accessRequest, id: 17, request_ref: "PDM-TEST-007", request_type: "portability" };
+  await page.evaluate(() => window.pdmOpenRequest(17));
+  await page.evaluate(() => window.pdmDraftResponse());
+  assert.equal(await page.locator("#pdmCheckExport").count(), 1, "Portability responses must include a delivery confirmation");
 
   activeRequest = requests[0];
   await page.evaluate(() => window.pdmOpenRequest(11));

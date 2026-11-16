@@ -206,23 +206,84 @@ async function pdmExecuteErasure() {
     await appAlert(data.message+" Records removed: "+data.records_removed,"Erasure completed","success");
     await showPersonalDataManagement();
 }
+function pdmResponseOutcomes(type) {
+    const options = {
+      access: [["provided","All requested information provided"],["partially_provided","Some information provided"],["refused","Request refused"]],
+      erasure: [["erased","Identified information erased"],["partially_erased","Partially erased"],["refused","Request refused"]],
+      rectification: [["corrected","Information corrected"],["partially_corrected","Partially corrected"],["refused","Request refused"]],
+      restriction: [["restricted","Processing restricted"],["partially_restricted","Partially restricted"],["refused","Request refused"]],
+      objection: [["accepted","Objection accepted"],["partially_accepted","Objection partially accepted"],["refused","Objection not accepted"]],
+      portability: [["provided","Information provided"],["partially_provided","Some information provided"],["refused","Request refused"]],
+      other: [["completed","Request action completed"],["partially_completed","Partially completed"],["not_actioned","No action taken"]]
+    };
+    return options[type] || options.other;
+}
+function pdmResponseOutcomeText(type, outcome) {
+    const labels = Object.fromEntries(pdmResponseOutcomes(type));
+    return labels[outcome] || "Outcome to be confirmed";
+}
+function pdmBuildResponseText() {
+    if (!pdmReady() || !pdmCurrentRequest) return;
+    const r = pdmCurrentRequest;
+    const outcome = document.getElementById("pdmResponseOutcome")?.value || "";
+    const notes = document.getElementById("pdmResponseReason")?.value?.trim() || "[insert the specific decision, reasons and any applicable exemption or exception]";
+    const name = r.requester_name || "[requester name]";
+    const received = pdmDate(r.received_at);
+    const greeting = "Dear " + name + ",";
+    let body = greeting + "\n\nThank you for contacting Rushden & Higham RUFC. We received your " +
+      pdmTypeLabel(r.request_type).toLowerCase() + " on " + received + ".\n\n";
+    const outcomeLine = "Our decision: " + pdmResponseOutcomeText(r.request_type, outcome) + ".\n\n";
+    if (r.request_type === "access") {
+      body += outcomeLine + notes + "\n\n";
+      if (outcome !== "refused") {
+        body += "The personal information covered by your request is supplied with this response. " +
+          "[Confirm the attached or linked data copy and the secure delivery method.]\n\n";
+      }
+      body += "Additional information about our processing\n" +
+        "Data controller: [confirm the club's legal controller identity and contact details].\n" +
+        "Purposes and lawful bases: [list each relevant purpose and its verified lawful basis].\n" +
+        "Categories of personal data: [describe the categories included in this response].\n" +
+        "Recipients: [identify the recipients or categories of recipients].\n" +
+        "International transfers: [confirm whether any apply and describe the safeguards, or state that none apply if verified].\n" +
+        "Retention: [state the approved retention periods or criteria].\n" +
+        "Sources: [identify the source of information not obtained directly from you, where applicable].\n" +
+        "Automated decision-making: [describe any qualifying automated decision-making, or confirm none if verified].\n\n" +
+        "You may have the right to request rectification, erasure or restriction, to object to processing, or to request data portability, depending on the circumstances. You may also complain to the Information Commissioner's Office (ICO).\n\n";
+    } else if (r.request_type === "erasure") {
+      body += outcomeLine + notes + "\n\n";
+      body += outcome === "erased" || outcome === "partially_erased"
+        ? "The action taken relates to the identified live application records. [Explain any information retained, the reason, and the applicable retention basis. Do not describe provider backups or logs as erased unless verified.]\n\n"
+        : "We have not erased the information. [Explain the specific reason, the applicable exemption or retention basis, and what information remains held.]\n\n";
+      body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
+    } else {
+      body += outcomeLine + notes + "\n\n";
+      body += "[Explain exactly what was changed, restricted, supplied or not actioned, including the information and date range affected. If refusing all or part of the request, explain the specific reason and any applicable exemption.]\n\n";
+      body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
+    }
+    body += "Kind regards,\nRHRUFC Club Committee";
+    const field = document.getElementById("pdmResponseText");
+    if (field) field.value = body;
+}
 function pdmDraftResponse() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const r=pdmCurrentRequest;
-    const subject=r.request_type==="access"?"Your personal data access request":r.request_type==="erasure"?"Your personal data erasure request":"Your data protection request";
-    const body="Dear "+r.requester_name+",\n\nThank you for your request received on "+pdmDate(r.received_at)+".\n\n"+
-      (r.request_type==="access"?"Please find attached the copy of personal data held by Rushden & Higham RUFC within the systems covered by this request.\n\nThe club uses this information to administer rugby participation, registers, fixtures, availability, family access and related club administration. The data may include parent account details, child/player details, age group, attendance, availability responses, family-sharing relationships and relevant security records.\n\nInformation may be accessed by authorised club coaches, administrators and system administrators according to their roles, and processed by the club's hosting and technical service providers. Records are retained under the club's published retention schedule, subject to legal, safeguarding and other applicable requirements.\n\nController and contact details: [insert the confirmed data controller and official contact route]. Purposes and lawful bases: [list each purpose and its lawful basis]. Recipients and service providers: [list the confirmed recipients]. International transfers and safeguards: [confirm whether any apply and identify the safeguard]. Data sources: [identify the source of any data not obtained directly from you]. Retention: [state the applicable periods or criteria]. Automated decision-making: [confirm whether any is used]. The club privacy notice is available at https://rhrfc-mini.pages.dev/policies/ but is currently marked as a working draft awaiting committee approval. Do not issue this response until these details have been verified and the notice has been approved.\n\nYou may have rights to request rectification, erasure, restriction, portability or object to processing, depending on the circumstances. You may complain to the Information Commissioner’s Office.":r.request_type==="erasure"?
-      "We have reviewed your request. Outcome: "+(r.decision||"Please insert the approved outcome.")+".\n\nWhere information has not been erased, the reason and applicable retention basis are: "+(r.response_notes||"Please insert the specific reason and legal basis."):"We have reviewed your request. Please see the outcome and explanation below:\n\n"+(r.response_notes||"Please insert the decision and reasons."))+
-      "\n\nIf you remain dissatisfied, you may raise a concern with the Information Commissioner's Office (ICO).\n\nKind regards,\nRHRUFC Club Committee";
+    const options=pdmResponseOutcomes(r.request_type);
+    const suggested = r.decision && options.some(x=>x[0]===r.decision) ? r.decision : options[0][0];
     const host=document.getElementById("pdmResponseHost");
-    host.innerHTML='<label for="pdmResponseText">Response draft</label><textarea id="pdmResponseText" rows="12">'+pdmEscape(body)+'</textarea>'+
+    host.innerHTML='<div class="pdm-form">'+
+      '<label>Response outcome<select id="pdmResponseOutcome" onchange="pdmBuildResponseText()">'+options.map(x=>'<option value="'+pdmEscape(x[0])+'">'+pdmEscape(x[1])+'</option>').join("")+'</select></label>'+
+      '<label>Decision reasons / explanation<textarea id="pdmResponseReason" rows="3" maxlength="4000" placeholder="Record the specific facts, actions taken and reasons for the decision"></textarea></label>'+
+      '<label for="pdmResponseText">Editable response draft</label><textarea id="pdmResponseText" rows="18"></textarea>'+
       '<button class="secondary-button" onclick="pdmCopyResponse()">Copy response</button>'+
       '<label for="pdmSentMethod">Sent by</label><select id="pdmSentMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select>'+
-      (r.request_type==="access"?'<label class="pdm-check-row"><input type="checkbox" id="pdmCheckExport"><span>I have securely attached or supplied the data copy.</span></label>':'')+
+      (r.request_type==="access"?'<label class="pdm-check-row"><input type="checkbox" id="pdmCheckExport"><span>I have securely supplied the relevant data copy where the outcome requires disclosure.</span></label>':'')+
       '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckThirdParty"><span>I have checked and redacted information about other people where required.</span></label>'+
-      '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckAccuracy"><span>I have checked the controller contact details, purposes and lawful bases, data sources, recipients, retention periods, international transfer safeguards and any automated decision-making against the club privacy notice and supplier records.</span></label>'+
-      '<p class="pdm-note">Review the wording, attach the access export where applicable, check for third-party data, then send through the verified contact route. Record the actual sent date and method.</p>'+
-      '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button>';
+      '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckAccuracy"><span>I have verified every factual statement against the club’s approved policies and actual records. No unverified legal basis, retention period or supplier claim remains.</span></label>'+
+      '<p class="pdm-note">This is a draft, not a legal determination. Replace every square-bracket instruction, verify the facts and approve the wording before sending.</p>'+
+      '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button></div>';
+    document.getElementById("pdmResponseOutcome").value=suggested;
+    document.getElementById("pdmResponseReason").value=r.response_notes||"";
+    pdmBuildResponseText();
 }
 async function pdmRecordSent() {
     if(!pdmReady()||!pdmCurrentRequest)return;
@@ -233,14 +294,20 @@ async function pdmRecordSent() {
       await appAlert("Verify the requester’s identity and authority before issuing a response.","Verification required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
-    if(!document.getElementById("pdmCheckThirdParty")?.checked||!document.getElementById("pdmCheckAccuracy")?.checked||
-       (pdmCurrentRequest.request_type==="access"&&(!pdmBundle||!document.getElementById("pdmCheckExport")?.checked))){
-      await appAlert("Complete the disclosure checks and, for an access request, confirm the data copy has been securely supplied before recording the response as sent.","Pre-send checks required","warning");return;
+    const outcome=document.getElementById("pdmResponseOutcome")?.value||"";
+    const requiresAccessCopy=pdmCurrentRequest.request_type==="access"&&outcome!=="refused";
+    const responseText=document.getElementById("pdmResponseText")?.value||"";
+    if(/\[[^\]]+\]/.test(responseText)){
+      await appAlert("The draft still contains square-bracket instructions. Replace or remove every placeholder before sending.","Draft incomplete","warning");return;
+    }
+    if(!outcome||!document.getElementById("pdmCheckThirdParty")?.checked||!document.getElementById("pdmCheckAccuracy")?.checked||
+       (requiresAccessCopy&&(!pdmBundle||!document.getElementById("pdmCheckExport")?.checked))){
+      await appAlert("Complete the outcome, disclosure checks and any required access-copy confirmation before recording the response as sent.","Pre-send checks required","warning");return;
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status||"verified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
       p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,
-      p_decision:pdmCurrentRequest.decision||"Response issued",p_response_notes:document.getElementById("pdmResponseText")?.value||pdmCurrentRequest.response_notes||null,
+      p_decision:outcome,p_response_notes:responseText||pdmCurrentRequest.response_notes||null,
       p_sent_at:new Date().toISOString(),p_sent_via:method,p_completed_at:new Date().toISOString()});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to record response.","Update failed","warning");return;}
     await showPersonalDataManagement();

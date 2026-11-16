@@ -140,6 +140,48 @@ async function showUserManagement() {
     }
 
     const {
+        data: accessAssignments,
+        error: assignmentError
+    } = await supabaseClient.rpc(
+        "get_user_access_assignments",
+        {
+            current_senior_code: currentSeniorPIN
+        }
+    );
+
+    if (assignmentError || !Array.isArray(accessAssignments)) {
+        console.error("User access assignments load failed:", assignmentError);
+        await appAlert(
+            "Unable to load user roles and age-group assignments. No changes have been made.",
+            "Unable to load assignments",
+            "danger"
+        );
+        return;
+    }
+
+    const assignmentByPerson = {};
+    accessAssignments.forEach(item => {
+        assignmentByPerson[item.person_id] = item;
+    });
+
+    const { data: activeAgeGroups, error: ageGroupError } =
+        await supabaseClient
+            .from("age_groups")
+            .select("id, age_group, display_name, sort_order")
+            .eq("active", true)
+            .order("sort_order");
+
+    if (ageGroupError || !Array.isArray(activeAgeGroups)) {
+        console.error("Age groups load failed:", ageGroupError);
+        await appAlert(
+            "Unable to load active age groups. No changes have been made.",
+            "Unable to load age groups",
+            "danger"
+        );
+        return;
+    }
+
+    const {
         data: installations,
         error: installationError
     } = await supabaseClient.rpc(
@@ -273,6 +315,25 @@ async function showUserManagement() {
 
                                 <strong>${escapeHTML(user.name)}</strong>
 
+                                ${(() => {
+                                    const assignment = assignmentByPerson[user.person_id] || {};
+                                    const roles = assignment.role_keys || [];
+                                    const groupIDs = assignment.age_group_ids || [];
+                                    const groupNames = activeAgeGroups
+                                        .filter(group => groupIDs.includes(Number(group.id)))
+                                        .map(group => group.display_name || group.age_group);
+                                    const summary = [
+                                        ...roles.map(role => role === "coach" ? "Coach" : "Admin"),
+                                        ...(groupNames.length ? [groupNames.join(", ")] : []),
+                                        ...(assignment.system_admin_authorised ? ["System Admin"] : [])
+                                    ];
+                                    return `<div style="margin-top:5px;">
+                                        <small><strong>Access:</strong>
+                                            ${summary.length ? escapeHTML(summary.join(" · ")) : "Not assigned"}
+                                        </small>
+                                    </div>`;
+                                })()}
+
                                 <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
 
                                     <span class="user-status ${
@@ -331,6 +392,12 @@ async function showUserManagement() {
                                     class="user-action-button user-action-neutral change-user-name-button"
                                     data-user-index="${index}">
                                     Change Name
+                                </button>
+
+                                <button type="button"
+                                    class="user-action-button user-action-neutral user-access-assignment-button"
+                                    data-user-index="${index}">
+                                    Roles &amp; Age Groups
                                 </button>
 
                             </div>
@@ -414,6 +481,215 @@ async function showUserManagement() {
                 showChangeUserName(selectedUser.person_id);
             });
         });
+
+    document
+        .querySelectorAll(".user-access-assignment-button")
+        .forEach(button => {
+            button.addEventListener("click", async () => {
+                const selectedUser = users[Number(button.dataset.userIndex)];
+                if (!selectedUser) return;
+                await showUserAccessAssignments(selectedUser.person_id);
+            });
+        });
+}
+
+
+// =========================================================
+// INDIVIDUAL USER ROLE AND AGE-GROUP ASSIGNMENTS
+// =========================================================
+
+async function showUserAccessAssignments(personID) {
+
+    const { data: users, error: usersError } = await supabaseClient.rpc(
+        "get_manageable_users",
+        { current_senior_code: currentSeniorPIN }
+    );
+
+    const { data: assignments, error: assignmentError } = await supabaseClient.rpc(
+        "get_user_access_assignments",
+        { current_senior_code: currentSeniorPIN }
+    );
+
+    const { data: groups, error: groupsError } = await supabaseClient
+        .from("age_groups")
+        .select("id, age_group, display_name, sort_order")
+        .eq("active", true)
+        .order("sort_order");
+
+    if (usersError || assignmentError || groupsError ||
+        !Array.isArray(users) || !Array.isArray(assignments) || !Array.isArray(groups)) {
+        console.error("Unable to load access assignment screen:", {
+            usersError, assignmentError, groupsError
+        });
+        await appAlert(
+            "Unable to load the user's access settings.",
+            "Unable to load assignments",
+            "danger"
+        );
+        return;
+    }
+
+    const user = users.find(item => item.person_id === personID);
+    const assignment = assignments.find(item => item.person_id === personID);
+
+    if (!user || !assignment) {
+        await appAlert(
+            "The selected user could not be found.",
+            "User not found",
+            "danger"
+        );
+        return;
+    }
+
+    const assignedRoles = assignment.role_keys || [];
+    const assignedGroups = (assignment.age_group_ids || []).map(Number);
+
+    renderShell(`
+        <div class="card">
+            <button class="back-button" onclick="showUserManagement()">
+                ← User Management
+            </button>
+
+            <h2>Access Assignments</h2>
+            <h3>${escapeHTML(user.name)}</h3>
+
+            <div class="info-box">
+                These assignments are being prepared for the individual login model.
+                Existing shared PIN access remains unchanged during this migration.
+            </div>
+
+            <h3>Roles</h3>
+
+            <label style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+                <input type="checkbox" id="assignmentRoleCoach"
+                    ${assignedRoles.includes("coach") ? "checked" : ""}>
+                Coach
+            </label>
+
+            <label style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+                <input type="checkbox" id="assignmentRoleAdmin"
+                    ${assignedRoles.includes("admin") ? "checked" : ""}>
+                Admin
+            </label>
+
+            <h3>Permitted Age Groups</h3>
+            <p class="subtitle">Select every age group this person is permitted to access.</p>
+
+            <div class="info-box">
+                ${groups.map(group => `
+                    <label style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+                        <input type="checkbox"
+                            class="assignment-age-group"
+                            value="${Number(group.id)}"
+                            ${assignedGroups.includes(Number(group.id)) ? "checked" : ""}>
+                        ${escapeHTML(group.display_name || group.age_group)}
+                    </label>
+                `).join("")}
+            </div>
+
+            <h3>Additional Authorisation</h3>
+
+            <label style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+                <input type="checkbox" id="assignmentSystemAdmin"
+                    ${assignment.system_admin_authorised ? "checked" : ""}>
+                System Admin authorisation
+            </label>
+
+            <div class="info-box">
+                System Admin authorisation is separate from the Admin role.
+                The individual must still enter the separate System Admin PIN.
+            </div>
+
+            <button class="primary-button" id="saveUserAccessAssignments">
+                Save Access Assignments
+            </button>
+        </div>
+    `);
+
+    document.getElementById("saveUserAccessAssignments")
+        ?.addEventListener("click", saveUserAccessAssignments.bind(null, personID));
+}
+
+
+async function saveUserAccessAssignments(personID) {
+
+    const coach = document.getElementById("assignmentRoleCoach")?.checked === true;
+    const admin = document.getElementById("assignmentRoleAdmin")?.checked === true;
+    const systemAdmin = document.getElementById("assignmentSystemAdmin")?.checked === true;
+
+    const roles = [];
+    if (coach) roles.push("coach");
+    if (admin) roles.push("admin");
+
+    const ageGroupIDs = Array.from(
+        document.querySelectorAll(".assignment-age-group:checked")
+    ).map(input => Number(input.value));
+
+    if (coach && ageGroupIDs.length === 0) {
+        await appAlert(
+            "A Coach must have at least one assigned age group.",
+            "Age group required",
+            "warning"
+        );
+        return;
+    }
+
+    if (systemAdmin && !admin) {
+        await appAlert(
+            "System Admin authorisation can only be assigned to an Admin.",
+            "Admin role required",
+            "warning"
+        );
+        return;
+    }
+
+    const confirmed = await appConfirm(
+        "Save the roles and age-group permissions for this user?",
+        "Confirm access assignments",
+        "Save assignments"
+    );
+
+    if (!confirmed) return;
+
+    const button = document.getElementById("saveUserAccessAssignments");
+    if (button) button.disabled = true;
+
+    try {
+        const { data, error } = await supabaseClient.rpc(
+            "save_user_access_assignments",
+            {
+                current_senior_code: currentSeniorPIN,
+                supplied_installation_id: getInstallationID(),
+                requested_person_id: personID,
+                requested_role_keys: roles,
+                requested_age_group_ids: ageGroupIDs,
+                requested_system_admin_authorised: systemAdmin
+            }
+        );
+
+        if (error) throw error;
+
+        if (data !== true) {
+            throw new Error("The database did not confirm the access assignment update.");
+        }
+
+        await appAlert(
+            "Access assignments saved. Existing login behaviour has not been changed.",
+            "Assignments saved",
+            "success"
+        );
+
+        await showUserManagement();
+
+    } catch (error) {
+        console.error("Saving access assignments failed:", error);
+        await appAlert(
+            error.message || "Unable to save access assignments.",
+            "Save failed",
+            "danger"
+        );
+        if (button) button.disabled = false;
+    }
 }
 
 

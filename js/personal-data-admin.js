@@ -8,6 +8,7 @@ let pdmRequests = [];
 let pdmCurrentRequest = null;
 let pdmBundle = null;
 let pdmErasurePreview = null;
+let pdmRequestFilter = "open";
 
 function pdmReady() {
     return typeof requireSystemAdminSession === "function" &&
@@ -18,6 +19,21 @@ function pdmEscape(value) {
 }
 function pdmDate(value) {
     return value ? new Date(value).toLocaleDateString("en-GB") : "—";
+}
+function pdmTodayLocal() {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+function pdmIsClosed(request) {
+    if (!request) return false;
+    if (request.status === "withdrawn") return true;
+    return ["completed", "partially_completed", "refused"].includes(request.status) && !!request.sent_at;
+}
+function pdmDeadlineLabel(request) {
+    if (!request?.clock_started_at && ["awaiting_identity", "awaiting_authority"].includes(request?.status)) {
+        return "Starts when identity / authority is verified";
+    }
+    return pdmDate(request?.extended_due_at || request?.due_at);
 }
 function pdmTypeLabel(value) {
     return ({access:"Access request",erasure:"Erasure request",rectification:"Rectification request",restriction:"Restriction request",objection:"Objection request",portability:"Data portability request",other:"Other request"})[value]||String(value||"Request");
@@ -33,18 +49,32 @@ async function showPersonalDataManagement() {
     pdmRequests=data.requests||[];
     renderPersonalDataManagement();
 }
+function pdmSetRequestFilter(filter) {
+    if (!["open", "closed"].includes(filter)) return;
+    pdmRequestFilter = filter;
+    renderPersonalDataManagement();
+}
 function renderPersonalDataManagement() {
     if(!pdmReady())return;
-    const rows=pdmRequests.map(r=>'<article class="pdm-request"><div class="pdm-request-head"><strong>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</strong><span>'+pdmEscape(r.status.replace(/_/g," "))+'</span></div><div>'+pdmEscape(r.subject_name)+' · '+pdmEscape(pdmSubjectLabel(r.subject_type))+'</div><div class="subtitle">Received '+pdmDate(r.received_at)+' · Due '+pdmDate(r.extended_due_at||r.due_at)+'</div><button class="secondary-button small-button" onclick="pdmOpenRequest('+Number(r.id)+')">Open request</button></article>').join("");
+    const openRequests = pdmRequests.filter(r => !pdmIsClosed(r));
+    const closedRequests = pdmRequests.filter(r => pdmIsClosed(r));
+    const visibleRequests = pdmRequestFilter === "closed" ? closedRequests : openRequests;
+    const rows = visibleRequests.map(r => {
+      const due = r.extended_due_at || r.due_at;
+      const overdue = r.clock_started_at && due && new Date(due).getTime() < Date.now() && !pdmIsClosed(r);
+      return '<article class="pdm-request"><div class="pdm-request-head"><strong>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</strong><span class="pdm-status">'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</span></div><div>'+pdmEscape(r.subject_name)+' · '+pdmEscape(pdmSubjectLabel(r.subject_type))+'</div><div class="subtitle">Received '+pdmDate(r.received_at)+' · Due '+pdmDeadlineLabel(r)+(overdue?' · OVERDUE':'')+'</div><button class="secondary-button small-button" onclick="pdmOpenRequest('+Number(r.id)+')">Open request</button></article>';
+    }).join("");
     renderShell('<div class="card retention-admin pdm-page">'+
       '<button class="back-button" onclick="showRetentionAdmin()">← System Admin</button>'+
       '<h2>Personal Data Management</h2><div class="subtitle">Manage data protection requests across Club Check-In and the Parent Portal.</div>'+
-      '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and respond within the applicable deadline. Do not store copies of identity documents here; record the verification outcome only. The club must approve a retention period for request case records.</div>'+
-      '<section class="pdm-section"><h3>Find a parent or child</h3><div class="pdm-search"><input id="pdmSearchTerm" type="search" placeholder="Enter at least 2 characters"><button class="primary-button" onclick="pdmSearch()">Search</button></div><div id="pdmSearchResults"></div></section>'+
-      '<section class="pdm-section"><h3>Open requests</h3><button class="secondary-button small-button" onclick="showPersonalDataManagement()">Refresh requests</button>'+
-      (rows||'<div class="empty">No data requests have been recorded.</div>')+'</section>'+
+      '<p class="pdm-note"><strong>Policy approval outstanding:</strong> The club privacy notice is still awaiting committee approval. Treat all policy details in response drafts as unapproved until the committee confirms them.</p>'+
+      '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and use the target date as an operational reminder, not an automatic legal deadline calculation. If genuine clarification pauses the clock or a date falls on a non-working day, review and adjust the target manually against current ICO guidance. Do not store copies of identity documents here; record the verification outcome only. The club must approve a retention period for request case records.</div>'+
+      '<section class="pdm-section"><h3>Find a parent or child</h3><div class="pdm-search"><input id="pdmSearchTerm" type="search" aria-label="Search parents or children" placeholder="Enter at least 2 characters"><button class="primary-button" onclick="pdmSearch()">Search</button></div><div id="pdmSearchResults"></div></section>'+
+      '<section class="pdm-section"><div class="pdm-list-heading"><h3>Requests</h3><button class="secondary-button small-button" onclick="showPersonalDataManagement()">Refresh</button></div>'+
+      '<div class="pdm-filter" role="group" aria-label="Filter requests"><button type="button" class="'+(pdmRequestFilter==="open"?"active":"")+'" aria-pressed="'+(pdmRequestFilter==="open"?"true":"false")+'" onclick="pdmSetRequestFilter(\'open\')">Open · '+openRequests.length+'</button><button type="button" class="'+(pdmRequestFilter==="closed"?"active":"")+'" aria-pressed="'+(pdmRequestFilter==="closed"?"true":"false")+'" onclick="pdmSetRequestFilter(\'closed\')">Closed · '+closedRequests.length+'</button></div>'+
+      (rows||'<div class="empty">'+(pdmRequestFilter==="closed"?"No closed requests.":"No open requests.")+'</div>')+'</section>'+
       '<button class="secondary-button" onclick="showRetentionAdmin()">Back to System Admin</button>'+
-      '<style>.pdm-page{padding:18px!important}.pdm-page .pdm-section{margin:24px 0;padding:16px;border:1px solid #e5e5e5;border-radius:12px;background:#fff}.pdm-page .pdm-section h3{margin:0 0 14px}.pdm-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px}.pdm-search input,.pdm-form input,.pdm-form select,.pdm-form textarea{width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#111;font:inherit}.pdm-result,.pdm-request{border:1px solid #ddd;border-radius:10px;padding:14px;margin:12px 0;overflow-wrap:anywhere}.pdm-request-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.pdm-form{display:grid;gap:13px;margin-top:14px}.pdm-form label,.pdm-page #pdmRequestDetail label{display:block!important;width:100%;min-width:0;font-size:14px;font-weight:700;line-height:1.4;margin:12px 0}.pdm-form label input,.pdm-form label select,.pdm-form label textarea{display:block;margin-top:6px}.pdm-page #pdmRequestDetail{margin:22px 0;padding:17px;border:1px solid #ddd;border-radius:13px;background:#fff}.pdm-page #pdmRequestDetail>h3{margin:0 0 9px;font-size:20px}.pdm-page #pdmRequestDetail>p{line-height:1.6;margin:0 0 18px;color:#444}.pdm-page .pdm-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}.pdm-page .pdm-actions button{width:100%;min-width:0;min-height:48px;padding:11px 9px;white-space:normal;line-height:1.25}.pdm-page #pdmResponseHost{margin-top:22px;padding-top:18px;border-top:1px solid #ddd}.pdm-page #pdmResponseHost label{display:block!important;width:100%;margin:0 0 13px;font-size:14px;font-weight:700;line-height:1.45}.pdm-page #pdmResponseHost textarea{display:block;width:100%;min-height:260px;margin-top:8px;padding:13px;border:1px solid #bbb;border-radius:9px;background:#fff;color:#111;font:15px/1.5 Arial,Helvetica,sans-serif;resize:vertical;white-space:pre-wrap}.pdm-page #pdmResponseHost select{display:block;width:100%;min-height:46px;margin-top:7px;padding:10px;border:1px solid #bbb;border-radius:8px;background:#fff;color:#111;font:inherit}.pdm-page #pdmResponseHost .pdm-check-row{display:flex;align-items:flex-start;gap:10px;padding:12px;margin:10px 0;border:1px solid #e1e1e1;border-radius:9px;background:#f8f8f8;font-size:13px;font-weight:400;line-height:1.45}.pdm-page #pdmResponseHost .pdm-check-row input{flex:0 0 20px;width:20px;height:20px;margin:1px 0 0}.pdm-page #pdmResponseHost button{width:100%;min-height:48px;margin:8px 0}.pdm-page #pdmResponseHost .pdm-note{margin:15px 0;padding:12px;background:#f5f5f5;border-radius:8px;line-height:1.5}.pdm-page .pdm-json{white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;background:rgba(127,127,127,.1);padding:12px;border-radius:7px;font-size:11px}.pdm-page .pdm-note{font-size:12px;opacity:.85}.pdm-page .pdm-bad{color:#9b2c2c;font-weight:600}@media(max-width:420px){.pdm-page{padding:12px!important}.pdm-page .pdm-section{padding:13px}.pdm-page .pdm-actions{grid-template-columns:1fr}.pdm-page #pdmRequestDetail{padding:13px}}.pdm-page .pdm-action-heading{margin:22px 0 9px;padding-top:14px;border-top:1px solid #e7e7e7;font-size:15px}.pdm-page .pdm-subsection{margin:16px 0;padding:14px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa}.pdm-page .pdm-subsection h4{margin:0 0 7px;font-size:16px}.pdm-page .pdm-technical{margin-top:12px;border:1px solid #ddd;border-radius:8px;background:#fff}.pdm-page .pdm-technical summary{padding:11px 13px;font-size:13px;font-weight:700;cursor:pointer}.pdm-page .pdm-technical .pdm-json{margin:0 10px 10px}.pdm-page #pdmResponseHost{display:block;width:100%;min-width:0}.pdm-page #pdmResponseHost textarea{box-sizing:border-box;width:100%;max-width:100%}.pdm-page #pdmResponseHost .pdm-check-row{display:flex!important;align-items:flex-start!important;gap:10px!important}.pdm-page #pdmResponseHost .pdm-check-row span{flex:1;min-width:0}</style></div>');
+      '<style>.pdm-page{padding:18px!important}.pdm-page .pdm-section{margin:24px 0;padding:16px;border:1px solid #e5e5e5;border-radius:12px;background:#fff}.pdm-page .pdm-section h3{margin:0 0 14px}.pdm-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px}.pdm-search input,.pdm-form input,.pdm-form select,.pdm-form textarea{width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#111;font:inherit}.pdm-result,.pdm-request{border:1px solid #ddd;border-radius:10px;padding:14px;margin:12px 0;overflow-wrap:anywhere}.pdm-request-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.pdm-case-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0;padding:12px;background:#f5f5f5;border-radius:10px}.pdm-case-summary div{min-width:0}.pdm-case-summary span{display:block;font-size:12px;color:#666;margin-bottom:3px}.pdm-case-summary strong{display:block;text-transform:capitalize;overflow-wrap:anywhere}.pdm-timeline{list-style:none;margin:12px 0;padding:0;border-left:2px solid #ddd}.pdm-timeline li{position:relative;margin:0 0 16px 12px;padding:0 0 0 14px}.pdm-timeline li:before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:#777}.pdm-timeline-event{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.pdm-timeline-outcome{text-transform:capitalize;font-size:12px;font-weight:700}.pdm-timeline .subtitle{margin:4px 0 0}.pdm-list-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.pdm-list-heading h3{margin:0!important}.pdm-filter{display:flex;gap:8px;margin:12px 0 16px}.pdm-filter button{flex:1;min-height:42px;border:1px solid #ddd;border-radius:8px;background:#f4f4f4;color:#222;font-weight:700}.pdm-filter button.active{background:#171717;color:#fff;border-color:#171717}.pdm-status{text-transform:capitalize;font-size:12px;font-weight:700;background:#eee;padding:4px 8px;border-radius:6px}.pdm-request .subtitle{margin:7px 0 12px}.pdm-request .subtitle:has(+button){line-height:1.4}.pdm-form{display:grid;gap:13px;margin-top:14px}.pdm-form label,.pdm-page #pdmRequestDetail label{display:block!important;width:100%;min-width:0;font-size:14px;font-weight:700;line-height:1.4;margin:12px 0}.pdm-form label input,.pdm-form label select,.pdm-form label textarea{display:block;margin-top:6px}.pdm-page #pdmRequestDetail{margin:22px 0;padding:17px;border:1px solid #ddd;border-radius:13px;background:#fff}.pdm-page #pdmRequestDetail>h3{margin:0 0 9px;font-size:20px}.pdm-page #pdmRequestDetail>p{line-height:1.6;margin:0 0 18px;color:#444}.pdm-page .pdm-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}.pdm-page .pdm-actions button{width:100%;min-width:0;min-height:48px;padding:11px 9px;white-space:normal;line-height:1.25}.pdm-page #pdmResponseHost{margin-top:22px;padding-top:18px;border-top:1px solid #ddd}.pdm-page #pdmResponseHost label{display:block!important;width:100%;margin:0 0 13px;font-size:14px;font-weight:700;line-height:1.45}.pdm-page #pdmResponseHost textarea{display:block;width:100%;min-height:260px;margin-top:8px;padding:13px;border:1px solid #bbb;border-radius:9px;background:#fff;color:#111;font:15px/1.5 Arial,Helvetica,sans-serif;resize:vertical;white-space:pre-wrap}.pdm-page #pdmResponseHost select{display:block;width:100%;min-height:46px;margin-top:7px;padding:10px;border:1px solid #bbb;border-radius:8px;background:#fff;color:#111;font:inherit}.pdm-page #pdmResponseHost .pdm-check-row{display:flex;align-items:flex-start;gap:10px;padding:12px;margin:10px 0;border:1px solid #e1e1e1;border-radius:9px;background:#f8f8f8;font-size:13px;font-weight:400;line-height:1.45}.pdm-page #pdmResponseHost .pdm-check-row input{flex:0 0 20px;width:20px;height:20px;margin:1px 0 0}.pdm-page #pdmResponseHost button{width:100%;min-height:48px;margin:8px 0}.pdm-page #pdmResponseHost .pdm-note{margin:15px 0;padding:12px;background:#f5f5f5;border-radius:8px;line-height:1.5}.pdm-page .pdm-json{white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;background:rgba(127,127,127,.1);padding:12px;border-radius:7px;font-size:11px}.pdm-page .pdm-note{font-size:12px;opacity:.85}.pdm-page .pdm-bad{color:#9b2c2c;font-weight:600}@media(max-width:520px){.pdm-case-summary{grid-template-columns:1fr 1fr}.pdm-actions{grid-template-columns:1fr}}@media(max-width:420px){.pdm-page{padding:12px!important}.pdm-page .pdm-section{padding:13px}.pdm-page .pdm-actions{grid-template-columns:1fr}.pdm-page #pdmRequestDetail{padding:13px}}.pdm-page .pdm-action-heading{margin:22px 0 9px;padding-top:14px;border-top:1px solid #e7e7e7;font-size:15px}.pdm-page .pdm-subsection{margin:16px 0;padding:14px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa}.pdm-page .pdm-subsection h4{margin:0 0 7px;font-size:16px}.pdm-page .pdm-technical{margin-top:12px;border:1px solid #ddd;border-radius:8px;background:#fff}.pdm-page .pdm-technical summary{padding:11px 13px;font-size:13px;font-weight:700;cursor:pointer}.pdm-page .pdm-technical .pdm-json{margin:0 10px 10px}.pdm-page #pdmResponseHost{display:block;width:100%;min-width:0}.pdm-page #pdmResponseHost textarea{box-sizing:border-box;width:100%;max-width:100%}.pdm-page #pdmResponseHost .pdm-check-row{display:flex!important;align-items:flex-start!important;gap:10px!important}.pdm-page #pdmResponseHost .pdm-check-row span{flex:1;min-width:0}</style></div>');
 }
 async function pdmSearch() {
     if(!pdmReady())return;
@@ -73,7 +103,7 @@ function pdmSelectSubject(index) {
       '<label>Relationship to subject<select id="pdmRelationship">'+(pdmSelectedSubject.type==="parent"?'<option value="self">The person themselves</option><option value="authorised_representative">Authorised representative</option><option value="other">Other</option>':'<option value="parent_or_guardian">Parent / person with parental responsibility</option><option value="authorised_representative">Authorised representative</option><option value="other">Other</option>')+'</select></label>'+
       '<label>Contact method<select id="pdmContactMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select></label>'+
       '<label>Contact details (if supplied)<input id="pdmContactDetails" maxlength="250"></label>'+
-      '<label>Date received<input id="pdmReceived" type="date" value="'+new Date().toISOString().slice(0,10)+'" required></label>'+
+      '<label>Date received<input id="pdmReceived" type="date" value="'+pdmTodayLocal()+'" required></label>'+
       '<label>Identity check<select id="pdmIdentity"><option value="unverified">Not yet verified</option><option value="verified">Verified</option><option value="more_information_required">More information required</option></select></label>'+
       '<label>Authority to act<select id="pdmAuthority">'+(pdmSelectedSubject.type==="parent"?'<option value="not_applicable">Not applicable / requester is adult subject</option><option value="unverified">Not yet verified</option><option value="verified">Verified</option>':'<option value="unverified">Not yet verified</option><option value="verified">Verified parental responsibility / authority</option><option value="not_authorised">Not authorised</option>')+'</select></label>'+
       '<label>Scope / notes<textarea id="pdmScope" rows="2" maxlength="2000"></textarea></label>'+
@@ -82,7 +112,12 @@ function pdmSelectSubject(index) {
 async function pdmCreateRequest() {
     if(!pdmReady()||!pdmSelectedSubject)return;
     const v=id=>document.getElementById(id)?.value||"";
-    const received=new Date(v("pdmReceived")+"T12:00:00").toISOString();
+    const receivedDate=v("pdmReceived");
+    const receivedLocal=new Date(receivedDate+"T00:00:00");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(receivedDate)||Number.isNaN(receivedLocal.getTime())||receivedDate>pdmTodayLocal()){
+      await appAlert("Enter a valid received date that is not in the future.","Date received","warning");return;
+    }
+    const received=receivedLocal.toISOString();
     const args={p_system_admin_pin:currentSystemAdminPIN,p_request_type:v("pdmType"),p_subject_type:pdmSelectedSubject.type,
       p_subject_reference:pdmSelectedSubject.ref,p_subject_name:pdmSelectedSubject.name,p_subject_locator:pdmSelectedSubject.locator,
       p_requester_name:v("pdmRequester"),p_requester_relationship:v("pdmRelationship"),p_contact_method:v("pdmContactMethod"),
@@ -101,20 +136,53 @@ async function pdmOpenRequest(id) {
     pdmBundle=null;pdmErasurePreview=null;
     renderPdmRequestDetail();
 }
+function pdmReturnToList() {
+    const host=document.querySelector(".pdm-page");
+    if(!host)return;
+    host.querySelector("#pdmRequestDetail")?.remove();
+    host.querySelectorAll(":scope > .pdm-section").forEach(section=>section.hidden=false);
+}
 function renderPdmRequestDetail() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const r=pdmCurrentRequest;
+    const isClosed=pdmIsClosed(r);
     const host=document.querySelector(".pdm-page");
     if(!host)return;
+    host.querySelectorAll(":scope > .pdm-section").forEach(section=>section.hidden=true);
     const panel=document.createElement("section");panel.id="pdmRequestDetail";panel.className="pdm-section";
-    panel.innerHTML='<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</h3>'+
-      '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDate(r.extended_due_at||r.due_at)+'</p>'+
-      '<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button>'+
-      (r.request_type==="erasure"?'<button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button>':'')+'</div>'+
-      '<div id="pdmBundleHost"></div><div id="pdmEraseHost"></div>'+
-      '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
-      '<div id="pdmResponseHost"></div>';
+    panel.innerHTML='<button class="back-button" type="button" onclick="pdmReturnToList()">← Back to requests</button>'+
+      '<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</h3>'+
+      '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDeadlineLabel(r)+'</p>'+
+      '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Target response date</span><strong>'+pdmEscape(pdmDeadlineLabel(r))+'</strong></div></div>'+
+      (isClosed?'<p class="pdm-note">This request is closed. Case actions are disabled; the recorded history remains available below.</p>':
+        (["access","portability"].includes(r.request_type)?'<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button></div>':'')+
+        (r.request_type==="erasure"?'<h4 class="pdm-action-heading">Erasure review</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button></div>':'')+
+        '<div id="pdmBundleHost"></div><div id="pdmEraseHost"></div>'+
+        '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
+        '<div id="pdmResponseHost"></div>')+
+      '<h4 class="pdm-action-heading">Request history</h4><div id="pdmTimeline" aria-live="polite"><p class="subtitle">Loading request history…</p></div>';
     host.querySelector("#pdmRequestDetail")?.remove();host.appendChild(panel);
+    pdmLoadTimeline(r.request_ref);
+}
+async function pdmLoadTimeline(requestRef) {
+    const host=document.getElementById("pdmTimeline");
+    if(!host||!pdmReady())return;
+    const {data,error}=await supabaseClient.rpc("get_personal_data_request_history",{p_system_admin_pin:currentSystemAdminPIN,p_request_ref:requestRef,p_requested_limit:200});
+    if(error||!Array.isArray(data)){
+      host.innerHTML='<p class="subtitle">Request history is temporarily unavailable. The underlying audit log is retained.</p>';
+      return;
+    }
+    const events=data;
+    const olderEventsMayExist=data.length===200;
+    if(!events.length){
+      host.innerHTML='<p class="subtitle">'+(olderEventsMayExist?'No matching event was found in the latest 200 audit entries; older events may exist.':'No request-specific history events were returned.')+'</p>';
+      return;
+    }
+    host.innerHTML='<ol class="pdm-timeline">'+events.map(x=>{
+      const eventLabel=String(x.event_type||"event").replace(/^personal_data_/,"").replace(/_/g," ");
+      const outcome=String(x.outcome||"recorded").replace(/_/g," ");
+      return '<li><div class="pdm-timeline-event"><strong>'+pdmEscape(eventLabel)+'</strong><span class="pdm-timeline-outcome">'+pdmEscape(outcome)+'</span></div><div class="subtitle">'+pdmEscape(pdmDate(x.occurred_at))+' · '+pdmEscape(new Date(x.occurred_at).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}))+' · '+pdmEscape(x.actor_type||"system")+'</div></li>';
+    }).join("")+'</ol>'+(olderEventsMayExist?'<p class="subtitle">Showing the latest 200 events for this request. Earlier events may exist in the full audit log.</p>':'');
 }
 async function pdmLoadBundle() {
     if(!pdmReady()||!pdmCurrentRequest)return;
@@ -174,7 +242,7 @@ async function pdmExecuteErasure() {
     const reviewUpdate=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:pdmCurrentRequest.status,p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
       p_scope_notes:[pdmCurrentRequest.scope_notes||"", "Erasure review: "+reviewNotes].filter(Boolean).join("\n"),
-      p_extension_reason:null,p_extension_notified_at:null,p_decision:pdmCurrentRequest.decision||null,
+      p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,p_decision:pdmCurrentRequest.decision||null,
       p_response_notes:pdmCurrentRequest.response_notes||null,p_sent_at:pdmCurrentRequest.sent_at||null,
       p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:pdmCurrentRequest.completed_at||null});
     if(reviewUpdate.error||reviewUpdate.data===null||!reviewUpdate.data.success){
@@ -187,41 +255,115 @@ async function pdmExecuteErasure() {
     await appAlert(data.message+" Records removed: "+data.records_removed,"Erasure completed","success");
     await showPersonalDataManagement();
 }
+function pdmResponseOutcomes(type) {
+    const options = {
+      access: [["provided","All requested information provided"],["partially_provided","Some information provided"],["refused","Request refused"]],
+      erasure: [["erased","Identified information erased"],["partially_erased","Partially erased"],["refused","Request refused"]],
+      rectification: [["corrected","Information corrected"],["partially_corrected","Partially corrected"],["refused","Request refused"]],
+      restriction: [["restricted","Processing restricted"],["partially_restricted","Partially restricted"],["refused","Request refused"]],
+      objection: [["accepted","Objection accepted"],["partially_accepted","Objection partially accepted"],["refused","Objection not accepted"]],
+      portability: [["provided","Information provided"],["partially_provided","Some information provided"],["refused","Request refused"]],
+      other: [["completed","Request action completed"],["partially_completed","Partially completed"],["not_actioned","No action taken"]]
+    };
+    return options[type] || options.other;
+}
+function pdmResponseOutcomeText(type, outcome) {
+    const labels = Object.fromEntries(pdmResponseOutcomes(type));
+    return labels[outcome] || "Outcome to be confirmed";
+}
+function pdmBuildResponseText() {
+    if (!pdmReady() || !pdmCurrentRequest) return;
+    const r = pdmCurrentRequest;
+    const outcome = document.getElementById("pdmResponseOutcome")?.value || "";
+    const notes = document.getElementById("pdmResponseReason")?.value?.trim() || "[insert the specific decision, reasons and any applicable exemption or exception]";
+    const name = r.requester_name || "[requester name]";
+    const received = pdmDate(r.received_at);
+    const greeting = "Dear " + name + ",";
+    let body = greeting + "\n\nThank you for contacting Rushden & Higham RUFC. We received your " +
+      pdmTypeLabel(r.request_type).toLowerCase() + " on " + received + ".\n\n";
+    const outcomeLine = "Our decision: " + pdmResponseOutcomeText(r.request_type, outcome) + ".\n\n";
+    if (r.request_type === "access") {
+      body += outcomeLine + notes + "\n\n";
+      if (outcome !== "refused") {
+        body += "The personal information covered by your request is supplied with this response. " +
+          "[Confirm the attached or linked data copy and the secure delivery method.]\n\n";
+      }
+      body += "Additional information about our processing\n" +
+        "Data controller: [confirm the club's legal controller identity and contact details].\n" +
+        "Purposes and lawful bases: [list each relevant purpose and its verified lawful basis].\n" +
+        "Categories of personal data: [describe the categories included in this response].\n" +
+        "Recipients: [identify the recipients or categories of recipients].\n" +
+        "International transfers: [confirm whether any apply and describe the safeguards, or state that none apply if verified].\n" +
+        "Retention: [state the approved retention periods or criteria].\n" +
+        "Sources: [identify the source of information not obtained directly from you, where applicable].\n" +
+        "Automated decision-making: [describe any qualifying automated decision-making, or confirm none if verified].\n\n" +
+        "You may have the right to request rectification, erasure or restriction, to object to processing, or to request data portability, depending on the circumstances. You may also complain to the Information Commissioner's Office (ICO).\n\n";
+    } else if (r.request_type === "portability") {
+      body += outcomeLine + notes + "\n\n";
+      if (outcome !== "refused") {
+        body += "The structured personal information covered by your portability request is supplied in the attached file or secure download. [Confirm the file format, delivery method and that the information relates to data provided by you and processed by automated means where the portability right applies.]\n\n";
+      }
+      body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
+    } else if (r.request_type === "erasure") {
+      body += outcomeLine + notes + "\n\n";
+      body += outcome === "erased" || outcome === "partially_erased"
+        ? "The action taken relates to the identified live application records. [Explain any information retained, the reason, and the applicable retention basis. Do not describe provider backups or logs as erased unless verified.]\n\n"
+        : "We have not erased the information. [Explain the specific reason, the applicable exemption or retention basis, and what information remains held.]\n\n";
+      body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
+    } else {
+      body += outcomeLine + notes + "\n\n";
+      body += "[Explain exactly what was changed, restricted, supplied or not actioned, including the information and date range affected. If refusing all or part of the request, explain the specific reason and any applicable exemption.]\n\n";
+      body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
+    }
+    body += "Kind regards,\nRHRUFC Club Committee";
+    const field = document.getElementById("pdmResponseText");
+    if (field) field.value = body;
+}
 function pdmDraftResponse() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const r=pdmCurrentRequest;
-    const subject=r.request_type==="access"?"Your personal data access request":r.request_type==="erasure"?"Your personal data erasure request":"Your data protection request";
-    const body="Dear "+r.requester_name+",\n\nThank you for your request received on "+pdmDate(r.received_at)+".\n\n"+
-      (r.request_type==="access"?"Please find attached the copy of personal data held by Rushden & Higham RUFC within the systems covered by this request.\n\nThe club uses this information to administer rugby participation, registers, fixtures, availability, family access and related club administration. The data may include parent account details, child/player details, age group, attendance, availability responses, family-sharing relationships and relevant security records.\n\nInformation may be accessed by authorised club coaches, administrators and system administrators according to their roles, and processed by the club's hosting and technical service providers. Records are retained under the club's published retention schedule, subject to legal, safeguarding and other applicable requirements.\n\nController and contact details: [insert the confirmed data controller and official contact route]. Purposes and lawful bases: [list each purpose and its lawful basis]. Recipients and service providers: [list the confirmed recipients]. International transfers and safeguards: [confirm whether any apply and identify the safeguard]. Data sources: [identify the source of any data not obtained directly from you]. Retention: [state the applicable periods or criteria]. Automated decision-making: [confirm whether any is used]. The club privacy notice is available at https://rhrfc-mini.pages.dev/policies/ but is currently marked as a working draft awaiting committee approval. Do not issue this response until these details have been verified and the notice has been approved.\n\nYou may have rights to request rectification, erasure, restriction, portability or object to processing, depending on the circumstances. You may complain to the Information Commissioner’s Office.":r.request_type==="erasure"?
-      "We have reviewed your request. Outcome: "+(r.decision||"Please insert the approved outcome.")+".\n\nWhere information has not been erased, the reason and applicable retention basis are: "+(r.response_notes||"Please insert the specific reason and legal basis."):"We have reviewed your request. Please see the outcome and explanation below:\n\n"+(r.response_notes||"Please insert the decision and reasons."))+
-      "\n\nIf you remain dissatisfied, you may raise a concern with the Information Commissioner's Office (ICO).\n\nKind regards,\nRHRUFC Club Committee";
+    const options=pdmResponseOutcomes(r.request_type);
+    const suggested = r.decision && options.some(x=>x[0]===r.decision) ? r.decision : options[0][0];
     const host=document.getElementById("pdmResponseHost");
-    host.innerHTML='<label for="pdmResponseText">Response draft</label><textarea id="pdmResponseText" rows="12">'+pdmEscape(body)+'</textarea>'+
+    host.innerHTML='<div class="pdm-form">'+
+      '<label>Response outcome<select id="pdmResponseOutcome">'+options.map(x=>'<option value="'+pdmEscape(x[0])+'">'+pdmEscape(x[1])+'</option>').join("")+'</select></label>'+
+      '<label>Decision reasons / explanation<textarea id="pdmResponseReason" rows="3" maxlength="4000" placeholder="Record the specific facts, actions taken and reasons for the decision"></textarea></label>'+
+      '<button type="button" class="secondary-button" onclick="pdmBuildResponseText()">Refresh draft from outcome and reasons</button>'+
+      '<label for="pdmResponseText">Editable response draft</label><textarea id="pdmResponseText" rows="18"></textarea>'+
       '<button class="secondary-button" onclick="pdmCopyResponse()">Copy response</button>'+
       '<label for="pdmSentMethod">Sent by</label><select id="pdmSentMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select>'+
-      (r.request_type==="access"?'<label class="pdm-check-row"><input type="checkbox" id="pdmCheckExport"><span>I have securely attached or supplied the data copy.</span></label>':'')+
+      (r.request_type==="access"?'<label class="pdm-check-row"><input type="checkbox" id="pdmCheckExport"><span>I have securely supplied the relevant data copy where the outcome requires disclosure.</span></label>':'')+
       '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckThirdParty"><span>I have checked and redacted information about other people where required.</span></label>'+
-      '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckAccuracy"><span>I have checked the controller contact details, purposes and lawful bases, data sources, recipients, retention periods, international transfer safeguards and any automated decision-making against the club privacy notice and supplier records.</span></label>'+
-      '<p class="pdm-note">Review the wording, attach the access export where applicable, check for third-party data, then send through the verified contact route. Record the actual sent date and method.</p>'+
-      '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button>';
+      '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckAccuracy"><span>I have verified every factual statement against the club’s approved policies and actual records. No unverified legal basis, retention period or supplier claim remains.</span></label>'+
+      '<p class="pdm-note">This is a draft, not a legal determination. Replace every square-bracket instruction and verify the facts. The club privacy notice is still awaiting committee approval; do not present its contents as approved club policy.</p>'+
+      '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button></div>';
+    document.getElementById("pdmResponseOutcome").value=suggested;
+    document.getElementById("pdmResponseReason").value=r.response_notes||"";
+    pdmBuildResponseText();
 }
 async function pdmRecordSent() {
     if(!pdmReady()||!pdmCurrentRequest)return;
-    if(pdmCurrentRequest.request_type==="erasure"&&!pdmCurrentRequest.erasure_executed_at&&pdmCurrentRequest.status!=="refused"){
+    const outcome=document.getElementById("pdmResponseOutcome")?.value||"";
+    if(pdmCurrentRequest.request_type==="erasure"&&!pdmCurrentRequest.erasure_executed_at&&outcome!=="refused"){
       await appAlert("Complete the deletion preview and authorised erasure first, or record a refusal with the reason, before sending an erasure response.","Erasure outcome required","warning");return;
     }
-    if(pdmCurrentRequest.identity_status!=="verified"||(!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)&&pdmCurrentRequest.status!=="refused")){
-      await appAlert("Verify the requester’s identity and authority before issuing a response.","Verification required","warning");return;
+    if(pdmCurrentRequest.identity_status!=="verified"||!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)){
+      await appAlert("Verify the requester’s identity and, where applicable, their authority before issuing any final response. If verification is outstanding, record the case as awaiting information instead.","Verification required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
-    if(!document.getElementById("pdmCheckThirdParty")?.checked||!document.getElementById("pdmCheckAccuracy")?.checked||
-       (pdmCurrentRequest.request_type==="access"&&(!pdmBundle||!document.getElementById("pdmCheckExport")?.checked))){
-      await appAlert("Complete the disclosure checks and, for an access request, confirm the data copy has been securely supplied before recording the response as sent.","Pre-send checks required","warning");return;
+    const requiresAccessCopy=["access","portability"].includes(pdmCurrentRequest.request_type)&&outcome!=="refused";
+    const responseText=document.getElementById("pdmResponseText")?.value||"";
+    if(/\[[^\]]+\]/.test(responseText)){
+      await appAlert("The draft still contains square-bracket instructions. Replace or remove every placeholder before sending.","Draft incomplete","warning");return;
+    }
+    if(!outcome||!document.getElementById("pdmCheckThirdParty")?.checked||!document.getElementById("pdmCheckAccuracy")?.checked||
+       (requiresAccessCopy&&(!pdmBundle||!document.getElementById("pdmCheckExport")?.checked))){
+      await appAlert("Complete the outcome, disclosure checks and any required access-copy confirmation before recording the response as sent.","Pre-send checks required","warning");return;
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
-      p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status||"verified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
-      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:null,p_extension_notified_at:null,
-      p_decision:pdmCurrentRequest.decision||"Response issued",p_response_notes:document.getElementById("pdmResponseText")?.value||pdmCurrentRequest.response_notes||null,
+      p_status:outcome==="refused"||outcome==="not_actioned"?"refused":outcome.startsWith("partially_")?"partially_completed":"completed",p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
+      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,
+      p_decision:outcome,p_response_notes:responseText||pdmCurrentRequest.response_notes||null,
       p_sent_at:new Date().toISOString(),p_sent_via:method,p_completed_at:new Date().toISOString()});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to record response.","Update failed","warning");return;}
     await showPersonalDataManagement();
@@ -247,10 +389,10 @@ async function pdmSaveProgress() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const v=id=>document.getElementById(id)?.value||"";
     const status=v("pdmStatus");
-    if(status==="completed"){await appAlert("Use Prepare response and Record as sent to complete a request.","Response required","warning");return;}
+    if(["completed","partially_completed"].includes(status)){await appAlert("Use Prepare response and Record as sent to close a request.","Response required","warning");return;}
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:status,p_identity_status:v("pdmIdentityStatus"),p_authority_status:v("pdmAuthorityStatus"),
-      p_scope_notes:v("pdmScopeNotes"),p_extension_reason:null,p_extension_notified_at:null,
+      p_scope_notes:v("pdmScopeNotes"),p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,
       p_decision:v("pdmDecision"),p_response_notes:v("pdmResponseNotes"),
       p_sent_at:pdmCurrentRequest.sent_at||null,p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:pdmCurrentRequest.completed_at||null});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to update request.","Update failed","warning");return;}
@@ -261,7 +403,7 @@ function pdmNotifyExtension() {
     const host=document.getElementById("pdmResponseHost");
     host.innerHTML='<div class="pdm-form"><p>A complex request or multiple requests may justify up to two additional months. The requester must be told, with reasons, within the first month.</p>'+
       '<label>Reason for extension<textarea id="pdmExtensionReason" rows="3" maxlength="2000" required></textarea></label>'+
-      '<label>Date the requester was notified<input id="pdmExtensionDate" type="date" value="'+new Date().toISOString().slice(0,10)+'" required></label>'+
+      '<label>Date the requester was notified<input id="pdmExtensionDate" type="date" value="'+pdmTodayLocal()+'" required></label>'+
       '<button class="primary-button" onclick="pdmSaveExtension()">Record extension notice</button></div>';
 }
 async function pdmSaveExtension() {
@@ -269,10 +411,9 @@ async function pdmSaveExtension() {
     const reason=document.getElementById("pdmExtensionReason")?.value?.trim()||"";
     const notified=document.getElementById("pdmExtensionDate")?.value||"";
     if(reason.length<10||!notified){await appAlert("Enter the reason and date the requester was notified.","Extension details required","warning");return;}
-    const when=new Date(notified+"T12:00:00");
-    const deadline=new Date(pdmCurrentRequest.received_at);deadline.setMonth(deadline.getMonth()+1);
-    if(Number.isNaN(when.getTime())||when>new Date()||when>deadline){
-      await appAlert("The extension must be notified within the first month of receipt.","Extension not recorded","warning");return;
+    const when=new Date(notified+"T00:00:00");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(notified)||Number.isNaN(when.getTime())||notified>pdmTodayLocal()){
+      await appAlert("Enter a valid notification date that is not in the future. The server will check the statutory notification deadline.","Extension not recorded","warning");return;
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:"extension_notified",p_identity_status:pdmCurrentRequest.identity_status||"unverified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",

@@ -24,6 +24,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check PDM external JavaScript
+        run: node --check js/personal-data-admin.js
+
       - name: Check index.html JavaScript
         run: |
           python3 - <<'PY'

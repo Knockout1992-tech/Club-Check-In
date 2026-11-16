@@ -1,7 +1,7 @@
 const { chromium } = require("playwright");
 const assert = require("node:assert/strict");
 const path = require("node:path");
-const { pathToFileURL } = require("node:url");
+const fs = require("node:fs");
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -21,9 +21,10 @@ const { pathToFileURL } = require("node:url");
     if (name === "search_personal_data_subjects") return { data: { success: true, parents: [], children: [] }, error: null };
     throw new Error("Unexpected RPC: " + name);
   });
-  const scriptUrl = pathToFileURL(path.resolve(__dirname, "../js/personal-data-admin.js")).href;
-  const harness = '<html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:16px Arial;margin:0;padding:12px;background:#f4f4f4;color:#222}button,input,select,textarea{font:inherit}button{cursor:pointer}.card{background:#fff;border-radius:12px;padding:14px}.subtitle{color:#555;font-size:13px}.info-box{padding:12px;background:#eef4f0;border-radius:8px}.secondary-button,.primary-button,.back-button{min-height:42px;padding:9px 12px;border-radius:8px;border:1px solid #aaa;background:#eee;color:#222}.primary-button{background:#173d2c;color:white}.back-button{margin-bottom:12px}.empty{padding:16px;color:#555}</style></head><body><main id="app"></main><script>window.currentSystemAdminPIN="TEST-PIN";window.requireSystemAdminSession=()=>true;window.escapeHTML=v=>String(v??"").replace(/[&<>\\"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c]));window.renderShell=html=>{document.getElementById("app").innerHTML=html};window.showRetentionAdmin=()=>{};window.appAlert=async()=>{};window.appConfirm=async()=>true;window.supabaseClient={rpc:(name,args)=>window.__rpc(name,args)};</script><script src="' + scriptUrl + '"></script></body></html>';
+  const pdmScript = fs.readFileSync(path.resolve(__dirname, "../js/personal-data-admin.js"), "utf8");
+  const harness = '<html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:16px Arial;margin:0;padding:12px;background:#f4f4f4;color:#222}button,input,select,textarea{font:inherit}button{cursor:pointer}.card{background:#fff;border-radius:12px;padding:14px}.subtitle{color:#555;font-size:13px}.info-box{padding:12px;background:#eef4f0;border-radius:8px}.secondary-button,.primary-button,.back-button{min-height:42px;padding:9px 12px;border-radius:8px;border:1px solid #aaa;background:#eee;color:#222}.primary-button{background:#173d2c;color:white}.back-button{margin-bottom:12px}.empty{padding:16px;color:#555}</style></head><body><main id="app"></main><script>window.currentSystemAdminPIN="TEST-PIN";window.requireSystemAdminSession=()=>true;window.escapeHTML=v=>String(v??"").replace(/[&<>\\"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c]));window.renderShell=html=>{document.getElementById("app").innerHTML=html};window.showRetentionAdmin=()=>{};window.appAlert=async()=>{};window.appConfirm=async()=>true;window.supabaseClient={rpc:(name,args)=>window.__rpc(name,args)};</script></body></html>';
   await page.setContent(harness, { waitUntil: "load" });
+  await page.addScriptTag({ content: pdmScript });
   await page.evaluate(() => window.showPersonalDataManagement());
   assert.match(await page.locator(".pdm-page").innerText(), /Personal Data Management/);
   assert.match(await page.locator(".pdm-filter").innerText(), /Open · 1/);

@@ -37,7 +37,7 @@ const fs = require("node:fs");
   await page.evaluate(script => window.eval(script), pdmScript);
   await page.evaluate(() => window.showPersonalDataManagement());
   assert.match(await page.locator(".pdm-page").innerText(), /Personal Data Management/);
-  assert.match(await page.locator(".pdm-filter").innerText(), /Open · 1/);
+  assert.match(await page.locator(".pdm-filter").innerText(), /Open · 2/);
   assert.match(await page.locator(".pdm-filter").innerText(), /Closed · 1/);
   await page.screenshot({ path: "test-results/pdm-dashboard-mobile.png", fullPage: true });
   await page.locator("#pdmSearchTerm").fill("Test");

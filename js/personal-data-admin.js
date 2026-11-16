@@ -45,7 +45,7 @@ function pdmSetRequestFilter(filter) {
 }
 function renderPersonalDataManagement() {
     if(!pdmReady())return;
-    const closedStatuses = ["completed", "withdrawn", "refused"];
+    const closedStatuses = ["completed", "withdrawn"];
     const openRequests = pdmRequests.filter(r => !closedStatuses.includes(r.status));
     const closedRequests = pdmRequests.filter(r => closedStatuses.includes(r.status));
     const visibleRequests = pdmRequestFilter === "closed" ? closedRequests : openRequests;

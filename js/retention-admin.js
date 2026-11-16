@@ -45,7 +45,7 @@ function showSystemAdminLogin() {
             <div class="subtitle">Enter the separate System Admin PIN to access retention and system controls.</div>
             <form onsubmit="event.preventDefault(); unlockSystemAdmin();">
                 <input id="systemAdminPinInput" class="pin-input" type="password"
-                    inputmode="numeric" maxlength="4" autocomplete="off" required
+                    inputmode="numeric" maxlength="12" autocomplete="off" required
                     placeholder="System Admin PIN">
                 <div id="systemAdminPinError" class="error"></div>
                 <button class="primary-button" type="submit">Unlock System Admin</button>
@@ -59,7 +59,7 @@ async function unlockSystemAdmin() {
     const errorBox = document.getElementById("systemAdminPinError");
     const pin = input?.value || "";
     errorBox.textContent = "";
-    if (!/^\d{4}$/.test(pin)) {
+    if (!/^\d{4,12}$/.test(pin)) {
         errorBox.textContent = "Enter your System Admin PIN.";
         return;
     }
@@ -92,9 +92,9 @@ function showSystemAdminChangePin(required = false) {
             <div class="subtitle">${required ? "Your temporary setup PIN must be changed before using System Admin controls." : "Choose a new private PIN for System Admin access."}</div>
             <form onsubmit="event.preventDefault(); saveSystemAdminPin();">
                 <input id="newSystemAdminPin" class="pin-input" type="password" inputmode="numeric"
-                    maxlength="4" minlength="4" autocomplete="new-password" placeholder="New 4-digit PIN" required>
+                    maxlength="12" minlength="8" autocomplete="new-password" placeholder="New 8–12 digit PIN" required>
                 <input id="confirmSystemAdminPin" class="pin-input" type="password" inputmode="numeric"
-                    maxlength="4" minlength="4" autocomplete="new-password" placeholder="Confirm new PIN" required>
+                    maxlength="12" minlength="8" autocomplete="new-password" placeholder="Confirm 8–12 digit PIN" required>
                 <div id="changeSystemAdminPinError" class="error"></div>
                 <button class="primary-button" type="submit">Save New PIN</button>
             </form>
@@ -107,7 +107,7 @@ async function saveSystemAdminPin() {
     const box = document.getElementById("changeSystemAdminPinError");
     box.textContent = "";
     if (next !== confirm) { box.textContent = "The PIN entries do not match."; return; }
-    if (!/^\d{4}$/.test(next)) { box.textContent = "Use exactly 4 digits."; return; }
+    if (!/^\d{8,12}$/.test(next)) { box.textContent = "Use 8 to 12 digits. Avoid obvious sequences or repeated digits."; return; }
     const { data, error } = await supabaseClient.rpc("change_system_admin_pin", {
         current_system_admin_pin: currentSystemAdminPIN,
         new_system_admin_pin: next
@@ -255,12 +255,13 @@ function showRetentionAdmin() {
         const isInvitation=/invitation|invite/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
         const unit=String(p.retention_unit||"").replace(/s$/,"")+(amount===1?"":"s");
         const manual=String(p.action||"").toLowerCase()==="review"&&!/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""));
-        return '<details class="retention-policy admin-policy-item"><summary class="retention-policy-title"><strong>'+escapeHTML(p.record_type||retentionHumanLabel(p.policy_key))+'</strong><span class="retention-status '+(p.enforcement_enabled?"is-on":"")+'">'+(p.enforcement_enabled?"Automatic removal ON":"Automatic removal OFF")+'</span></summary>'+
+        return '<details class="retention-policy admin-policy-item"><summary class="retention-policy-title"><strong>'+escapeHTML(p.record_type||retentionHumanLabel(p.policy_key))+'</strong><span class="retention-status '+(manual?"":p.enforcement_enabled?"is-on":"")+'">'+(manual?"Manual review only":p.enforcement_enabled?"Automatic removal ON":"Automatic removal OFF")+'</span></summary>'+
         '<p class="retention-description">'+escapeHTML(retentionPolicyDescription(p))+'</p>'+
-        (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
-        '<label class="retention-active"><input type="checkbox" id="retention-enabled-'+key+'" '+(p.enabled?"checked":"")+'><span>This rule is active</span></label>'+
-        '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
-        (manual?'<p class="retention-manual-note">Manual review required. These records are not removed automatically.</p>':(/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""))?'<p class="retention-manual-note">Automatic processing runs daily at 03:15 UTC when enforcement is enabled.</p>':""))+'</details>';
+        (manual?'<p class="retention-manual-note">No retention period has been approved. Keep under manual review; automatic deletion and anonymisation are unavailable until a documented period is approved and configured.</p>':
+          (isInvitation?'<div class="retention-period-line"><strong>Keep until:</strong><span class="retention-unit">Accepted, revoked/cancelled or expired</span></div>':'<div class="retention-period-line"><label for="retention-value-'+key+'">Keep for</label><input type="number" min="0" max="120" step="1" id="retention-value-'+key+'" value="'+amount+'"><span class="retention-unit">'+escapeHTML(unit)+'</span></div>')+
+          '<label class="retention-active"><input type="checkbox" id="retention-enabled-'+key+'" '+(p.enabled?"checked":"")+'><span>This rule is active</span></label>'+
+          '<div class="retention-actions"><button class="secondary-button small-button" onclick="saveRetentionPolicy(\''+key+'\')">Save changes</button><button class="'+(p.enforcement_enabled?"red-button":"secondary-button")+' small-button" onclick="toggleRetentionEnforcement(\''+key+'\','+(!p.enforcement_enabled)+')">'+(p.enforcement_enabled?"Turn automatic removal OFF":"Turn automatic removal ON")+'</button></div>'+
+          (/archiv|parent|family/i.test(String(p.policy_key||"")+" "+String(p.record_type||""))?'<p class="retention-manual-note">Automatic processing runs daily at 03:15 UTC when enforcement is enabled.</p>':""))+'</details>';
       }).join("")||'<div class="empty">No record-keeping rules are available</div>')+
       '</div></div></details>'+
       '<details class="admin-collapse"><summary>Preview check <span>Check eligibility without changing or deleting records</span></summary><div class="admin-collapse-body"><p>Checks which records meet the rules above. It does not change or delete anything.</p><button class="primary-button" onclick="runRetentionDryRun()">Run preview check</button><div id="retentionDryRunResult"></div></div></details>'+
@@ -286,20 +287,23 @@ function retentionHoldTargetOptions() {
 function showRetentionHolds() {
     if (!requireSystemAdminSession() || !retentionAdminData) return;
     const holds=Array.isArray(retentionAdminData.holds)?retentionAdminData.holds:[];
+    const overdueHolds=holds.filter(h=>h.status==="active"&&h.review_due_at&&new Date(h.review_due_at).getTime()<Date.now());
     const options=retentionHoldTargetOptions().map(x=>'<option value="'+escapeHTML(x[0]+'|'+x[1])+'">'+escapeHTML(x[2])+'</option>').join("");
     const rows=holds.map(h=>{
         const active=h.status==="active";
+        const reviewOverdue=active&&h.review_due_at&&new Date(h.review_due_at).getTime()<Date.now();
         return '<article class="retention-hold-item">'+
-          '<div class="retention-hold-heading"><strong>'+escapeHTML(retentionHumanLabel(h.category))+' hold</strong><span class="retention-status '+(active?"is-on":"")+'">'+(active?"Active":"Released")+'</span></div>'+
+          '<div class="retention-hold-heading"><strong>'+escapeHTML(retentionHumanLabel(h.category))+' hold</strong><span class="retention-status '+(active?"is-on":"")+'">'+(reviewOverdue?"Review overdue":active?"Active":"Released")+'</span></div>'+
           '<div class="retention-hold-meta">'+escapeHTML(retentionHumanLabel(h.policy_key))+' · '+escapeHTML(h.target_table)+' · Ref '+escapeHTML(h.target_reference)+'</div>'+
           '<p>'+escapeHTML(h.reason||"No reason recorded")+'</p>'+
-          '<div class="retention-hold-meta">Created '+escapeHTML(retentionFriendlyDate(h.created_at))+' · Review due '+escapeHTML(retentionFriendlyDate(h.review_due_at))+'</div>'+
+          '<div class="retention-hold-meta">Created '+escapeHTML(retentionFriendlyDate(h.created_at))+' · Review due '+escapeHTML(retentionFriendlyDate(h.review_due_at))+(reviewOverdue?' · OVERDUE':'')+'</div>'+
           (h.last_reviewed_at?'<div class="retention-hold-meta">Last reviewed '+escapeHTML(retentionFriendlyDate(h.last_reviewed_at))+' · '+escapeHTML(h.review_notes||"")+'</div>':"")+
           (active?'<div class="retention-hold-actions"><label>Next review date<input type="date" id="hold-review-date-'+h.id+'" min="'+new Date().toISOString().slice(0,10)+'"></label><label>Review note<input type="text" id="hold-review-note-'+h.id+'" maxlength="2000" placeholder="Why the hold remains necessary"></label><button class="secondary-button small-button" onclick="reviewRetentionHold('+h.id+')">Record review</button><label>Release reason<input type="text" id="hold-release-reason-'+h.id+'" maxlength="2000" placeholder="Why the hold can end"></label><button class="red-button small-button" onclick="releaseRetentionHold('+h.id+')">Release hold</button></div>':'<div class="retention-hold-meta">Released '+escapeHTML(retentionFriendlyDate(h.released_at))+' · '+escapeHTML(h.release_reason||"")+'</div>')+
           '</article>';
     }).join("");
     renderShell('<div class="card retention-admin"><button class="back-button" onclick="showRetentionAdmin()">← System Admin</button><h2>Retention Holds</h2><p class="subtitle">An active hold prevents the retention process from deleting or anonymising the selected record. Holds remain active until explicitly released, even if the review date passes.</p>'+
-      '<style>.retention-hold-form,.retention-hold-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}.retention-hold-form label,.retention-hold-actions label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}.retention-hold-form input,.retention-hold-form select,.retention-hold-form textarea,.retention-hold-actions input{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--border,#ccc);border-radius:7px;background:var(--card,#fff);color:inherit}.retention-hold-item{border:1px solid var(--border,#ddd);border-radius:9px;padding:13px;margin:12px 0}.retention-hold-heading{display:flex;justify-content:space-between;gap:10px}.retention-hold-meta{font-size:12px;opacity:.75;margin-top:6px;overflow-wrap:anywhere}.retention-hold-actions{padding-top:10px;border-top:1px solid var(--border,#ddd)}.retention-hold-item p{margin:8px 0;overflow-wrap:anywhere}@media(min-width:650px){.retention-hold-form{grid-template-columns:1fr 1fr}.retention-hold-form .wide{grid-column:1/-1}.retention-hold-actions{grid-template-columns:1fr 1fr}.retention-hold-actions button{align-self:end}}</style>'+
+      (overdueHolds.length?'<p class="retention-overdue-summary">'+overdueHolds.length+' active hold(s) need review. Their protection remains in place until explicitly released.</p>':'')+
+      '<style>.retention-hold-form,.retention-hold-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}.retention-hold-form label,.retention-hold-actions label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}.retention-hold-form input,.retention-hold-form select,.retention-hold-form textarea,.retention-hold-actions input{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--border,#ccc);border-radius:7px;background:var(--card,#fff);color:inherit}.retention-hold-item{border:1px solid var(--border,#ddd);border-radius:9px;padding:13px;margin:12px 0}.retention-overdue-summary{padding:11px 13px;border-left:4px solid #b45309;background:rgba(180,83,9,.09);border-radius:6px;font-weight:700}.retention-hold-heading{display:flex;justify-content:space-between;gap:10px}.retention-hold-meta{font-size:12px;opacity:.75;margin-top:6px;overflow-wrap:anywhere}.retention-hold-actions{padding-top:10px;border-top:1px solid var(--border,#ddd)}.retention-hold-item p{margin:8px 0;overflow-wrap:anywhere}@media(min-width:650px){.retention-hold-form{grid-template-columns:1fr 1fr}.retention-hold-form .wide{grid-column:1/-1}.retention-hold-actions{grid-template-columns:1fr 1fr}.retention-hold-actions button{align-self:end}}</style>'+
       '<details class="admin-collapse" open><summary>Create a retention hold</summary><div class="admin-collapse-body"><p>Use the record reference shown by the relevant admin screen or audit record. Do not enter PINs, PIN hashes or authentication tokens.</p>'+
       '<div class="retention-hold-form"><label class="wide">Record type<select id="newRetentionHoldTarget">'+options+'</select></label><label>Record reference<input id="newRetentionHoldReference" maxlength="200" placeholder="Record ID or installation ID"></label><label>Reason category<select id="newRetentionHoldCategory"><option value="safeguarding">Safeguarding</option><option value="insurance">Insurance</option><option value="legal">Legal</option><option value="incident">Incident</option></select></label><label class="wide">Reason for retention<textarea id="newRetentionHoldReason" rows="3" maxlength="2000" placeholder="Explain why this record must be retained"></textarea></label><label>Review due date<input id="newRetentionHoldReview" type="date" min="'+new Date().toISOString().slice(0,10)+'"></label></div><button class="primary-button" style="margin-top:14px" onclick="createRetentionHold()">Create hold</button></div></details>'+
       '<h3>Existing holds</h3>'+(rows||'<div class="empty">No retention holds have been recorded.</div>')+

@@ -87,7 +87,7 @@ async function pdmSearch() {
     if(error||data===null||!data.success){host.textContent="Search failed. Please try again.";return;}
     pdmSearchResults=data;
     const parents=(data.parents||[]).map(x=>({type:"parent",ref:x.subject_reference,name:x.parent_name,detail:"Parent account · "+x.linked_submissions+" linked submissions",locator:{}}));
-    const children=(data.children||[]).map(x=>({type:x.subject_type,ref:x.subject_reference,name:x.subject_name,detail:[x.context_label,x.age_group,x.school_year,x.ambiguous_match?"Possible duplicate child records — manual identification required":""].filter(Boolean).join(" · "),locator:{age_group_id:x.age_group_id||null,school_year:x.school_year||"",family_id:x.family_id||null,parent_name:x.parent_name||"",availability_ids:x.availability_ids||null,ambiguous_match:x.ambiguous_match===true}}));
+    const children=(data.children||[]).map(x=>({type:x.subject_type,ref:x.subject_reference,name:x.subject_name,detail:[x.context_label,x.age_group,x.school_year,x.ambiguous_match?"Possible duplicate child records — manual identification required":""].filter(Boolean).join(" · "),locator:{age_group_id:x.age_group_id||null,school_year:x.school_year||"",family_id:x.family_id||null,parent_name:x.parent_name||"",availability_ids:x.availability_ids||null,parent_access_id:x.parent_access_id||null,source_submission_id:x.source_submission_id||null,ambiguous_match:x.ambiguous_match===true}}));
     const all=[...parents,...children];
     host.innerHTML=all.length?all.map((x,i)=>'<article class="pdm-result"><strong>'+pdmEscape(x.name)+'</strong><div class="subtitle">'+pdmEscape(x.detail)+'</div><button class="secondary-button small-button" onclick="pdmSelectSubject('+i+')">Select</button></article>').join(""):'<div class="empty">No matching parent or child records found.</div>';
     window.pdmCurrentResults=all;
@@ -154,12 +154,12 @@ function renderPdmRequestDetail() {
     panel.innerHTML='<button class="back-button" type="button" onclick="pdmReturnToList()">← Back to requests</button>'+
       '<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</h3>'+
       '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDeadlineLabel(r)+'</p>'+
-      '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Target response date</span><strong>'+pdmEscape(pdmDeadlineLabel(r))+'</strong></div></div>'+
+      '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Target response date</span><strong>'+pdmEscape(pdmDeadlineLabel(r))+'</strong></div></div>'+(r.decision_reason?'<div class="pdm-note"><strong>Decision reasons / explanation</strong><p>'+pdmEscape(r.decision_reason)+'</p></div>':'')+
       (isClosed?'<p class="pdm-note">This request is closed. Case actions are disabled; the recorded history remains available below.</p>':
         (["access","portability"].includes(r.request_type)?'<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button></div>':'')+
-        (r.request_type==="erasure"?(r.erasure_executed_at?'<div class="pdm-note">Erasure executed '+pdmEscape(new Date(r.erasure_executed_at).toLocaleString("en-GB"))+'. Records removed: '+pdmEscape(r.erasure_records_removed??"Not recorded")+'. Prepare and send the response below.</div>':'<h4 class="pdm-action-heading">Erasure review</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button></div>'):'')+
+        (r.request_type==="erasure"?(r.erasure_executed_at?'<div class="pdm-note">Erasure executed '+pdmEscape(new Date(r.erasure_executed_at).toLocaleString("en-GB"))+'. Records removed: '+pdmEscape(r.erasure_records_removed??"Not recorded")+'.'+(r.erasure_reviewed_at?' Legal and safeguarding review recorded '+pdmEscape(new Date(r.erasure_reviewed_at).toLocaleString("en-GB"))+'.':'')+' Prepare and send the response below.</div>':'<h4 class="pdm-action-heading">Erasure review</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button></div>'):'')+
         '<div id="pdmBundleHost"></div><div id="pdmEraseHost"></div>'+
-        '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
+        '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button>'+(r.extension_notified_at?'':'<button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button>')+'</div>'+
         '<div id="pdmResponseHost"></div>')+
       '<h4 class="pdm-action-heading">Request history</h4><div id="pdmTimeline" aria-live="polite"><p class="subtitle">Loading request history…</p></div>';
     host.querySelector("#pdmRequestDetail")?.remove();host.appendChild(panel);
@@ -188,6 +188,7 @@ async function pdmLoadTimeline(requestRef) {
 async function pdmLoadBundle() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const r=pdmCurrentRequest;
+    if(r.subject_type==="portal_child"&&r.subject_locator?.ambiguous_match===true){await appAlert("This child match is ambiguous. Confirm the exact child record before preparing a data copy.","Child identification required","warning");return;}
     if(r.identity_status!=="verified"||!["verified","not_applicable"].includes(r.authority_status)){
       await appAlert("Verify the requester’s identity and, where applicable, their authority before preparing a personal data copy.","Verification required","warning");return;
     }
@@ -195,7 +196,7 @@ async function pdmLoadBundle() {
       p_subject_type:r.subject_type,p_subject_reference:r.subject_reference,p_subject_name:r.subject_name,p_subject_locator:r.subject_locator||{}});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to build data copy.","Access request","warning");return;}
     pdmBundle=data;const host=document.getElementById("pdmBundleHost");
-    host.innerHTML='<div class="pdm-subsection"><h4>Data copy prepared</h4><p class="pdm-note">Review the records carefully and remove or redact information about other people where required. Preparing this copy does not send it to the requester.</p>'+
+    host.innerHTML='<div class="pdm-subsection"><h4>Data copy prepared</h4><p class="pdm-note">This export is limited to the selected subject. Child records and other family members are excluded and require separate, appropriately verified requests. Still review the copy before disclosure. Preparing this copy does not send it to the requester.</p>'+
       '<div class="pdm-actions"><button class="primary-button small-button" onclick="pdmDownloadReadableBundle()">Download readable report</button><button class="secondary-button small-button" onclick="pdmDownloadBundle()">Download technical JSON</button></div>'+
       '<details class="pdm-technical"><summary>Show technical data preview</summary><pre class="pdm-json">'+pdmEscape(JSON.stringify(data,null,2))+'</pre></details></div>';
 }
@@ -230,7 +231,7 @@ async function pdmPreviewErasure() {
     document.getElementById("pdmEraseHost").innerHTML='<h4>Deletion preview</h4><pre class="pdm-json">'+pdmEscape(JSON.stringify(data.records,null,2))+'</pre>'+
       (data.can_erase?'<p>Eligible for deletion. No active retention holds were found.</p>':'<p class="pdm-bad">Deletion blocked. '+pdmEscape((data.blockers||[]).map(x=>x.message).join(" "))+'</p>')+
       '<p class="pdm-note">'+pdmEscape(data.retained_aggregate_note)+'</p>'+
-      (data.can_erase?'<label><input type="checkbox" id="pdmCheckExceptions"> I have reviewed legal, safeguarding, insurance and claims retention exceptions, and created any required retention holds.</label><label>Erasure review notes<textarea id="pdmErasureReviewNotes" class="pdm-erasure-notes" rows="5" placeholder="Record why erasure is appropriate and any records retained"></textarea></label><label>Type DELETE to confirm<input id="pdmConfirmRef" class="pdm-delete-confirm" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DELETE"></label><button class="red-button" onclick="pdmExecuteErasure()">Permanently erase identified records</button>':'');
+      (data.can_erase?'<label><input type="checkbox" id="pdmCheckExceptions"> I have reviewed legal, safeguarding, insurance and claims retention exceptions, and created any required retention holds.</label><label>Erasure review notes<textarea id="pdmErasureReviewNotes" class="pdm-erasure-notes" rows="5" placeholder="Record the checks completed and any retention basis. Do not include names or unnecessary personal details."></textarea></label><label>Type DELETE to confirm<input id="pdmConfirmRef" class="pdm-delete-confirm" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DELETE"></label><button class="red-button" onclick="pdmExecuteErasure()">Permanently erase identified records</button>':'');
 }
 async function pdmExecuteErasure() {
     if(!pdmReady()||!pdmCurrentRequest||!pdmErasurePreview?.can_erase)return;
@@ -243,17 +244,10 @@ async function pdmExecuteErasure() {
     if(!document.getElementById("pdmCheckExceptions")?.checked||reviewNotes.length<10){
       await appAlert("Confirm the legal and safeguarding review and record a short reason before erasure.","Erasure review required","warning");return;
     }
-    const reviewUpdate=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
-      p_status:pdmCurrentRequest.status,p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
-      p_scope_notes:[pdmCurrentRequest.scope_notes||"", "Erasure review: "+reviewNotes].filter(Boolean).join("\n"),
-      p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,p_decision:pdmCurrentRequest.decision||null,
-      p_response_notes:pdmCurrentRequest.response_notes||null,p_sent_at:pdmCurrentRequest.sent_at||null,
-      p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:pdmCurrentRequest.completed_at||null});
-    if(reviewUpdate.error||reviewUpdate.data===null||!reviewUpdate.data.success){
-      await appAlert(reviewUpdate.error?.message||reviewUpdate.data?.message||"Unable to record erasure review.","Erasure not started","danger");return;
-    }
     const ok=await appConfirm("This permanently removes the identified personal records. This cannot be undone. Continue only if the request, identity, authority and retention checks have been approved.","Permanent erasure","Erase records");
     if(!ok)return;
+    const review=await supabaseClient.rpc("record_personal_data_erasure_review",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,p_review_notes:reviewNotes,p_confirmed:true});
+    if(review.error||review.data===null||!review.data.success){await appAlert(review.error?.message||review.data?.message||"Unable to record erasure review.","Erasure not started","danger");return;}
     const {data,error}=await supabaseClient.rpc("execute_personal_data_erasure",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,p_confirm_reference:ref});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Erasure was not completed.","Erasure failed","danger");return;}
     await appAlert(data.message+" Records removed: "+data.records_removed,"Erasure completed","success");
@@ -336,7 +330,7 @@ function pdmDraftResponse() {
       '<label for="pdmResponseText">Editable response draft</label><textarea id="pdmResponseText" rows="18"></textarea>'+
       '<button class="secondary-button" onclick="pdmCopyResponse()">Copy response</button>'+
       '<label for="pdmSentMethod">Sent by</label><select id="pdmSentMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select>'+
-      (r.request_type==="access"?'<label class="pdm-check-row"><input type="checkbox" id="pdmCheckExport"><span>I have securely supplied the relevant data copy where the outcome requires disclosure.</span></label>':'')+
+      (["access","portability"].includes(r.request_type)?'<label class="pdm-check-row"><input type="checkbox" id="pdmCheckExport"><span>I have securely supplied the relevant data copy where the outcome requires disclosure.</span></label>':'')+
       '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckThirdParty"><span>I have checked and redacted information about other people where required.</span></label>'+
       '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckAccuracy"><span>I have verified every factual statement against the club’s approved policies and actual records. No unverified legal basis, retention period or supplier claim remains.</span></label>'+
       '<p class="pdm-note">This is a draft, not a legal determination. Replace every square-bracket instruction and verify the facts. The club privacy notice is still awaiting committee approval; do not present its contents as approved club policy.</p>'+
@@ -373,12 +367,12 @@ async function pdmRecordSent() {
        (requiresAccessCopy&&(!pdmBundle||!document.getElementById("pdmCheckExport")?.checked))){
       await appAlert("Complete the outcome, disclosure checks and any required access-copy confirmation before recording the response as sent.","Pre-send checks required","warning");return;
     }
-    const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
-      p_status:outcome==="refused"||outcome==="not_actioned"?"refused":outcome.startsWith("partially_")?"partially_completed":"completed",p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
-      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,
-      p_decision:outcome,p_response_notes:responseText||pdmCurrentRequest.response_notes||null,
-      p_sent_at:new Date().toISOString(),p_sent_via:method,p_completed_at:new Date().toISOString()});
-    if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to record response.","Update failed","warning");return;}
+    const {data,error}=await supabaseClient.rpc("record_personal_data_response",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
+       p_decision:outcome,p_decision_reason:decisionReason,p_response_text:responseText,p_sent_via:method,
+       p_access_copy_confirmed:!requiresAccessCopy||!!document.getElementById("pdmCheckExport")?.checked,
+       p_third_party_reviewed:!!document.getElementById("pdmCheckThirdParty")?.checked,
+       p_accuracy_confirmed:!!document.getElementById("pdmCheckAccuracy")?.checked});
+     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to record response.","Update failed","warning");return;}
     await showPersonalDataManagement();
 }
 function pdmUpdateStatus() {
@@ -411,8 +405,9 @@ async function pdmSaveProgress() {
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to update request.","Update failed","warning");return;}
     await showPersonalDataManagement();
 }
-function pdmNotifyExtension() {
+async function pdmNotifyExtension() {
     if(!pdmReady()||!pdmCurrentRequest)return;
+    if(pdmCurrentRequest.extension_notified_at){await appAlert("An extension has already been recorded for this request. It cannot be issued again.","Extension already recorded","warning");return;}
     const host=document.getElementById("pdmResponseHost");
     host.innerHTML='<div class="pdm-form"><p>A complex request or multiple requests may justify up to two additional months. The requester must be told, with reasons, within the first month.</p>'+
       '<label>Reason for extension<textarea id="pdmExtensionReason" rows="3" maxlength="2000" required></textarea></label>'+

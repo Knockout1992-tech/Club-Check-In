@@ -27,6 +27,9 @@ jobs:
       - name: Check PDM external JavaScript
         run: node --check js/personal-data-admin.js
 
+      - name: Check System Admin and retention JavaScript
+        run: node --check js/retention-admin.js
+
       - name: Check index.html JavaScript
         run: |
           python3 - <<'PY'

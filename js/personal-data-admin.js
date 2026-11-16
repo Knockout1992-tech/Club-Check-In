@@ -195,7 +195,7 @@ async function pdmLoadBundle() {
       p_subject_type:r.subject_type,p_subject_reference:r.subject_reference,p_subject_name:r.subject_name,p_subject_locator:r.subject_locator||{}});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to build data copy.","Access request","warning");return;}
     pdmBundle=data;const host=document.getElementById("pdmBundleHost");
-    host.innerHTML='<div class="pdm-subsection"><h4>Data copy prepared</h4><p class="pdm-note">This export is limited to the selected subject. Child records and other family members are excluded and require separate, appropriately verified requests. Still review the copy before disclosure. Preparing this copy does not send it to the requester.</p>'+
+    host.innerHTML='<div class="pdm-subsection"><h4>Data copy prepared</h4><p class="pdm-note">This export includes the selected parent’s family-sharing relationship only. Other family members’ personal data, child records and submissions are excluded and require separate, appropriately verified requests. Still review the copy before disclosure. Preparing this copy does not send it to the requester.</p>'+
       '<div class="pdm-actions"><button class="primary-button small-button" onclick="pdmDownloadReadableBundle()">Download readable report</button><button class="secondary-button small-button" onclick="pdmDownloadBundle()">Download technical JSON</button></div>'+
       '<details class="pdm-technical"><summary>Show technical data preview</summary><pre class="pdm-json">'+pdmEscape(JSON.stringify(data,null,2))+'</pre></details></div>';
 }

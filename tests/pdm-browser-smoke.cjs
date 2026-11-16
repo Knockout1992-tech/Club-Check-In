@@ -21,7 +21,12 @@ const fs = require("node:fs");
     if (name === "update_personal_data_request") return { data: { success: true, request_ref: args.p_request_id === 13 ? "PDM-TEST-003" : "PDM-TEST-001", status: args.p_status, extended_due_at: "2027-02-10T10:00:00Z" }, error: null };
     if (name === "record_personal_data_response") return { data: { success: true, request_ref: "PDM-TEST-001", status: "completed" }, error: null };
     if (name === "record_personal_data_erasure_review") return { data: { success: true, request_ref: "PDM-TEST-003" }, error: null };
-    if (name === "get_personal_data_subject_bundle") return { data: { success: true, subject_type: args.p_subject_type, player: { name: "Test Player" }, attendance: [], availability: [] }, error: null };
+    if (name === "get_personal_data_subject_bundle") return { data: args.p_subject_type === "parent"
+      ? { success: true, subject_type: "parent", account: { id: 42, parent_name: "Test Parent" },
+          family: { is_linked: true, linked_account_count: 2, joined_at: "2026-11-14T13:10:19Z", link_created_by_subject: true },
+          family_members: [{ is_subject: true, joined_at: "2026-11-14T13:10:19Z", link_created_by_subject: true }],
+          family_invitations: [], family_invites: [], shared_family_responses: [], submissions: [], security_activity: [] }
+      : { success: true, subject_type: args.p_subject_type, player: { name: "Test Player" }, attendance: [], availability: [] }, error: null };
     if (name === "preview_personal_data_erasure") return { data: { success: true, request_ref: "PDM-TEST-003", records: { player_record: 1, attendance_records: 2 }, blockers: [], can_erase: true, retained_aggregate_note: "Aggregate history is retained." }, error: null };
     if (name === "execute_personal_data_erasure") return { data: { success: true, request_ref: "PDM-TEST-003", records_removed: 3, message: "Test erasure completed." }, error: null };
     if (name === "search_personal_data_subjects") return { data: { success: true, parents: [{ subject_reference: "42", parent_name: "Test Parent", linked_submissions: 1 }], children: [{ subject_reference: "portal:child", subject_type: "portal_child", subject_name: "Portal Child", age_group: "U7", age_group_id: 7, school_year: "2", family_id: 3, parent_name: "Test Parent", parent_access_id: 42, source_submission_id: null, availability_ids: [501,502], ambiguous_match: false }] }, error: null };
@@ -42,6 +47,12 @@ const fs = require("node:fs");
   assert.match(pdmScript, /record_personal_data_response/);
   assert.match(pdmScript, /record_personal_data_erasure_review/);
   assert.match(pdmScript, /availability_ids:x\.availability_ids/);
+  const familyExportMigration = fs.readFileSync(path.resolve(__dirname, "../supabase/migrations/20261116165400_include_parent_family_sharing_in_pdm_export.sql"), "utf8");
+  assert.match(familyExportMigration, /match_parent_family_members fm/);
+  assert.match(familyExportMigration, /where fm\.parent_access_id=v_parent_id/);
+  assert.match(familyExportMigration, /'is_linked',v_family_id is not null/);
+  assert.match(familyExportMigration, /'family_members',case when v_family_id is null/);
+  assert.match(familyExportMigration, /Other family members personal data, child records and submissions are excluded/);
   const appStyles = fs.readFileSync(path.resolve(__dirname, "../css/styles.css"), "utf8");
   const harness = '<html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:16px Arial;margin:0;padding:12px;background:#f4f4f4;color:#222}button,input,select,textarea{font:inherit}button{cursor:pointer}.card{background:#fff;border-radius:12px;padding:14px}.subtitle{color:#555;font-size:13px}.info-box{padding:12px;background:#eef4f0;border-radius:8px}.secondary-button,.primary-button,.back-button{min-height:42px;padding:9px 12px;border-radius:8px;border:1px solid #aaa;background:#eee;color:#222}.primary-button{background:#173d2c;color:white}.back-button{margin-bottom:12px}.empty{padding:16px;color:#555}</style></head><body><main id="app"></main><script>window.currentSystemAdminPIN="TEST-PIN";window.requireSystemAdminSession=()=>true;window.escapeHTML=v=>String(v??"").replace(/[&<>\\"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c]));window.renderShell=html=>{document.getElementById("app").innerHTML=html};window.showRetentionAdmin=()=>{};window.appAlert=async()=>{};window.appConfirm=async()=>true;window.supabaseClient={rpc:(name,args)=>window.__rpc(name,args)};</script></body></html>';
   await page.setContent(harness, { waitUntil: "load" });
@@ -157,10 +168,20 @@ const fs = require("node:fs");
   assert.ok(extensionSave.args.p_extension_notified_at);
   assert.ok(new Date(extensionSave.args.p_extension_notified_at).getTime() <= Date.now(), "An extension notified today must not be treated as a future timestamp");
 
-  activeRequest = requests[0];
-  await page.evaluate(() => window.pdmOpenRequest(11));
+  activeRequest = accessRequest;
+  await page.evaluate(() => window.pdmOpenRequest(14));
   await page.evaluate(() => window.pdmLoadBundle());
   assert.ok(calls.some(x => x.name === "get_personal_data_subject_bundle"));
+  const familyDownloadPromise = page.waitForEvent("download");
+  await page.evaluate(() => window.pdmDownloadBundle());
+  const familyDownload = await familyDownloadPromise;
+  const parentFamilyExport = JSON.parse(fs.readFileSync(await familyDownload.path(), "utf8"));
+  assert.equal(parentFamilyExport.family.is_linked, true, "A linked parent account must include its family-sharing status");
+  assert.equal(parentFamilyExport.family.linked_account_count, 2, "The export should show the number of linked accounts");
+  assert.equal(parentFamilyExport.family_members.length, 1, "Only the requesting parent's own membership metadata should be exported");
+  assert.equal(parentFamilyExport.family_members[0].is_subject, true);
+  assert.equal(parentFamilyExport.family_members[0].joined_at, parentFamilyExport.family.joined_at);
+  assert.equal(Object.hasOwn(parentFamilyExport.family_members[0], "parent_name"), false, "Other family members must not be identified in this export");
   activeRequest = { ...activeRequest, id: 15, subject_type: "portal_child", subject_locator: { availability_ids: [501,502], age_group_id: 7, family_id: 3, parent_access_id: 42, ambiguous_match: false }, identity_status: "verified", authority_status: "verified" };
   await page.evaluate(() => window.pdmOpenRequest(15));
   await page.evaluate(() => window.pdmLoadBundle());

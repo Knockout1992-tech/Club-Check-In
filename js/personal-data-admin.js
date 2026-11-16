@@ -24,6 +24,17 @@ function pdmTodayLocal() {
     const now = new Date();
     return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
+function pdmIsClosed(request) {
+    if (!request) return false;
+    if (request.status === "withdrawn") return true;
+    return ["completed", "partially_completed", "refused"].includes(request.status) && !!request.sent_at;
+}
+function pdmDeadlineLabel(request) {
+    if (!request?.clock_started_at && ["awaiting_identity", "awaiting_authority"].includes(request?.status)) {
+        return "Starts when identity / authority is verified";
+    }
+    return pdmDate(request?.extended_due_at || request?.due_at);
+}
 function pdmTypeLabel(value) {
     return ({access:"Access request",erasure:"Erasure request",rectification:"Rectification request",restriction:"Restriction request",objection:"Objection request",portability:"Data portability request",other:"Other request"})[value]||String(value||"Request");
 }
@@ -45,14 +56,13 @@ function pdmSetRequestFilter(filter) {
 }
 function renderPersonalDataManagement() {
     if(!pdmReady())return;
-    const closedStatuses = ["completed", "withdrawn"];
-    const openRequests = pdmRequests.filter(r => !closedStatuses.includes(r.status));
-    const closedRequests = pdmRequests.filter(r => closedStatuses.includes(r.status));
+    const openRequests = pdmRequests.filter(r => !pdmIsClosed(r));
+    const closedRequests = pdmRequests.filter(r => pdmIsClosed(r));
     const visibleRequests = pdmRequestFilter === "closed" ? closedRequests : openRequests;
     const rows = visibleRequests.map(r => {
       const due = r.extended_due_at || r.due_at;
-      const overdue = due && new Date(due).getTime() < Date.now() && !closedStatuses.includes(r.status);
-      return '<article class="pdm-request"><div class="pdm-request-head"><strong>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</strong><span class="pdm-status">'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</span></div><div>'+pdmEscape(r.subject_name)+' · '+pdmEscape(pdmSubjectLabel(r.subject_type))+'</div><div class="subtitle">Received '+pdmDate(r.received_at)+' · Due '+pdmDate(due)+(overdue?' · OVERDUE':'')+'</div><button class="secondary-button small-button" onclick="pdmOpenRequest('+Number(r.id)+')">Open request</button></article>';
+      const overdue = r.clock_started_at && due && new Date(due).getTime() < Date.now() && !pdmIsClosed(r);
+      return '<article class="pdm-request"><div class="pdm-request-head"><strong>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</strong><span class="pdm-status">'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</span></div><div>'+pdmEscape(r.subject_name)+' · '+pdmEscape(pdmSubjectLabel(r.subject_type))+'</div><div class="subtitle">Received '+pdmDate(r.received_at)+' · Due '+pdmDeadlineLabel(r)+(overdue?' · OVERDUE':'')+'</div><button class="secondary-button small-button" onclick="pdmOpenRequest('+Number(r.id)+')">Open request</button></article>';
     }).join("");
     renderShell('<div class="card retention-admin pdm-page">'+
       '<button class="back-button" onclick="showRetentionAdmin()">← System Admin</button>'+
@@ -135,15 +145,15 @@ function pdmReturnToList() {
 function renderPdmRequestDetail() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const r=pdmCurrentRequest;
-    const isClosed=["completed","withdrawn"].includes(r.status);
+    const isClosed=pdmIsClosed(r);
     const host=document.querySelector(".pdm-page");
     if(!host)return;
     host.querySelectorAll(":scope > .pdm-section").forEach(section=>section.hidden=true);
     const panel=document.createElement("section");panel.id="pdmRequestDetail";panel.className="pdm-section";
     panel.innerHTML='<button class="back-button" type="button" onclick="pdmReturnToList()">← Back to requests</button>'+
       '<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</h3>'+
-      '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDate(r.extended_due_at||r.due_at)+'</p>'+
-      '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Response deadline</span><strong>'+pdmEscape(pdmDate(r.extended_due_at||r.due_at))+'</strong></div></div>'+
+      '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDeadlineLabel(r)+'</p>'+
+      '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Response deadline</span><strong>'+pdmEscape(pdmDeadlineLabel(r))+'</strong></div></div>'+
       (isClosed?'<p class="pdm-note">This request is closed. Case actions are disabled; the recorded history remains available below.</p>':
         (["access","portability"].includes(r.request_type)?'<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button></div>':'')+
         (r.request_type==="erasure"?'<h4 class="pdm-action-heading">Erasure review</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button></div>':'')+
@@ -341,7 +351,7 @@ async function pdmRecordSent() {
       await appAlert("Verify the requester’s identity and, where applicable, their authority before issuing any final response. If verification is outstanding, record the case as awaiting information instead.","Verification required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
-    const requiresAccessCopy=pdmCurrentRequest.request_type==="access"&&outcome!=="refused";
+    const requiresAccessCopy=["access","portability"].includes(pdmCurrentRequest.request_type)&&outcome!=="refused";
     const responseText=document.getElementById("pdmResponseText")?.value||"";
     if(/\[[^\]]+\]/.test(responseText)){
       await appAlert("The draft still contains square-bracket instructions. Replace or remove every placeholder before sending.","Draft incomplete","warning");return;
@@ -351,7 +361,7 @@ async function pdmRecordSent() {
       await appAlert("Complete the outcome, disclosure checks and any required access-copy confirmation before recording the response as sent.","Pre-send checks required","warning");return;
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
-      p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
+      p_status:outcome==="refused"||outcome==="not_actioned"?"refused":outcome.startsWith("partially_")?"partially_completed":"completed",p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
       p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,
       p_decision:outcome,p_response_notes:responseText||pdmCurrentRequest.response_notes||null,
       p_sent_at:new Date().toISOString(),p_sent_via:method,p_completed_at:new Date().toISOString()});
@@ -379,7 +389,7 @@ async function pdmSaveProgress() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const v=id=>document.getElementById(id)?.value||"";
     const status=v("pdmStatus");
-    if(status==="completed"){await appAlert("Use Prepare response and Record as sent to complete a request.","Response required","warning");return;}
+    if(["completed","partially_completed"].includes(status)){await appAlert("Use Prepare response and Record as sent to close a request.","Response required","warning");return;}
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:status,p_identity_status:v("pdmIdentityStatus"),p_authority_status:v("pdmAuthorityStatus"),
       p_scope_notes:v("pdmScopeNotes"),p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,

@@ -54,6 +54,7 @@ const fs = require("node:fs");
   assert.match(await page.locator(".pdm-page").innerText(), /PDM-TEST-002/);
   assert.doesNotMatch(await page.locator(".pdm-page").innerText(), /PDM-TEST-001/);
   await page.evaluate(() => window.pdmSetRequestFilter("open"));
+  activeRequest = requests[0];
   await page.evaluate(() => window.pdmOpenRequest(11));
   await page.waitForSelector("#pdmTimeline .pdm-timeline");
   assert.match(await page.locator("#pdmTimeline").innerText(), /request created/);

@@ -73,6 +73,9 @@ const fs = require("node:fs");
   await page.waitForSelector("#pdmTimeline .pdm-timeline");
   assert.doesNotMatch(await page.locator("#pdmRequestDetail").innerText(), /Build data copy/);
   await page.evaluate(() => window.pdmDraftResponse());
+  assert.doesNotMatch(await page.locator("#pdmResponseText").inputValue(), /\[Explain the specific reason|\[Explain any information retained/,
+    "Generated response must not duplicate the decision rationale");
+  assert.match(await page.locator("#pdmResponseReason").getAttribute("placeholder"), /what information remains held/i);
   await page.screenshot({ path: "test-results/pdm-response-mobile.png", fullPage: true });
   assert.equal(await page.locator("#pdmResponseOutcome").count(), 1);
   await page.evaluate(() => window.pdmRecordSent());
@@ -134,6 +137,16 @@ const fs = require("node:fs");
   assert.equal(erasureNotesBox, "150px");
   await page.evaluate(() => window.pdmExecuteErasure());
   assert.ok(calls.some(x => x.name === "execute_personal_data_erasure" && x.args.p_confirm_reference === "PDM-TEST-003"));
+  activeRequest = { ...requests[1], erasure_executed_at: "2026-11-16T10:00:00Z", erasure_records_removed: 3 };
+  await page.evaluate(() => window.pdmOpenRequest(13));
+  await page.evaluate(() => window.pdmDraftResponse());
+  const erasureOutcomes = await page.locator("#pdmResponseOutcome option").allTextContents();
+  assert.ok(!erasureOutcomes.some(x => /partially erased/i.test(x)), "Partially erased must not be available as an executable status");
+  await page.locator("#pdmResponseOutcome").selectOption("refused");
+  const completedBeforeInvalidErasureOutcome = calls.filter(x => x.name === "update_personal_data_request" && x.args.p_status === "completed").length;
+  await page.evaluate(() => window.pdmRecordSent());
+  assert.equal(calls.filter(x => x.name === "update_personal_data_request" && x.args.p_status === "completed").length,
+    completedBeforeInvalidErasureOutcome, "An executed erasure must not subsequently be recorded as refused");
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.evaluate(() => window.showPersonalDataManagement());
   await page.screenshot({ path: "test-results/pdm-dashboard-desktop.png", fullPage: true });

@@ -61,6 +61,7 @@ const fs = require("node:fs");
   assert.ok(receivedDate, "Received date should default to today");
   await page.evaluate(() => window.pdmCreateRequest());
   await page.evaluate(() => window.pdmReturnToList());
+  assert.equal(await page.locator("#pdmSearchTerm").isVisible(), true, "The request list should be available after returning from a newly created case");
   const createCall = calls.find(x => x.name === "create_personal_data_request");
   assert.ok(createCall, "Request creation RPC should be called");
   assert.ok(new Date(createCall.args.p_received_at).getTime() <= Date.now(), "A request received today must not be sent to the server as a future timestamp");

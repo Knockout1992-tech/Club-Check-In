@@ -141,13 +141,13 @@ function renderPdmRequestDetail() {
 async function pdmLoadTimeline(requestRef) {
     const host=document.getElementById("pdmTimeline");
     if(!host||!pdmReady())return;
-    const {data,error}=await supabaseClient.rpc("get_system_admin_audit_log_page",{supplied_pin:currentSystemAdminPIN,requested_limit:201,before_occurred_at:null,before_id:null});
+    const {data,error}=await supabaseClient.rpc("get_personal_data_request_history",{p_system_admin_pin:currentSystemAdminPIN,p_request_ref:requestRef,p_requested_limit:200});
     if(error||!Array.isArray(data)){
       host.innerHTML='<p class="subtitle">Request history is temporarily unavailable. The underlying audit log is retained.</p>';
       return;
     }
-    const events=data.filter(x=>x.request_id===requestRef);
-    const olderEventsMayExist=data.length===201;
+    const events=data;
+    const olderEventsMayExist=data.length===200;
     if(!events.length){
       host.innerHTML='<p class="subtitle">'+(olderEventsMayExist?'No matching event was found in the latest 200 audit entries; older events may exist.':'No request-specific history events were returned.')+'</p>';
       return;
@@ -156,7 +156,7 @@ async function pdmLoadTimeline(requestRef) {
       const eventLabel=String(x.event_type||"event").replace(/^personal_data_/,"").replace(/_/g," ");
       const outcome=String(x.outcome||"recorded").replace(/_/g," ");
       return '<li><div class="pdm-timeline-event"><strong>'+pdmEscape(eventLabel)+'</strong><span class="pdm-timeline-outcome">'+pdmEscape(outcome)+'</span></div><div class="subtitle">'+pdmEscape(pdmDate(x.occurred_at))+' · '+pdmEscape(new Date(x.occurred_at).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}))+' · '+pdmEscape(x.actor_type||"system")+'</div></li>';
-    }).join("")+'</ol>'+(olderEventsMayExist?'<p class="subtitle">Showing matching events from the latest 200 audit entries. Earlier events may exist in the full audit log.</p>':'');
+    }).join("")+'</ol>'+(olderEventsMayExist?'<p class="subtitle">Showing the latest 200 events for this request. Earlier events may exist in the full audit log.</p>':'');
 }
 async function pdmLoadBundle() {
     if(!pdmReady()||!pdmCurrentRequest)return;

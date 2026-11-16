@@ -8,7 +8,7 @@ const fs = require("node:fs");
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const calls = [];
   const requests = [
-    { id: 11, request_ref: "PDM-TEST-001", request_type: "other", subject_type: "parent", subject_name: "Test Parent", requester_name: "Test Parent", received_at: "2026-11-10T10:00:00Z", due_at: "2026-12-10T10:00:00Z", extended_due_at: "2027-02-10T10:00:00Z", extension_reason: "Complex request requiring review", extension_notified_at: "2026-11-12T12:00:00Z", status: "in_review", identity_status: "verified", authority_status: "not_applicable" },
+    { id: 11, request_ref: "PDM-TEST-001", request_type: "other", subject_type: "parent", subject_name: "Test Parent", requester_name: "Test Parent", received_at: "2026-11-10T10:00:00Z", due_at: "2026-11-01T10:00:00Z", extended_due_at: "2026-11-15T10:00:00Z", extension_reason: "Complex request requiring review", extension_notified_at: "2026-11-12T12:00:00Z", status: "in_review", identity_status: "verified", authority_status: "not_applicable" },
     { id: 13, request_ref: "PDM-TEST-003", request_type: "erasure", subject_type: "child", subject_name: "Test Player", requester_name: "Test Parent", subject_reference: "player:TEST", subject_locator: {}, received_at: "2026-11-10T10:00:00Z", due_at: "2026-12-10T10:00:00Z", status: "in_review", identity_status: "verified", authority_status: "verified" },
     { id: 12, request_ref: "PDM-TEST-002", request_type: "access", subject_type: "parent", subject_name: "Closed Parent", requester_name: "Closed Parent", received_at: "2026-10-01T10:00:00Z", due_at: "2026-11-01T10:00:00Z", status: "completed", sent_at: "2026-10-20T10:00:00Z", identity_status: "verified", authority_status: "not_applicable" }
   ];
@@ -39,6 +39,7 @@ const fs = require("node:fs");
   assert.match(await page.locator(".pdm-page").innerText(), /Personal Data Management/);
   assert.match(await page.locator(".pdm-filter").innerText(), /Open · 2/);
   assert.match(await page.locator(".pdm-filter").innerText(), /Closed · 1/);
+  assert.match(await page.locator(".pdm-page").innerText(), /OVERDUE/, "Overdue response targets must be visible on the request list");
   await page.screenshot({ path: "test-results/pdm-dashboard-mobile.png", fullPage: true });
   await page.locator("#pdmSearchTerm").fill("Test");
   await page.evaluate(() => window.pdmSearch());

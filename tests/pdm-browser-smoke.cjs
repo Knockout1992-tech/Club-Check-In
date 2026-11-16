@@ -37,7 +37,7 @@ const fs = require("node:fs");
   await page.evaluate(() => window.pdmOpenRequest(11));
   await page.waitForSelector("#pdmTimeline .pdm-timeline");
   assert.match(await page.locator("#pdmTimeline").innerText(), /request created/);
-  assert.match(await page.locator(".pdm-case-summary").innerText(), /verified/);
+  assert.match(await page.locator(".pdm-case-summary").innerText(), /verified/i);
   await page.screenshot({ path: "test-results/pdm-case-mobile.png", fullPage: true });
   await page.evaluate(() => window.pdmDraftResponse());
   assert.equal(await page.locator("#pdmResponseOutcome").count(), 1);

@@ -172,7 +172,7 @@ const fs = require("node:fs");
   await page.evaluate(() => window.pdmOpenRequest(14));
   await page.evaluate(() => window.pdmLoadBundle());
   assert.ok(calls.some(x => x.name === "get_personal_data_subject_bundle"));
-  const parentFamilyExport = await page.evaluate(() => window.pdmBundle);
+  const parentFamilyExport = await page.evaluate(() => JSON.parse(JSON.stringify(pdmBundle)));
   assert.equal(parentFamilyExport.family.is_linked, true, "A linked parent account must include its family-sharing status");
   assert.equal(parentFamilyExport.family.linked_account_count, 2, "The export should show the number of linked accounts");
   assert.equal(parentFamilyExport.family_members.length, 1, "Only the requesting parent's own membership metadata should be exported");

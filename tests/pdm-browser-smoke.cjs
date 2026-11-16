@@ -10,7 +10,7 @@ const fs = require("node:fs");
   const requests = [
     { id: 11, request_ref: "PDM-TEST-001", request_type: "other", subject_type: "parent", subject_name: "Test Parent", requester_name: "Test Parent", received_at: "2026-11-10T10:00:00Z", due_at: "2026-12-10T10:00:00Z", extended_due_at: "2027-02-10T10:00:00Z", extension_reason: "Complex request requiring review", extension_notified_at: "2026-11-12T12:00:00Z", status: "in_review", identity_status: "verified", authority_status: "not_applicable" },
     { id: 13, request_ref: "PDM-TEST-003", request_type: "erasure", subject_type: "child", subject_name: "Test Player", requester_name: "Test Parent", subject_reference: "player:TEST", subject_locator: {}, received_at: "2026-11-10T10:00:00Z", due_at: "2026-12-10T10:00:00Z", status: "in_review", identity_status: "verified", authority_status: "verified" },
-    { id: 12, request_ref: "PDM-TEST-002", request_type: "access", subject_type: "parent", subject_name: "Closed Parent", requester_name: "Closed Parent", received_at: "2026-10-01T10:00:00Z", due_at: "2026-11-01T10:00:00Z", status: "completed", identity_status: "verified", authority_status: "not_applicable" }
+    { id: 12, request_ref: "PDM-TEST-002", request_type: "access", subject_type: "parent", subject_name: "Closed Parent", requester_name: "Closed Parent", received_at: "2026-10-01T10:00:00Z", due_at: "2026-11-01T10:00:00Z", status: "completed", sent_at: "2026-10-20T10:00:00Z", identity_status: "verified", authority_status: "not_applicable" }
   ];
   let activeRequest = requests[0];
   await page.exposeFunction("__rpc", async (name, args) => {

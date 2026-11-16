@@ -19,6 +19,10 @@ function pdmEscape(value) {
 function pdmDate(value) {
     return value ? new Date(value).toLocaleDateString("en-GB") : "—";
 }
+function pdmTodayLocal() {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
 function pdmTypeLabel(value) {
     return ({access:"Access request",erasure:"Erasure request",rectification:"Rectification request",restriction:"Restriction request",objection:"Objection request",portability:"Data portability request",other:"Other request"})[value]||String(value||"Request");
 }
@@ -73,7 +77,7 @@ function pdmSelectSubject(index) {
       '<label>Relationship to subject<select id="pdmRelationship">'+(pdmSelectedSubject.type==="parent"?'<option value="self">The person themselves</option><option value="authorised_representative">Authorised representative</option><option value="other">Other</option>':'<option value="parent_or_guardian">Parent / person with parental responsibility</option><option value="authorised_representative">Authorised representative</option><option value="other">Other</option>')+'</select></label>'+
       '<label>Contact method<select id="pdmContactMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select></label>'+
       '<label>Contact details (if supplied)<input id="pdmContactDetails" maxlength="250"></label>'+
-      '<label>Date received<input id="pdmReceived" type="date" value="'+new Date().toISOString().slice(0,10)+'" required></label>'+
+      '<label>Date received<input id="pdmReceived" type="date" value="'+pdmTodayLocal()+'" required></label>'+
       '<label>Identity check<select id="pdmIdentity"><option value="unverified">Not yet verified</option><option value="verified">Verified</option><option value="more_information_required">More information required</option></select></label>'+
       '<label>Authority to act<select id="pdmAuthority">'+(pdmSelectedSubject.type==="parent"?'<option value="not_applicable">Not applicable / requester is adult subject</option><option value="unverified">Not yet verified</option><option value="verified">Verified</option>':'<option value="unverified">Not yet verified</option><option value="verified">Verified parental responsibility / authority</option><option value="not_authorised">Not authorised</option>')+'</select></label>'+
       '<label>Scope / notes<textarea id="pdmScope" rows="2" maxlength="2000"></textarea></label>'+
@@ -174,7 +178,7 @@ async function pdmExecuteErasure() {
     const reviewUpdate=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:pdmCurrentRequest.status,p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
       p_scope_notes:[pdmCurrentRequest.scope_notes||"", "Erasure review: "+reviewNotes].filter(Boolean).join("\n"),
-      p_extension_reason:null,p_extension_notified_at:null,p_decision:pdmCurrentRequest.decision||null,
+      p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,p_decision:pdmCurrentRequest.decision||null,
       p_response_notes:pdmCurrentRequest.response_notes||null,p_sent_at:pdmCurrentRequest.sent_at||null,
       p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:pdmCurrentRequest.completed_at||null});
     if(reviewUpdate.error||reviewUpdate.data===null||!reviewUpdate.data.success){
@@ -220,7 +224,7 @@ async function pdmRecordSent() {
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status||"verified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
-      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:null,p_extension_notified_at:null,
+      p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,
       p_decision:pdmCurrentRequest.decision||"Response issued",p_response_notes:document.getElementById("pdmResponseText")?.value||pdmCurrentRequest.response_notes||null,
       p_sent_at:new Date().toISOString(),p_sent_via:method,p_completed_at:new Date().toISOString()});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to record response.","Update failed","warning");return;}
@@ -250,7 +254,7 @@ async function pdmSaveProgress() {
     if(status==="completed"){await appAlert("Use Prepare response and Record as sent to complete a request.","Response required","warning");return;}
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:status,p_identity_status:v("pdmIdentityStatus"),p_authority_status:v("pdmAuthorityStatus"),
-      p_scope_notes:v("pdmScopeNotes"),p_extension_reason:null,p_extension_notified_at:null,
+      p_scope_notes:v("pdmScopeNotes"),p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,
       p_decision:v("pdmDecision"),p_response_notes:v("pdmResponseNotes"),
       p_sent_at:pdmCurrentRequest.sent_at||null,p_sent_via:pdmCurrentRequest.sent_via||null,p_completed_at:pdmCurrentRequest.completed_at||null});
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to update request.","Update failed","warning");return;}
@@ -261,7 +265,7 @@ function pdmNotifyExtension() {
     const host=document.getElementById("pdmResponseHost");
     host.innerHTML='<div class="pdm-form"><p>A complex request or multiple requests may justify up to two additional months. The requester must be told, with reasons, within the first month.</p>'+
       '<label>Reason for extension<textarea id="pdmExtensionReason" rows="3" maxlength="2000" required></textarea></label>'+
-      '<label>Date the requester was notified<input id="pdmExtensionDate" type="date" value="'+new Date().toISOString().slice(0,10)+'" required></label>'+
+      '<label>Date the requester was notified<input id="pdmExtensionDate" type="date" value="'+pdmTodayLocal()+'" required></label>'+
       '<button class="primary-button" onclick="pdmSaveExtension()">Record extension notice</button></div>';
 }
 async function pdmSaveExtension() {
@@ -270,9 +274,8 @@ async function pdmSaveExtension() {
     const notified=document.getElementById("pdmExtensionDate")?.value||"";
     if(reason.length<10||!notified){await appAlert("Enter the reason and date the requester was notified.","Extension details required","warning");return;}
     const when=new Date(notified+"T12:00:00");
-    const deadline=new Date(pdmCurrentRequest.received_at);deadline.setMonth(deadline.getMonth()+1);
-    if(Number.isNaN(when.getTime())||when>new Date()||when>deadline){
-      await appAlert("The extension must be notified within the first month of receipt.","Extension not recorded","warning");return;
+    if(Number.isNaN(when.getTime())||when>new Date()){
+      await appAlert("Enter a valid notification date that is not in the future. The server will check the statutory notification deadline.","Extension not recorded","warning");return;
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
       p_status:"extension_notified",p_identity_status:pdmCurrentRequest.identity_status||"unverified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",

@@ -117,7 +117,7 @@ const fs = require("node:fs");
   await page.evaluate(() => window.pdmLoadBundle());
   assert.ok(calls.some(x => x.name === "get_personal_data_subject_bundle"));
 
-  activeRequest = requests[2];
+  activeRequest = requests[1];
   await page.evaluate(() => window.pdmOpenRequest(13));
   await page.evaluate(() => window.pdmPreviewErasure());
   assert.match(await page.locator("#pdmEraseHost").innerText(), /Eligible for deletion/);

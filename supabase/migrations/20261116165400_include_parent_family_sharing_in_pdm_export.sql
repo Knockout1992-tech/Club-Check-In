@@ -168,5 +168,4 @@ begin
 exception when invalid_text_representation then
   return jsonb_build_object('success',false,'message','The selected record reference is invalid.');
 end;
-$function$
-
+$function$;

@@ -61,7 +61,8 @@ function renderPersonalDataManagement() {
     const visibleRequests = pdmRequestFilter === "closed" ? closedRequests : openRequests;
     const rows = visibleRequests.map(r => {
       const due = r.extended_due_at || r.due_at;
-      const overdue = r.clock_started_at && due && new Date(due).getTime() < Date.now() && !pdmIsClosed(r);
+      const responseClockActive = ["in_review","extension_notified","ready_to_send","partially_completed"].includes(r.status);
+      const overdue = responseClockActive && due && new Date(due).getTime() < Date.now() && !pdmIsClosed(r);
       return '<article class="pdm-request"><div class="pdm-request-head"><strong>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</strong><span class="pdm-status">'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</span></div><div>'+pdmEscape(r.subject_name)+' · '+pdmEscape(pdmSubjectLabel(r.subject_type))+'</div><div class="subtitle">Received '+pdmDate(r.received_at)+' · Due '+pdmDeadlineLabel(r)+(overdue?' · OVERDUE':'')+'</div><button class="secondary-button small-button" onclick="pdmOpenRequest('+Number(r.id)+')">Open request</button></article>';
     }).join("");
     renderShell('<div class="card retention-admin pdm-page">'+

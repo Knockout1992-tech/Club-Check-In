@@ -16,7 +16,6 @@ declare
   v_attendance jsonb;
   v_availability jsonb;
   v_family jsonb;
-  v_family_id bigint;
   v_family_joined_at timestamptz;
   v_family_linked_by_subject boolean;
   v_locator jsonb := coalesce(p_subject_locator,'{}'::jsonb);

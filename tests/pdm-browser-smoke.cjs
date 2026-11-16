@@ -168,8 +168,8 @@ const fs = require("node:fs");
   assert.ok(extensionSave.args.p_extension_notified_at);
   assert.ok(new Date(extensionSave.args.p_extension_notified_at).getTime() <= Date.now(), "An extension notified today must not be treated as a future timestamp");
 
-  activeRequest = requests[0];
-  await page.evaluate(() => window.pdmOpenRequest(11));
+  activeRequest = accessRequest;
+  await page.evaluate(() => window.pdmOpenRequest(14));
   await page.evaluate(() => window.pdmLoadBundle());
   assert.ok(calls.some(x => x.name === "get_personal_data_subject_bundle"));
   const parentFamilyExport = await page.evaluate(() => window.pdmBundle);

@@ -68,7 +68,7 @@ function renderPersonalDataManagement() {
       '<button class="back-button" onclick="showRetentionAdmin()">← System Admin</button>'+
       '<h2>Personal Data Management</h2><div class="subtitle">Manage data protection requests across Club Check-In and the Parent Portal.</div>'+
       '<p class="pdm-note"><strong>Policy approval outstanding:</strong> The club privacy notice is still awaiting committee approval. Treat all policy details in response drafts as unapproved until the committee confirms them.</p>'+
-      '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and use the target date as an operational reminder, not an automatic legal deadline calculation. If genuine clarification pauses the clock or a date falls on a non-working day, review and adjust the target manually against current ICO guidance. Do not store copies of identity documents here; record the verification outcome only. The club must approve a retention period for request case records.</div>'+
+      '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and treat the displayed date as an operational reminder rather than a legal deadline calculation. Record any clarification requests and correspondence in the case history, and separately check the statutory deadline against current ICO guidance. This screen does not pause or recalculate the legal clock. Do not store copies of identity documents here; record the verification outcome only. The club must approve a retention period for request case records.</div>'+
       '<section class="pdm-section"><h3>Find a parent or child</h3><div class="pdm-search"><input id="pdmSearchTerm" type="search" aria-label="Search parents or children" placeholder="Enter at least 2 characters"><button class="primary-button" onclick="pdmSearch()">Search</button></div><div id="pdmSearchResults"></div></section>'+
       '<section class="pdm-section"><div class="pdm-list-heading"><h3>Requests</h3><button class="secondary-button small-button" onclick="showPersonalDataManagement()">Refresh</button></div>'+
       '<div class="pdm-filter" role="group" aria-label="Filter requests"><button type="button" class="'+(pdmRequestFilter==="open"?"active":"")+'" aria-pressed="'+(pdmRequestFilter==="open"?"true":"false")+'" onclick="pdmSetRequestFilter(\'open\')">Open · '+openRequests.length+'</button><button type="button" class="'+(pdmRequestFilter==="closed"?"active":"")+'" aria-pressed="'+(pdmRequestFilter==="closed"?"true":"false")+'" onclick="pdmSetRequestFilter(\'closed\')">Closed · '+closedRequests.length+'</button></div>'+
@@ -341,7 +341,7 @@ function pdmDraftResponse() {
       '<p class="pdm-note">This is a draft, not a legal determination. Replace every square-bracket instruction and verify the facts. The club privacy notice is still awaiting committee approval; do not present its contents as approved club policy.</p>'+
       '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button></div>';
     document.getElementById("pdmResponseOutcome").value=suggested;
-    document.getElementById("pdmResponseReason").value=r.response_notes||"";
+    document.getElementById("pdmResponseReason").value="";
     pdmBuildResponseText();
 }
 async function pdmRecordSent() {
@@ -357,6 +357,10 @@ async function pdmRecordSent() {
     }
     if(pdmCurrentRequest.identity_status!=="verified"||!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)){
       await appAlert("Verify the requester’s identity and, where applicable, their authority before issuing any final response. If verification is outstanding, record the case as awaiting information instead.","Verification required","warning");return;
+    }
+    const decisionReason=document.getElementById("pdmResponseReason")?.value?.trim()||"";
+    if(decisionReason.length<10){
+      await appAlert("Enter the decision reasons / explanation (at least 10 characters) before recording the response as sent.","Decision explanation required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
     const requiresAccessCopy=["access","portability"].includes(pdmCurrentRequest.request_type)&&outcome!=="refused";
@@ -379,7 +383,7 @@ async function pdmRecordSent() {
 function pdmUpdateStatus() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const host=document.getElementById("pdmResponseHost");
-    const statuses=["received","awaiting_identity","awaiting_authority","in_review","extension_notified","ready_to_send","partially_completed","refused","withdrawn"];
+    const statuses=["received","awaiting_identity","awaiting_authority","in_review","extension_notified","ready_to_send"];
     host.innerHTML='<div class="pdm-form"><label>Request status<select id="pdmStatus">'+statuses.map(x=>'<option value="'+x+'">'+x.replace(/_/g," ")+'</option>').join("")+'</select></label>'+
       '<label>Identity check<select id="pdmIdentityStatus"><option value="unverified">Unverified</option><option value="verified">Verified</option><option value="more_information_required">More information required</option><option value="not_applicable">Not applicable</option></select></label>'+
       '<label>Authority to act<select id="pdmAuthorityStatus"><option value="not_applicable">Not applicable</option><option value="unverified">Unverified</option><option value="verified">Verified</option><option value="not_authorised">Not authorised</option></select></label>'+

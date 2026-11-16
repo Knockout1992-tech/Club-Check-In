@@ -136,8 +136,8 @@ function renderPdmRequestDetail() {
     panel.innerHTML='<button class="back-button" type="button" onclick="pdmReturnToList()">← Back to requests</button>'+
       '<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</h3>'+
       '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDate(r.extended_due_at||r.due_at)+'</p>'+
-      '<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button>'+
-      (r.request_type==="erasure"?'<button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button>':'')+'</div>'+
+      (["access","portability"].includes(r.request_type)?'<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button></div>':'')+
+      (r.request_type==="erasure"?'<h4 class="pdm-action-heading">Erasure review</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button></div>':'')+
       '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Response deadline</span><strong>'+pdmEscape(pdmDate(r.extended_due_at||r.due_at))+'</strong></div></div>'+
       '<div id="pdmBundleHost"></div><div id="pdmEraseHost"></div>'+
       '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
@@ -280,6 +280,12 @@ function pdmBuildResponseText() {
         "Sources: [identify the source of information not obtained directly from you, where applicable].\n" +
         "Automated decision-making: [describe any qualifying automated decision-making, or confirm none if verified].\n\n" +
         "You may have the right to request rectification, erasure or restriction, to object to processing, or to request data portability, depending on the circumstances. You may also complain to the Information Commissioner's Office (ICO).\n\n";
+    } else if (r.request_type === "portability") {
+      body += outcomeLine + notes + "\n\n";
+      if (outcome !== "refused") {
+        body += "The structured personal information covered by your portability request is supplied in the attached file or secure download. [Confirm the file format, delivery method and that the information relates to data provided by you and processed by automated means where the portability right applies.]\n\n";
+      }
+      body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
     } else if (r.request_type === "erasure") {
       body += outcomeLine + notes + "\n\n";
       body += outcome === "erased" || outcome === "partially_erased"

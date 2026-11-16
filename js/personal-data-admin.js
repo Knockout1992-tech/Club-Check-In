@@ -61,14 +61,15 @@ function renderPersonalDataManagement() {
     const visibleRequests = pdmRequestFilter === "closed" ? closedRequests : openRequests;
     const rows = visibleRequests.map(r => {
       const due = r.extended_due_at || r.due_at;
-      const overdue = r.clock_started_at && due && new Date(due).getTime() < Date.now() && !pdmIsClosed(r);
+      const responseClockActive = ["in_review","extension_notified","ready_to_send","partially_completed"].includes(r.status);
+      const overdue = responseClockActive && due && new Date(due).getTime() < Date.now() && !pdmIsClosed(r);
       return '<article class="pdm-request"><div class="pdm-request-head"><strong>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</strong><span class="pdm-status">'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</span></div><div>'+pdmEscape(r.subject_name)+' · '+pdmEscape(pdmSubjectLabel(r.subject_type))+'</div><div class="subtitle">Received '+pdmDate(r.received_at)+' · Due '+pdmDeadlineLabel(r)+(overdue?' · OVERDUE':'')+'</div><button class="secondary-button small-button" onclick="pdmOpenRequest('+Number(r.id)+')">Open request</button></article>';
     }).join("");
     renderShell('<div class="card retention-admin pdm-page">'+
       '<button class="back-button" onclick="showRetentionAdmin()">← System Admin</button>'+
       '<h2>Personal Data Management</h2><div class="subtitle">Manage data protection requests across Club Check-In and the Parent Portal.</div>'+
       '<p class="pdm-note"><strong>Policy approval outstanding:</strong> The club privacy notice is still awaiting committee approval. Treat all policy details in response drafts as unapproved until the committee confirms them.</p>'+
-      '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and use the target date as an operational reminder, not an automatic legal deadline calculation. If genuine clarification pauses the clock or a date falls on a non-working day, review and adjust the target manually against current ICO guidance. Do not store copies of identity documents here; record the verification outcome only. The club must approve a retention period for request case records.</div>'+
+      '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and treat the displayed date as an operational reminder rather than a legal deadline calculation. Record any clarification requests and correspondence in the case history, and separately check the statutory deadline against current ICO guidance. This screen does not pause or recalculate the legal clock. Do not store copies of identity documents here; record the verification outcome only. The club must approve a retention period for request case records.</div>'+
       '<section class="pdm-section"><h3>Find a parent or child</h3><div class="pdm-search"><input id="pdmSearchTerm" type="search" aria-label="Search parents or children" placeholder="Enter at least 2 characters"><button class="primary-button" onclick="pdmSearch()">Search</button></div><div id="pdmSearchResults"></div></section>'+
       '<section class="pdm-section"><div class="pdm-list-heading"><h3>Requests</h3><button class="secondary-button small-button" onclick="showPersonalDataManagement()">Refresh</button></div>'+
       '<div class="pdm-filter" role="group" aria-label="Filter requests"><button type="button" class="'+(pdmRequestFilter==="open"?"active":"")+'" aria-pressed="'+(pdmRequestFilter==="open"?"true":"false")+'" onclick="pdmSetRequestFilter(\'open\')">Open · '+openRequests.length+'</button><button type="button" class="'+(pdmRequestFilter==="closed"?"active":"")+'" aria-pressed="'+(pdmRequestFilter==="closed"?"true":"false")+'" onclick="pdmSetRequestFilter(\'closed\')">Closed · '+closedRequests.length+'</button></div>'+
@@ -156,7 +157,7 @@ function renderPdmRequestDetail() {
       '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Target response date</span><strong>'+pdmEscape(pdmDeadlineLabel(r))+'</strong></div></div>'+
       (isClosed?'<p class="pdm-note">This request is closed. Case actions are disabled; the recorded history remains available below.</p>':
         (["access","portability"].includes(r.request_type)?'<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button></div>':'')+
-        (r.request_type==="erasure"?'<h4 class="pdm-action-heading">Erasure review</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button></div>':'')+
+        (r.request_type==="erasure"?(r.erasure_executed_at?'<div class="pdm-note">Erasure executed '+pdmEscape(new Date(r.erasure_executed_at).toLocaleString("en-GB"))+'. Records removed: '+pdmEscape(r.erasure_records_removed??"Not recorded")+'. Prepare and send the response below.</div>':'<h4 class="pdm-action-heading">Erasure review</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button></div>'):'')+
         '<div id="pdmBundleHost"></div><div id="pdmEraseHost"></div>'+
         '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
         '<div id="pdmResponseHost"></div>')+
@@ -261,7 +262,7 @@ async function pdmExecuteErasure() {
 function pdmResponseOutcomes(type) {
     const options = {
       access: [["provided","All requested information provided"],["partially_provided","Some information provided"],["refused","Request refused"]],
-      erasure: [["erased","Identified information erased"],["partially_erased","Partially erased"],["refused","Request refused"]],
+      erasure: [["erased","Identified information erased"],["refused","Request refused"]],
       rectification: [["corrected","Information corrected"],["partially_corrected","Partially corrected"],["refused","Request refused"]],
       restriction: [["restricted","Processing restricted"],["partially_restricted","Partially restricted"],["refused","Request refused"]],
       objection: [["accepted","Objection accepted"],["partially_accepted","Objection partially accepted"],["refused","Objection not accepted"]],
@@ -309,13 +310,13 @@ function pdmBuildResponseText() {
       body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
     } else if (r.request_type === "erasure") {
       body += outcomeLine + notes + "\n\n";
-      body += outcome === "erased" || outcome === "partially_erased"
-        ? "The action taken relates to the identified live application records. [Explain any information retained, the reason, and the applicable retention basis. Do not describe provider backups or logs as erased unless verified.]\n\n"
-        : "We have not erased the information. [Explain the specific reason, the applicable exemption or retention basis, and what information remains held.]\n\n";
+      body += outcome === "erased"
+        ? "We have erased the identified live application records. Any information retained, and the reason and applicable basis for retaining it, are set out in the decision explanation above. We do not claim to have removed provider backups or logs unless that has been separately verified.\n\n"
+        : "We have not erased the information. The reasons and any applicable exemption or retention basis are set out in the decision explanation above.\n\n";
       body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
     } else {
       body += outcomeLine + notes + "\n\n";
-      body += "[Explain exactly what was changed, restricted, supplied or not actioned, including the information and date range affected. If refusing all or part of the request, explain the specific reason and any applicable exemption.]\n\n";
+      body += "The action taken, information affected and any reasons for not completing all or part of the request are set out in the decision explanation above.\n\n";
       body += "If you remain dissatisfied, you may complain to the ICO.\n\n";
     }
     body += "Kind regards,\nRHRUFC Club Committee";
@@ -330,7 +331,7 @@ function pdmDraftResponse() {
     const host=document.getElementById("pdmResponseHost");
     host.innerHTML='<div class="pdm-form">'+
       '<label>Response outcome<select id="pdmResponseOutcome">'+options.map(x=>'<option value="'+pdmEscape(x[0])+'">'+pdmEscape(x[1])+'</option>').join("")+'</select></label>'+
-      '<label>Decision reasons / explanation<textarea id="pdmResponseReason" rows="3" maxlength="4000" placeholder="Record the specific facts, actions taken and reasons for the decision"></textarea></label>'+
+      '<label>Decision reasons / explanation<textarea id="pdmResponseReason" rows="5" maxlength="4000" placeholder="Record the facts and action taken. For erasure, include what information remains held, why, the applicable exemption or retention basis, and the retention period if known."></textarea></label>'+
       '<button type="button" class="secondary-button" onclick="pdmBuildResponseText()">Refresh draft from outcome and reasons</button>'+
       '<label for="pdmResponseText">Editable response draft</label><textarea id="pdmResponseText" rows="18"></textarea>'+
       '<button class="secondary-button" onclick="pdmCopyResponse()">Copy response</button>'+
@@ -341,17 +342,26 @@ function pdmDraftResponse() {
       '<p class="pdm-note">This is a draft, not a legal determination. Replace every square-bracket instruction and verify the facts. The club privacy notice is still awaiting committee approval; do not present its contents as approved club policy.</p>'+
       '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button></div>';
     document.getElementById("pdmResponseOutcome").value=suggested;
-    document.getElementById("pdmResponseReason").value=r.response_notes||"";
+    document.getElementById("pdmResponseReason").value="";
     pdmBuildResponseText();
 }
 async function pdmRecordSent() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const outcome=document.getElementById("pdmResponseOutcome")?.value||"";
-    if(pdmCurrentRequest.request_type==="erasure"&&!pdmCurrentRequest.erasure_executed_at&&outcome!=="refused"){
-      await appAlert("Complete the deletion preview and authorised erasure first, or record a refusal with the reason, before sending an erasure response.","Erasure outcome required","warning");return;
+    if(pdmCurrentRequest.request_type==="erasure"){
+      if(!pdmCurrentRequest.erasure_executed_at&&outcome!=="refused"){
+        await appAlert("Complete the deletion preview and authorised erasure first, or record a refusal with the reason, before sending an erasure response.","Erasure outcome required","warning");return;
+      }
+      if(pdmCurrentRequest.erasure_executed_at&&outcome!=="erased"){
+        await appAlert("This request has already been erased. Record the completed erasure outcome; it cannot now be refused.","Erasure outcome required","warning");return;
+      }
     }
     if(pdmCurrentRequest.identity_status!=="verified"||!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)){
       await appAlert("Verify the requester’s identity and, where applicable, their authority before issuing any final response. If verification is outstanding, record the case as awaiting information instead.","Verification required","warning");return;
+    }
+    const decisionReason=document.getElementById("pdmResponseReason")?.value?.trim()||"";
+    if(decisionReason.length<10){
+      await appAlert("Enter the decision reasons / explanation (at least 10 characters) before recording the response as sent.","Decision explanation required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
     const requiresAccessCopy=["access","portability"].includes(pdmCurrentRequest.request_type)&&outcome!=="refused";
@@ -374,7 +384,7 @@ async function pdmRecordSent() {
 function pdmUpdateStatus() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const host=document.getElementById("pdmResponseHost");
-    const statuses=["received","awaiting_identity","awaiting_authority","in_review","extension_notified","ready_to_send","partially_completed","refused","withdrawn"];
+    const statuses=["received","awaiting_identity","awaiting_authority","in_review","extension_notified","ready_to_send"];
     host.innerHTML='<div class="pdm-form"><label>Request status<select id="pdmStatus">'+statuses.map(x=>'<option value="'+x+'">'+x.replace(/_/g," ")+'</option>').join("")+'</select></label>'+
       '<label>Identity check<select id="pdmIdentityStatus"><option value="unverified">Unverified</option><option value="verified">Verified</option><option value="more_information_required">More information required</option><option value="not_applicable">Not applicable</option></select></label>'+
       '<label>Authority to act<select id="pdmAuthorityStatus"><option value="not_applicable">Not applicable</option><option value="unverified">Unverified</option><option value="verified">Verified</option><option value="not_authorised">Not authorised</option></select></label>'+

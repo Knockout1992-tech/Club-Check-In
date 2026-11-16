@@ -8,7 +8,7 @@ const fs = require("node:fs");
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const calls = [];
   const requests = [
-    { id: 11, request_ref: "PDM-TEST-001", request_type: "other", subject_type: "parent", subject_name: "Test Parent", requester_name: "Test Parent", received_at: "2026-11-10T10:00:00Z", due_at: "2026-12-10T10:00:00Z", extended_due_at: "2027-02-10T10:00:00Z", extension_reason: "Complex request requiring review", extension_notified_at: "2026-11-12T12:00:00Z", status: "in_review", identity_status: "verified", authority_status: "not_applicable" },
+    { id: 11, request_ref: "PDM-TEST-001", request_type: "other", subject_type: "parent", subject_name: "Test Parent", requester_name: "Test Parent", received_at: "2026-11-10T10:00:00Z", due_at: "2026-11-01T10:00:00Z", extended_due_at: "2026-11-15T10:00:00Z", extension_reason: "Complex request requiring review", extension_notified_at: "2026-11-12T12:00:00Z", status: "in_review", identity_status: "verified", authority_status: "not_applicable" },
     { id: 13, request_ref: "PDM-TEST-003", request_type: "erasure", subject_type: "child", subject_name: "Test Player", requester_name: "Test Parent", subject_reference: "player:TEST", subject_locator: {}, received_at: "2026-11-10T10:00:00Z", due_at: "2026-12-10T10:00:00Z", status: "in_review", identity_status: "verified", authority_status: "verified" },
     { id: 12, request_ref: "PDM-TEST-002", request_type: "access", subject_type: "parent", subject_name: "Closed Parent", requester_name: "Closed Parent", received_at: "2026-10-01T10:00:00Z", due_at: "2026-11-01T10:00:00Z", status: "completed", sent_at: "2026-10-20T10:00:00Z", identity_status: "verified", authority_status: "not_applicable" }
   ];
@@ -39,6 +39,7 @@ const fs = require("node:fs");
   assert.match(await page.locator(".pdm-page").innerText(), /Personal Data Management/);
   assert.match(await page.locator(".pdm-filter").innerText(), /Open · 2/);
   assert.match(await page.locator(".pdm-filter").innerText(), /Closed · 1/);
+  assert.match(await page.locator(".pdm-page").innerText(), /OVERDUE/, "Overdue response targets must be visible on the request list");
   await page.screenshot({ path: "test-results/pdm-dashboard-mobile.png", fullPage: true });
   await page.locator("#pdmSearchTerm").fill("Test");
   await page.evaluate(() => window.pdmSearch());
@@ -73,10 +74,14 @@ const fs = require("node:fs");
   await page.waitForSelector("#pdmTimeline .pdm-timeline");
   assert.doesNotMatch(await page.locator("#pdmRequestDetail").innerText(), /Build data copy/);
   await page.evaluate(() => window.pdmDraftResponse());
+  assert.doesNotMatch(await page.locator("#pdmResponseText").inputValue(), /\[Explain the specific reason|\[Explain any information retained/,
+    "Generated response must not duplicate the decision rationale");
+  assert.match(await page.locator("#pdmResponseReason").getAttribute("placeholder"), /what information remains held/i);
   await page.screenshot({ path: "test-results/pdm-response-mobile.png", fullPage: true });
   assert.equal(await page.locator("#pdmResponseOutcome").count(), 1);
   await page.evaluate(() => window.pdmRecordSent());
   assert.equal(calls.filter(x => x.name === "update_personal_data_request" && x.args.p_status === "completed").length, 0, "Draft placeholders must block sending");
+  await page.locator("#pdmResponseReason").fill("The request was reviewed and all requested information was provided.");
   await page.locator("#pdmResponseText").fill("Dear Test Parent,\n\nYour request has been reviewed and the action is complete.\n\nKind regards,\nRHRUFC");
   await page.locator("#pdmCheckThirdParty").check();
   await page.locator("#pdmCheckAccuracy").check();
@@ -89,6 +94,7 @@ const fs = require("node:fs");
   await page.evaluate(() => window.pdmOpenRequest(14));
   assert.match(await page.locator("#pdmRequestDetail").innerText(), /Build data copy/);
   await page.evaluate(() => window.pdmDraftResponse());
+  await page.locator("#pdmResponseReason").fill("The requested personal data copy was prepared and checked for third-party information.");
   await page.locator("#pdmResponseText").fill("Dear Access Parent,\n\nYour access response is ready.\n\nKind regards,\nRHRUFC");
   await page.locator("#pdmCheckThirdParty").check();
   await page.locator("#pdmCheckAccuracy").check();
@@ -103,6 +109,8 @@ const fs = require("node:fs");
   activeRequest = requests[0];
   await page.evaluate(() => window.pdmOpenRequest(11));
   await page.evaluate(() => window.pdmUpdateStatus());
+  const progressOptions = await page.locator("#pdmStatus option").allTextContents();
+  assert.ok(!progressOptions.some(x => /refused|withdrawn|partially completed/i.test(x)), "Final outcomes must not be set through a progress-only action");
   await page.locator("#pdmStatus").selectOption("in_review");
   await page.evaluate(() => window.pdmSaveProgress());
   const progressSave = calls.filter(x => x.name === "update_personal_data_request").at(-1);
@@ -134,6 +142,17 @@ const fs = require("node:fs");
   assert.equal(erasureNotesBox, "150px");
   await page.evaluate(() => window.pdmExecuteErasure());
   assert.ok(calls.some(x => x.name === "execute_personal_data_erasure" && x.args.p_confirm_reference === "PDM-TEST-003"));
+  activeRequest = { ...requests[1], erasure_executed_at: "2026-11-16T10:00:00Z", erasure_records_removed: 3 };
+  await page.evaluate(() => window.pdmOpenRequest(13));
+  await page.evaluate(() => window.pdmDraftResponse());
+  const erasureOutcomes = await page.locator("#pdmResponseOutcome option").allTextContents();
+  assert.ok(!erasureOutcomes.some(x => /partially erased/i.test(x)), "Partially erased must not be available as an executable status");
+  await page.locator("#pdmResponseOutcome").selectOption("refused");
+  await page.locator("#pdmResponseReason").fill("This is a deliberately invalid refusal after erasure.");
+  const completedBeforeInvalidErasureOutcome = calls.filter(x => x.name === "update_personal_data_request" && x.args.p_status === "completed").length;
+  await page.evaluate(() => window.pdmRecordSent());
+  assert.equal(calls.filter(x => x.name === "update_personal_data_request" && x.args.p_status === "completed").length,
+    completedBeforeInvalidErasureOutcome, "An executed erasure must not subsequently be recorded as refused");
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.evaluate(() => window.showPersonalDataManagement());
   await page.screenshot({ path: "test-results/pdm-dashboard-desktop.png", fullPage: true });

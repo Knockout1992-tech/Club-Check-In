@@ -98,322 +98,295 @@ async function permanentlyRemovePlayer(playerID) {
 
 async function showUserManagement() {
 
-    const {
-        data: users,
-        error
-    } = await supabaseClient.rpc(
-        "get_manageable_users",
+    const installationID = getInstallationID();
+
+    const { data: users, error } = await supabaseClient.rpc(
+        "get_user_access_management",
         {
-            current_senior_code: currentSeniorPIN
+            current_senior_code: currentSeniorPIN,
+            supplied_installation_id: installationID
         }
     );
 
     if (error || !Array.isArray(users)) {
-
-        console.error("User management load failed:", error);
-
-        if (window.clubCheckInDiagnostics) {
-            window.clubCheckInDiagnostics.error(
-                "User management load failed",
-                error
-            );
-        }
-
-        renderShell(`
-            <div class="card">
-
-                <button class="back-button"
-                    onclick="showSeniorDashboard()">
-                    ← Admin Dashboard
-                </button>
-
-                <h2>User Management</h2>
-
-                <div class="info-box">
-                    Unable to load users.
-                </div>
-
-            </div>
-        `);
-
+        console.error("User access management load failed:", error);
+        await appAlert(
+            "Unable to load access assignments. Your Admin and System Admin permissions may not have been recognised.",
+            "Unable to load user management",
+            "danger"
+        );
         return;
     }
 
-    const {
-        data: installations,
-        error: installationError
-    } = await supabaseClient.rpc(
-        "get_installation_status",
-        {
+    const { data: installations, error: installationError } =
+        await supabaseClient.rpc("get_installation_status", {
             current_senior_code: currentSeniorPIN
-        }
-    );
+        });
 
     if (installationError || !Array.isArray(installations)) {
-
-        const errorDetails = installationError
-            ? {
-                message: installationError.message,
-                details: installationError.details,
-                hint: installationError.hint,
-                code: installationError.code
-            }
-            : {
-                message: "Installation status returned an unexpected response."
-            };
-
-        console.error(
-            "Installation status load failed:",
-            errorDetails
+        console.error("Installation status load failed:", installationError);
+        await appAlert(
+            "Unable to load device registration status.",
+            "Unable to load devices",
+            "danger"
         );
+        return;
+    }
 
-        if (window.clubCheckInDiagnostics) {
-            window.clubCheckInDiagnostics.error(
-                "Installation status load failed",
-                errorDetails
-            );
+    const { data: ageGroups, error: ageGroupError } = await supabaseClient
+        .from("age_groups")
+        .select("id, display_name, age_group, sort_order, active")
+        .eq("active", true)
+        .order("sort_order");
 
-            window.clubCheckInDiagnostics.show();
-        }
-
-        renderShell(`
-            <div class="card">
-
-                <button class="back-button"
-                    onclick="showSeniorDashboard()">
-                    ← Admin Dashboard
-                </button>
-
-                <h2>User Management</h2>
-
-                <div class="info-box">
-                    Unable to load device registration status.
-                    Check the diagnostic panel for details.
-                </div>
-
-            </div>
-        `);
-
+    if (ageGroupError || !Array.isArray(ageGroups)) {
+        console.error("Age group list load failed:", ageGroupError);
+        await appAlert(
+            "Unable to load the age group list.",
+            "Unable to load age groups",
+            "danger"
+        );
         return;
     }
 
     const installationSummary = {};
-
-    installations.forEach(installation => {
-        installationSummary[installation.person_id] = {
-            activeCount: Number(
-                installation.active_installations || 0
-            ),
-            lastSeen: installation.last_seen_at || null
+    installations.forEach(item => {
+        installationSummary[item.person_id] = {
+            activeCount: Number(item.active_installations || 0),
+            lastSeen: item.last_seen_at || null
         };
     });
 
-    function formatDeviceLastSeen(value) {
+    const groupNames = {};
+    ageGroups.forEach(group => {
+        groupNames[Number(group.id)] = group.display_name || group.age_group;
+    });
 
+    const formatLastSeen = value => {
         if (!value) return "Not available";
-
         const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return "Not available";
-        }
-
-        return date.toLocaleString("en-GB", {
-            dateStyle: "medium",
-            timeStyle: "short"
-        });
-    }
+        return Number.isNaN(date.getTime())
+            ? "Not available"
+            : date.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+    };
 
     renderShell(`
         <div class="card">
-
-            <button class="back-button"
-                onclick="showSeniorDashboard()">
-                ← Admin Dashboard
-            </button>
-
+            <button class="back-button" onclick="showSeniorDashboard()">← Admin Dashboard</button>
             <h2>User Management</h2>
+            <p class="subtitle">Manage approved users, roles and age-group access.</p>
 
-            <button class="primary-button"
-                onclick="showAddCoach()">
-                + Add Coach
-            </button>
+            <div class="info-box">
+                <strong>Access assignment status</strong>
+                <p>Existing users retain their current PIN access while roles are assigned. A missing role is shown as Not assigned; it does not automatically grant access.</p>
+            </div>
 
+            <button class="primary-button" onclick="showAddCoach()">+ Add Coach</button>
             <br><br>
 
-            ${
-                users.length === 0
-                ? `
-                    <div class="info-box">
-                        No users have been added yet.
-                    </div>
-                `
-                : users.map((user, index) => {
+            ${users.map((user, index) => {
+                const device = installationSummary[user.person_id] || { activeCount: 0, lastSeen: null };
+                const roles = Array.isArray(user.roles) ? user.roles : [];
+                const groups = Array.isArray(user.age_group_ids) ? user.age_group_ids.map(Number) : [];
+                const roleLabels = roles.map(role => role === "admin" ? "Admin" : "Coach");
+                const groupLabels = groups.map(id => groupNames[id]).filter(Boolean);
 
-                    const device =
-                        installationSummary[user.person_id] || {
-                            activeCount: 0,
-                            lastSeen: null
-                        };
-
-                    const deviceStatus =
-                        device.activeCount > 0
-                        ? "Device Registered"
-                        : "No Active Device";
-
-                    const deviceClass =
-                        device.activeCount > 0
-                        ? "user-status-active"
-                        : "user-status-inactive";
-
-                    return `
-                        <div class="info-box user-management-card">
-
-                            <div class="user-management-header">
-
-                                <strong>${escapeHTML(user.name)}</strong>
-
-                                <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
-
-                                    <span class="user-status ${
-                                        user.active
-                                        ? "user-status-active"
-                                        : "user-status-inactive"
-                                    }">
-                                        ${user.active ? "Active" : "Inactive"}
-                                    </span>
-
-                                    <span class="user-status ${deviceClass}">
-                                        ${deviceStatus}
-                                    </span>
-
-                                </div>
-
-                                ${
-                                    device.activeCount > 1
-                                    ? `
-                                        <br>
-                                        <span class="user-status user-status-inactive">
-                                            Warning: ${device.activeCount} active installations
-                                        </span>
-                                    `
-                                    : ""
-                                }
-
-                                <br>
-
-                                <small>
-                                    Last seen:
-                                    ${formatDeviceLastSeen(device.lastSeen)}
-                                </small>
-
+                return `
+                    <div class="info-box user-management-card">
+                        <div class="user-management-header">
+                            <strong>${escapeHTML(user.name)}</strong>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;">
+                                <span class="user-status ${user.active ? "user-status-active" : "user-status-inactive"}">${user.active ? "Active" : "Inactive"}</span>
+                                <span class="user-status ${device.activeCount > 0 ? "user-status-active" : "user-status-inactive"}">${device.activeCount > 0 ? "Device Registered" : "No Active Device"}</span>
+                                ${user.protected_user ? '<span class="user-status">Protected Account</span>' : ""}
+                                ${user.system_admin_authorised ? '<span class="user-status user-status-active">System Admin</span>' : ""}
                             </div>
-
-                            <div class="user-management-actions">
-
-                                <button type="button"
-                                    class="user-action-button ${
-                                        user.active
-                                        ? "user-action-danger"
-                                        : "user-action-primary"
-                                    } user-active-button"
-                                    data-user-index="${index}">
-                                    ${user.active ? "Deactivate" : "Activate"}
-                                </button>
-
-                                <button type="button"
-                                    class="user-action-button user-action-neutral reset-installation-button"
-                                    data-user-index="${index}">
-                                    Reset Installation
-                                </button>
-
-                                <button type="button"
-                                    class="user-action-button user-action-neutral change-user-name-button"
-                                    data-user-index="${index}">
-                                    Change Name
-                                </button>
-
-                            </div>
-
+                            <div><strong>Roles:</strong> ${roleLabels.length ? roleLabels.map(escapeHTML).join(", ") : '<span class="user-status user-status-inactive">Not assigned</span>'}</div>
+                            <div><strong>Age groups:</strong> ${groupLabels.length ? groupLabels.map(escapeHTML).join(", ") : "None assigned"}</div>
+                            ${device.activeCount > 1 ? `<p><span class="user-status user-status-inactive">Warning: ${device.activeCount} active installations</span></p>` : ""}
+                            <small>Last seen: ${formatLastSeen(device.lastSeen)}</small>
                         </div>
-                    `;
 
-                }).join("")
-            }
-
+                        <div class="user-management-actions">
+                            ${user.protected_user ? "" : `
+                                <button type="button" class="user-action-button user-action-primary edit-user-access-button" data-user-index="${index}">Manage Access</button>
+                                <button type="button" class="user-action-button ${user.active ? "user-action-danger" : "user-action-primary"} user-active-button" data-user-index="${index}">${user.active ? "Deactivate" : "Activate"}</button>
+                                <button type="button" class="user-action-button user-action-neutral reset-installation-button" data-user-index="${index}">Reset Installation</button>
+                                <button type="button" class="user-action-button user-action-neutral change-user-name-button" data-user-index="${index}">Change Name</button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join("")}
         </div>
     `);
 
-    document
-        .querySelectorAll(".user-active-button")
-        .forEach(button => {
-
-            button.addEventListener("click", async () => {
-
-                const selectedUser =
-                    users[Number(button.dataset.userIndex)];
-
-                if (!selectedUser) {
-                    await appAlert(
-                        "User could not be found.",
-                        "User not found",
-                        "danger"
-                    );
-                    return;
-                }
-
-                await setUserActive(
-                    selectedUser.person_id,
-                    !selectedUser.active
-                );
-            });
+    document.querySelectorAll(".edit-user-access-button").forEach(button => {
+        button.addEventListener("click", () => {
+            const user = users[Number(button.dataset.userIndex)];
+            if (user) showEditUserAccess(user.person_id);
         });
+    });
 
-    document
-        .querySelectorAll(".reset-installation-button")
-        .forEach(button => {
-
-            button.addEventListener("click", async () => {
-
-                const selectedUser =
-                    users[Number(button.dataset.userIndex)];
-
-                if (!selectedUser) {
-                    await appAlert(
-                        "User could not be found.",
-                        "User not found",
-                        "danger"
-                    );
-                    return;
-                }
-
-                await resetUserInstallation(
-                    selectedUser.person_id
-                );
-            });
+    document.querySelectorAll(".user-active-button").forEach(button => {
+        button.addEventListener("click", async () => {
+            const user = users[Number(button.dataset.userIndex)];
+            if (!user) return;
+            await setUserActive(user.person_id, !user.active);
         });
+    });
 
-    document
-        .querySelectorAll(".change-user-name-button")
-        .forEach(button => {
-
-            button.addEventListener("click", async () => {
-
-                const selectedUser =
-                    users[Number(button.dataset.userIndex)];
-
-                if (!selectedUser) {
-                    await appAlert(
-                        "User could not be found.",
-                        "User not found",
-                        "danger"
-                    );
-                    return;
-                }
-
-                showChangeUserName(selectedUser.person_id);
-            });
+    document.querySelectorAll(".reset-installation-button").forEach(button => {
+        button.addEventListener("click", async () => {
+            const user = users[Number(button.dataset.userIndex)];
+            if (user) await resetUserInstallation(user.person_id);
         });
+    });
+
+    document.querySelectorAll(".change-user-name-button").forEach(button => {
+        button.addEventListener("click", () => {
+            const user = users[Number(button.dataset.userIndex)];
+            if (user) showChangeUserName(user.person_id);
+        });
+    });
+}
+
+
+// =========================================================
+// USER ROLE AND AGE-GROUP ASSIGNMENTS
+// =========================================================
+
+async function showEditUserAccess(personID) {
+
+    const { data: users, error } = await supabaseClient.rpc(
+        "get_user_access_management",
+        {
+            current_senior_code: currentSeniorPIN,
+            supplied_installation_id: getInstallationID()
+        }
+    );
+
+    if (error || !Array.isArray(users)) {
+        await appAlert("Unable to load user access details.", "Load failed", "danger");
+        return;
+    }
+
+    const user = users.find(item => item.person_id === personID);
+    if (!user || user.protected_user) {
+        await appAlert("This account cannot be edited through ordinary User Management.", "Protected account", "warning");
+        return;
+    }
+
+    const { data: groups, error: groupError } = await supabaseClient
+        .from("age_groups")
+        .select("id, display_name, age_group, sort_order, active")
+        .eq("active", true)
+        .order("sort_order");
+
+    if (groupError || !Array.isArray(groups)) {
+        await appAlert("Unable to load age groups.", "Load failed", "danger");
+        return;
+    }
+
+    const roles = Array.isArray(user.roles) ? user.roles : [];
+    const assignedGroups = (user.age_group_ids || []).map(Number);
+
+    renderShell(`
+        <div class="card">
+            <button class="back-button" onclick="showUserManagement()">← User Management</button>
+            <h2>Manage Access</h2>
+            <h3>${escapeHTML(user.name)}</h3>
+            <p class="subtitle">Person ID: ${escapeHTML(user.person_id)}</p>
+
+            <div class="info-box">
+                <strong>Role assignments</strong>
+                <p>Users can hold both roles. Coach access requires at least one assigned age group. Existing shared PIN access is unchanged.</p>
+                <label style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+                    <input type="checkbox" id="accessRoleCoach" ${roles.includes("coach") ? "checked" : ""}>
+                    Coach
+                </label>
+                <label style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+                    <input type="checkbox" id="accessRoleAdmin" ${roles.includes("admin") ? "checked" : ""}>
+                    Admin
+                </label>
+            </div>
+
+            <div class="info-box" id="accessAgeGroupPanel">
+                <strong>Permitted age groups</strong>
+                <p>Select every age group this user is allowed to access.</p>
+                ${groups.map(group => `
+                    <label style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+                        <input type="checkbox" class="access-age-group" value="${Number(group.id)}" ${assignedGroups.includes(Number(group.id)) ? "checked" : ""}>
+                        ${escapeHTML(group.display_name || group.age_group)}
+                    </label>
+                `).join("")}
+            </div>
+
+            <div class="info-box">
+                <strong>System Admin</strong>
+                <p>${user.system_admin_authorised ? "This account has separate System Admin authorisation." : "This account does not have System Admin authorisation."} This setting is managed separately and cannot be changed here.</p>
+            </div>
+
+            <button class="primary-button" id="saveUserAccessButton" data-system-admin-authorised="${user.system_admin_authorised ? "true" : "false"}" onclick="saveUserAccessAssignments('${escapeHTML(user.person_id)}')">Save Access Assignments</button>
+            <button class="user-action-button user-action-neutral" onclick="showUserManagement()">Cancel</button>
+            <div id="userAccessMessage" class="info-box" style="display:none;"></div>
+        </div>
+    `);
+
+ }
+
+
+async function saveUserAccessAssignments(personID) {
+
+    const message = document.getElementById("userAccessMessage");
+    const saveButton = document.getElementById("saveUserAccessButton");
+    const roles = [];
+
+    if (document.getElementById("accessRoleCoach").checked) roles.push("coach");
+    if (document.getElementById("accessRoleAdmin").checked) roles.push("admin");
+
+    const ageGroupIDs = Array.from(
+        document.querySelectorAll(".access-age-group:checked")
+    ).map(input => Number(input.value));
+
+     if (roles.includes("coach") && ageGroupIDs.length === 0) {
+        message.style.display = "block";
+        message.textContent = "A Coach must have at least one age group assigned.";
+        return;
+    }
+
+     const confirmed = await appConfirm(
+        "Save these access assignments?\n\nThe selected roles and age groups will replace the current assignments. System Admin authorisation is not changed.",
+        "Confirm access changes",
+        "Save assignments"
+    );
+    if (!confirmed) return;
+
+    saveButton.disabled = true;
+    message.style.display = "block";
+    message.textContent = "Saving access assignments…";
+
+    const { data, error } = await supabaseClient.rpc(
+        "save_user_access_assignments",
+        {
+            current_senior_code: currentSeniorPIN,
+            supplied_installation_id: getInstallationID(),
+            requested_person_id: personID,
+            requested_role_keys: roles,
+            requested_age_group_ids: ageGroupIDs,
+            requested_system_admin_authorised: saveButton.dataset.systemAdminAuthorised === "true"
+        }
+    );
+
+    if (error || data !== true) {
+        console.error("Access assignment save failed:", error);
+        saveButton.disabled = false;
+        message.textContent = "Access assignments were not saved. Check your permissions and try again.";
+        return;
+    }
+
+    await appAlert("Access assignments have been saved and recorded in the audit log.", "Access updated", "success");
+    await showUserManagement();
 }
 
 

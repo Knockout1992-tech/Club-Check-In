@@ -98,6 +98,7 @@ const fs = require("node:fs");
   await page.waitForSelector("#pdmTimeline .pdm-timeline");
   assert.doesNotMatch(await page.locator("#pdmRequestDetail").innerText(), /Build data copy/);
   await page.evaluate(() => window.pdmDraftResponse());
+  assert.equal(await page.locator("#pdmCheckExport").count(), 1, "Portability responses must include a delivery confirmation");
   assert.doesNotMatch(await page.locator("#pdmResponseText").inputValue(), /\[Explain the specific reason|\[Explain any information retained/,
     "Generated response must not duplicate the decision rationale");
   assert.match(await page.locator("#pdmResponseReason").getAttribute("placeholder"), /what information remains held/i);

@@ -22,7 +22,11 @@ const fs = require("node:fs");
     if (name === "get_personal_data_subject_bundle") return { data: { success: true, subject_type: args.p_subject_type, player: { name: "Test Player" }, attendance: [], availability: [] }, error: null };
     if (name === "preview_personal_data_erasure") return { data: { success: true, request_ref: "PDM-TEST-003", records: { player_record: 1, attendance_records: 2 }, blockers: [], can_erase: true, retained_aggregate_note: "Aggregate history is retained." }, error: null };
     if (name === "execute_personal_data_erasure") return { data: { success: true, request_ref: "PDM-TEST-003", records_removed: 3, message: "Test erasure completed." }, error: null };
-    if (name === "search_personal_data_subjects") return { data: { success: true, parents: [], children: [] }, error: null };
+    if (name === "search_personal_data_subjects") return { data: { success: true, parents: [{ subject_reference: "42", parent_name: "Test Parent", linked_submissions: 1 }], children: [] }, error: null };
+    if (name === "create_personal_data_request") {
+      activeRequest = { id: 15, request_ref: "PDM-TEST-005", request_type: args.p_request_type, subject_type: args.p_subject_type, subject_name: args.p_subject_name, requester_name: args.p_requester_name, received_at: args.p_received_at, due_at: "2026-12-16T00:00:00Z", status: "in_review", identity_status: args.p_identity_status, authority_status: args.p_authority_status };
+      return { data: { success: true, id: 15, request_ref: "PDM-TEST-005", due_at: "2026-12-16T00:00:00Z" }, error: null };
+    }
     throw new Error("Unexpected RPC: " + name);
   });
   const pdmScript = fs.readFileSync(path.resolve(__dirname, "../js/personal-data-admin.js"), "utf8");
@@ -36,6 +40,16 @@ const fs = require("node:fs");
   assert.match(await page.locator(".pdm-filter").innerText(), /Open · 1/);
   assert.match(await page.locator(".pdm-filter").innerText(), /Closed · 1/);
   await page.screenshot({ path: "test-results/pdm-dashboard-mobile.png", fullPage: true });
+  await page.locator("#pdmSearchTerm").fill("Test");
+  await page.evaluate(() => window.pdmSearch());
+  await page.evaluate(() => window.pdmSelectSubject(0));
+  await page.locator("#pdmRequester").fill("Test Parent");
+  const receivedDate = await page.locator("#pdmReceived").inputValue();
+  assert.ok(receivedDate, "Received date should default to today");
+  await page.evaluate(() => window.pdmCreateRequest());
+  const createCall = calls.find(x => x.name === "create_personal_data_request");
+  assert.ok(createCall, "Request creation RPC should be called");
+  assert.ok(new Date(createCall.args.p_received_at).getTime() <= Date.now(), "A request received today must not be sent to the server as a future timestamp");
   await page.evaluate(() => window.pdmSetRequestFilter("closed"));
   assert.match(await page.locator(".pdm-page").innerText(), /PDM-TEST-002/);
   assert.doesNotMatch(await page.locator(".pdm-page").innerText(), /PDM-TEST-001/);
@@ -95,6 +109,7 @@ const fs = require("node:fs");
   const extensionSave = calls.filter(x => x.name === "update_personal_data_request").at(-1);
   assert.equal(extensionSave.args.p_extension_reason, "Complex request and multiple records require additional review.");
   assert.ok(extensionSave.args.p_extension_notified_at);
+  assert.ok(new Date(extensionSave.args.p_extension_notified_at).getTime() <= Date.now(), "An extension notified today must not be treated as a future timestamp");
 
   activeRequest = requests[0];
   await page.evaluate(() => window.pdmOpenRequest(11));

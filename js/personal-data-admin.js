@@ -120,13 +120,21 @@ async function pdmOpenRequest(id) {
     pdmBundle=null;pdmErasurePreview=null;
     renderPdmRequestDetail();
 }
+function pdmReturnToList() {
+    const host=document.querySelector(".pdm-page");
+    if(!host)return;
+    host.querySelector("#pdmRequestDetail")?.remove();
+    host.querySelectorAll(":scope > .pdm-section").forEach(section=>section.hidden=false);
+}
 function renderPdmRequestDetail() {
     if(!pdmReady()||!pdmCurrentRequest)return;
     const r=pdmCurrentRequest;
     const host=document.querySelector(".pdm-page");
     if(!host)return;
+    host.querySelectorAll(":scope > .pdm-section").forEach(section=>section.hidden=true);
     const panel=document.createElement("section");panel.id="pdmRequestDetail";panel.className="pdm-section";
-    panel.innerHTML='<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</h3>'+
+    panel.innerHTML='<button class="back-button" type="button" onclick="pdmReturnToList()">← Back to requests</button>'+
+      '<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</h3>'+
       '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDate(r.extended_due_at||r.due_at)+'</p>'+
       '<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button>'+
       (r.request_type==="erasure"?'<button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button>':'')+'</div>'+

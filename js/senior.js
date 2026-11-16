@@ -162,6 +162,17 @@ async function showUserManagement() {
         groupNames[Number(group.id)] = group.display_name || group.age_group;
     });
 
+    const activeUsersWithoutRole = users.filter(user =>
+        user.active && (!Array.isArray(user.roles) || user.roles.length === 0)
+    ).length;
+
+    const activeCoachesWithoutAgeGroup = users.filter(user =>
+        user.active &&
+        Array.isArray(user.roles) &&
+        user.roles.includes("coach") &&
+        (!Array.isArray(user.age_group_ids) || user.age_group_ids.length === 0)
+    ).length;
+
     const formatLastSeen = value => {
         if (!value) return "Not available";
         const date = new Date(value);
@@ -179,12 +190,14 @@ async function showUserManagement() {
             <div class="info-box">
                 <strong>Access assignment status</strong>
                 <p>Existing users retain their current PIN access while roles are assigned. A missing role is shown as Not assigned; it does not automatically grant access.</p>
+                <p><strong>Active users without a role:</strong> ${activeUsersWithoutRole}</p>
+                <p><strong>Active Coaches without an age group:</strong> ${activeCoachesWithoutAgeGroup}</p>
             </div>
 
             <button class="primary-button" onclick="showAddCoach()">+ Add Coach</button>
             <br><br>
 
-            ${users.map((user, index) => {
+            ${users.length === 0 ? '<div class="info-box">No approved users have been added yet.</div>' : users.map((user, index) => {
                 const device = installationSummary[user.person_id] || { activeCount: 0, lastSeen: null };
                 const roles = Array.isArray(user.roles) ? user.roles : [];
                 const groups = Array.isArray(user.age_group_ids) ? user.age_group_ids.map(Number) : [];

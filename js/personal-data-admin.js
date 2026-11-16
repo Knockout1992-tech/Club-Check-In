@@ -101,7 +101,12 @@ function pdmSelectSubject(index) {
 async function pdmCreateRequest() {
     if(!pdmReady()||!pdmSelectedSubject)return;
     const v=id=>document.getElementById(id)?.value||"";
-    const received=new Date(v("pdmReceived")+"T12:00:00").toISOString();
+    const receivedDate=v("pdmReceived");
+    const receivedLocal=new Date(receivedDate+"T00:00:00");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(receivedDate)||Number.isNaN(receivedLocal.getTime())||receivedDate>pdmTodayLocal()){
+      await appAlert("Enter a valid received date that is not in the future.","Date received","warning");return;
+    }
+    const received=receivedLocal.toISOString();
     const args={p_system_admin_pin:currentSystemAdminPIN,p_request_type:v("pdmType"),p_subject_type:pdmSelectedSubject.type,
       p_subject_reference:pdmSelectedSubject.ref,p_subject_name:pdmSelectedSubject.name,p_subject_locator:pdmSelectedSubject.locator,
       p_requester_name:v("pdmRequester"),p_requester_relationship:v("pdmRelationship"),p_contact_method:v("pdmContactMethod"),
@@ -393,8 +398,8 @@ async function pdmSaveExtension() {
     const reason=document.getElementById("pdmExtensionReason")?.value?.trim()||"";
     const notified=document.getElementById("pdmExtensionDate")?.value||"";
     if(reason.length<10||!notified){await appAlert("Enter the reason and date the requester was notified.","Extension details required","warning");return;}
-    const when=new Date(notified+"T12:00:00");
-    if(Number.isNaN(when.getTime())||when>new Date()){
+    const when=new Date(notified+"T00:00:00");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(notified)||Number.isNaN(when.getTime())||notified>pdmTodayLocal()){
       await appAlert("Enter a valid notification date that is not in the future. The server will check the statutory notification deadline.","Extension not recorded","warning");return;
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,

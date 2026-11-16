@@ -45,7 +45,7 @@ function showSystemAdminLogin() {
             <div class="subtitle">Enter the separate System Admin PIN to access retention and system controls.</div>
             <form onsubmit="event.preventDefault(); unlockSystemAdmin();">
                 <input id="systemAdminPinInput" class="pin-input" type="password"
-                    inputmode="numeric" maxlength="12" autocomplete="off" required
+                    inputmode="numeric" maxlength="4" autocomplete="off" required
                     placeholder="System Admin PIN">
                 <div id="systemAdminPinError" class="error"></div>
                 <button class="primary-button" type="submit">Unlock System Admin</button>
@@ -59,7 +59,7 @@ async function unlockSystemAdmin() {
     const errorBox = document.getElementById("systemAdminPinError");
     const pin = input?.value || "";
     errorBox.textContent = "";
-    if (!/^\d{4,12}$/.test(pin)) {
+    if (!/^\d{4}$/.test(pin)) {
         errorBox.textContent = "Enter your System Admin PIN.";
         return;
     }
@@ -92,9 +92,9 @@ function showSystemAdminChangePin(required = false) {
             <div class="subtitle">${required ? "Your temporary setup PIN must be changed before using System Admin controls." : "Choose a new private PIN for System Admin access."}</div>
             <form onsubmit="event.preventDefault(); saveSystemAdminPin();">
                 <input id="newSystemAdminPin" class="pin-input" type="password" inputmode="numeric"
-                    maxlength="12" minlength="8" autocomplete="new-password" placeholder="New 8–12 digit PIN" required>
+                    maxlength="4" minlength="4" autocomplete="new-password" placeholder="New 4-digit PIN" required>
                 <input id="confirmSystemAdminPin" class="pin-input" type="password" inputmode="numeric"
-                    maxlength="12" minlength="8" autocomplete="new-password" placeholder="Confirm 8–12 digit PIN" required>
+                    maxlength="4" minlength="4" autocomplete="new-password" placeholder="Confirm new PIN" required>
                 <div id="changeSystemAdminPinError" class="error"></div>
                 <button class="primary-button" type="submit">Save New PIN</button>
             </form>
@@ -107,7 +107,7 @@ async function saveSystemAdminPin() {
     const box = document.getElementById("changeSystemAdminPinError");
     box.textContent = "";
     if (next !== confirm) { box.textContent = "The PIN entries do not match."; return; }
-    if (!/^\d{8,12}$/.test(next)) { box.textContent = "Use 8 to 12 digits. Avoid obvious sequences or repeated digits."; return; }
+    if (!/^\d{4}$/.test(next)) { box.textContent = "Use exactly 4 digits."; return; }
     const { data, error } = await supabaseClient.rpc("change_system_admin_pin", {
         current_system_admin_pin: currentSystemAdminPIN,
         new_system_admin_pin: next

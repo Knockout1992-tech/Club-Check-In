@@ -315,8 +315,8 @@ async function pdmRecordSent() {
     if(pdmCurrentRequest.request_type==="erasure"&&!pdmCurrentRequest.erasure_executed_at&&outcome!=="refused"){
       await appAlert("Complete the deletion preview and authorised erasure first, or record a refusal with the reason, before sending an erasure response.","Erasure outcome required","warning");return;
     }
-    if((pdmCurrentRequest.identity_status!=="verified"||!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status))&&outcome!=="refused"){
-      await appAlert("Verify the requester’s identity and authority before issuing a response.","Verification required","warning");return;
+    if(pdmCurrentRequest.identity_status!=="verified"||!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)){
+      await appAlert("Verify the requester’s identity and, where applicable, their authority before issuing any final response. If verification is outstanding, record the case as awaiting information instead.","Verification required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
     const requiresAccessCopy=pdmCurrentRequest.request_type==="access"&&outcome!=="refused";
@@ -329,7 +329,7 @@ async function pdmRecordSent() {
       await appAlert("Complete the outcome, disclosure checks and any required access-copy confirmation before recording the response as sent.","Pre-send checks required","warning");return;
     }
     const {data,error}=await supabaseClient.rpc("update_personal_data_request",{p_system_admin_pin:currentSystemAdminPIN,p_request_id:pdmCurrentRequest.id,
-      p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status||"verified",p_authority_status:pdmCurrentRequest.authority_status||"not_applicable",
+      p_status:"completed",p_identity_status:pdmCurrentRequest.identity_status,p_authority_status:pdmCurrentRequest.authority_status,
       p_scope_notes:pdmCurrentRequest.scope_notes||null,p_extension_reason:pdmCurrentRequest.extension_reason||null,p_extension_notified_at:pdmCurrentRequest.extension_notified_at||null,
       p_decision:outcome,p_response_notes:responseText||pdmCurrentRequest.response_notes||null,
       p_sent_at:new Date().toISOString(),p_sent_via:method,p_completed_at:new Date().toISOString()});

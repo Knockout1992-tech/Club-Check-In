@@ -605,10 +605,10 @@ function getAuditRetentionHoldTarget(item) {
     ) {
         return {
             policyKey: "security_logs",
-            targetTable: "installation_access_attempts",
-            targetReference: String(item.actor_reference),
-            label: "Installation security log for " + String(item.actor_reference),
-            key: "installation_access_attempts|" + String(item.actor_reference)
+            targetTable: "system_admin_audit_log",
+            targetReference: String(item.id),
+            label: "Security audit event " + String(item.reference_number || ("SEC-" + String(item.id).padStart(8, "0"))),
+            key: "system_admin_audit_log|" + String(item.id)
         };
     }
 
@@ -649,7 +649,7 @@ async function openAuditRetentionHold(auditId) {
 
 async function submitAuditRetentionHold(auditId) {
     if (!requireSystemAdminSession()) return;
-    const item = systemAdminAuditEntries.find(entry => Number(entry.id) === Number(auditId));
+    const item = (systemAdminAuditAllEntries || systemAdminAuditEntries).find(entry => Number(entry.id) === Number(auditId));
     const targetInfo = getAuditRetentionHoldTarget(item);
     if (!item || !targetInfo) return;
 

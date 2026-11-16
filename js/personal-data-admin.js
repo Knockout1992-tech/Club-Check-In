@@ -154,12 +154,12 @@ function renderPdmRequestDetail() {
     panel.innerHTML='<button class="back-button" type="button" onclick="pdmReturnToList()">← Back to requests</button>'+
       '<h3>'+pdmEscape(r.request_ref)+' · '+pdmEscape(pdmTypeLabel(r.request_type))+'</h3>'+
       '<p>'+pdmEscape(r.subject_name)+' · '+pdmEscape(r.subject_type)+'<br>Received '+pdmDate(r.received_at)+' · Due '+pdmDeadlineLabel(r)+'</p>'+
-      '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Target response date</span><strong>'+pdmEscape(pdmDeadlineLabel(r))+'</strong></div></div>'+
+      '<div class="pdm-case-summary"><div><span>Current status</span><strong>'+pdmEscape(String(r.status||"received").replace(/_/g," "))+'</strong></div><div><span>Identity</span><strong>'+pdmEscape(String(r.identity_status||"unverified").replace(/_/g," "))+'</strong></div><div><span>Authority</span><strong>'+pdmEscape(String(r.authority_status||"not_applicable").replace(/_/g," "))+'</strong></div><div><span>Target response date</span><strong>'+pdmEscape(pdmDeadlineLabel(r))+'</strong></div></div>'+(r.decision_reason?'<div class="pdm-note"><strong>Decision reasons / explanation</strong><p>'+pdmEscape(r.decision_reason)+'</p></div>':'')+
       (isClosed?'<p class="pdm-note">This request is closed. Case actions are disabled; the recorded history remains available below.</p>':
         (["access","portability"].includes(r.request_type)?'<h4 class="pdm-action-heading">Request actions</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmLoadBundle()">Build data copy</button></div>':'')+
         (r.request_type==="erasure"?(r.erasure_executed_at?'<div class="pdm-note">Erasure executed '+pdmEscape(new Date(r.erasure_executed_at).toLocaleString("en-GB"))+'. Records removed: '+pdmEscape(r.erasure_records_removed??"Not recorded")+'. Prepare and send the response below.</div>':'<h4 class="pdm-action-heading">Erasure review</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmPreviewErasure()">Preview deletion</button></div>'):'')+
         '<div id="pdmBundleHost"></div><div id="pdmEraseHost"></div>'+
-        '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button><button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button></div>'+
+        '<h4 class="pdm-action-heading">Response and case management</h4><div class="pdm-actions"><button class="secondary-button" onclick="pdmDraftResponse()">Prepare response</button><button class="secondary-button" onclick="pdmUpdateStatus()">Update progress</button>'+(r.extension_notified_at?'':'<button class="secondary-button" onclick="pdmNotifyExtension()">Record extension notice</button>')+'</div>'+
         '<div id="pdmResponseHost"></div>')+
       '<h4 class="pdm-action-heading">Request history</h4><div id="pdmTimeline" aria-live="polite"><p class="subtitle">Loading request history…</p></div>';
     host.querySelector("#pdmRequestDetail")?.remove();host.appendChild(panel);
@@ -405,8 +405,9 @@ async function pdmSaveProgress() {
     if(error||data===null||!data.success){await appAlert(error?.message||data?.message||"Unable to update request.","Update failed","warning");return;}
     await showPersonalDataManagement();
 }
-function pdmNotifyExtension() {
+async function pdmNotifyExtension() {
     if(!pdmReady()||!pdmCurrentRequest)return;
+    if(pdmCurrentRequest.extension_notified_at){await appAlert("An extension has already been recorded for this request. It cannot be issued again.","Extension already recorded","warning");return;}
     const host=document.getElementById("pdmResponseHost");
     host.innerHTML='<div class="pdm-form"><p>A complex request or multiple requests may justify up to two additional months. The requester must be told, with reasons, within the first month.</p>'+
       '<label>Reason for extension<textarea id="pdmExtensionReason" rows="3" maxlength="2000" required></textarea></label>'+

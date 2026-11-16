@@ -74,91 +74,57 @@ function getNextSeason(season) {
    START NEW SEASON
    ========================================================= */
 
-async function performNewSeason(nextSeason) {
+async function performNewSeason(nextSeason, coachAssignments, expectedCurrentSeason) {
 
-    // The rollover date is fixed at 1 August of the season being started.
-    // The database independently enforces this date and Senior PIN validation.
     const startYear = Number(String(nextSeason).split("/")[0]);
     const startDate = startYear + "-08-01";
 
-    const { data, error } =
-        await supabaseClient.rpc(
-            "rollover_season_secure",
-            {
-                supplied_code: currentSeniorPIN,
-                new_season_name: nextSeason,
-                new_start_date: startDate
-            }
-        );
+    const { data, error } = await supabaseClient.rpc(
+        "rollover_season_with_coaches_secure",
+        {
+            supplied_code: currentSeniorPIN,
+            supplied_installation_id: getInstallationID(),
+            expected_current_season: expectedCurrentSeason,
+            new_season_name: nextSeason,
+            new_start_date: startDate,
+            coach_assignments: coachAssignments
+        }
+    );
 
     if (error) {
-
-        console.error(
-            "Supabase season rollover failed:",
-            error
-        );
-
+        console.error("Supabase season rollover failed:", error);
         await appAlert(
-            "Unable to start the new season.\n\n" +
+            "Unable to start the new season. No rollover changes have been committed.\n\n" +
             error.message,
             "Season rollover failed",
             "danger"
         );
-
         return false;
-
     }
 
     if (data !== true) {
-
         await appAlert(
-            "The new season could not be started.",
+            "The new season could not be started. No rollover changes have been committed.",
             "Season not started",
             "danger"
         );
-
         return false;
-
     }
 
-
-    /* -----------------------------------------------------
-       REFRESH PLAYERS
-       ----------------------------------------------------- */
-
-    const playersLoaded =
-        await loadPlayersFromSupabase();
+    const playersLoaded = await loadPlayersFromSupabase();
 
     if (!playersLoaded) {
-
         await appAlert(
-            "The new season was created, " +
-            "but the players could not be refreshed.\n\n" +
-            "Please refresh the app.",
+            "The new season was created successfully, but the player list could not be refreshed. Please refresh the app.",
             "Season created",
             "warning"
         );
-
         return false;
-
     }
 
-
-    /* -----------------------------------------------------
-       UPDATE CURRENT SEASON
-       ----------------------------------------------------- */
-
     currentSeason = nextSeason;
-
     saveData();
-
-
-    /* -----------------------------------------------------
-       RETURN TO SENIOR DASHBOARD
-       ----------------------------------------------------- */
-
+    window.seasonRolloverPreview = null;
     showSeniorDashboard();
-
     return true;
-
 }

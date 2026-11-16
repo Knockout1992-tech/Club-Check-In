@@ -2,8 +2,6 @@ name: PDM Browser Tests
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [pdm-ux-response-review]
 permissions:
   contents: read
 jobs:

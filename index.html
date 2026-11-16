@@ -3289,203 +3289,250 @@ async function seniorAddPlayer(
    NEW SEASON
    ========================================================= */
 
-function showNewSeason() {
+/* =========================================================
+   NEW SEASON
+   ========================================================= */
 
-    const nextSeason =
-        getNextSeason(
-            currentSeason
+async function showNewSeason() {
+
+    const previewResult = await supabaseClient.rpc(
+        "get_season_rollover_preview_secure",
+        {
+            supplied_code: currentSeniorPIN,
+            supplied_installation_id: getInstallationID()
+        }
+    );
+
+    if (previewResult.error || !previewResult.data) {
+        console.error("Unable to load season rollover preview:", previewResult.error);
+        await appAlert(
+            "Unable to load the current coach assignments for review. No changes have been made.",
+            "Unable to load rollover review",
+            "danger"
         );
+        return;
+    }
+
+    window.seasonRolloverPreview = previewResult.data;
+
+    const preview = window.seasonRolloverPreview;
+    const nextSeason = getNextSeason(preview.current_season || currentSeason);
+    const groups = Array.isArray(preview.age_groups) ? preview.age_groups : [];
+    const coaches = Array.isArray(preview.coaches) ? preview.coaches : [];
+
+    if (!preview.current_season || preview.current_season !== currentSeason) {
+        await appAlert(
+            "The current season shown by the app does not match Supabase. Refresh the app before starting a new season.",
+            "Season information changed",
+            "danger"
+        );
+        return;
+    }
+
+    const groupById = new Map(groups.map(group => [Number(group.id), group]));
+
+    const coachCards = coaches.map(coach => {
+        const currentIds = (coach.current_age_group_ids || []).map(Number);
+        const proposedIds = [];
+
+        currentIds.forEach(groupId => {
+            const currentGroup = groupById.get(groupId);
+            const nextGroup = currentGroup && groupById.get(Number(currentGroup.next_age_group_id));
+
+            // If the configured next group is inactive, keep the current assignment
+            // as the safe default and explicitly flag it for Senior review.
+            if (nextGroup) {
+                proposedIds.push(Number(nextGroup.id));
+            } else {
+                proposedIds.push(groupId);
+            }
+        });
+
+        const uniqueProposed = [...new Set(proposedIds)];
+        const currentNames = currentIds.map(id => {
+            const group = groupById.get(id);
+            return group ? group.name : "Unknown group";
+        });
+        const requiresReview = currentIds.some(id => {
+            const group = groupById.get(id);
+            return !group || !groupById.has(Number(group.next_age_group_id));
+        });
+
+        return {
+            ...coach,
+            currentIds,
+            proposedIds: uniqueProposed,
+            currentNames,
+            requiresReview
+        };
+    });
+
+    const playerProgression = ageGroups.map(ageGroup => {
+        const count = getActivePlayers(ageGroup).length;
+        if (!count) return "";
+
+        const next = getNextAgeGroup(ageGroup);
+        const nextGroup = ageGroupData.find(group => group.age_group === next);
+        const nextActive = Boolean(nextGroup && nextGroup.active);
+
+        return `
+            <div class="promotion-row ${next && !nextActive ? "warning-box" : ""}">
+                <span>
+                    ${escapeHTML(ageGroup)}
+                    →
+                    ${nextActive
+                        ? escapeHTML(next)
+                        : "Leaving Active Register"}
+                </span>
+                <strong>${count}</strong>
+            </div>
+        `;
+    }).join("");
+
+    const coachReview = coachCards.length
+        ? coachCards.map((coach, index) => `
+            <div class="list-row season-coach-card"
+                 data-person-id="${escapeHTML(coach.person_id)}">
+                <div class="list-title">${escapeHTML(coach.name)}</div>
+                <div class="list-sub">
+                    Current assignments: ${escapeHTML(coach.currentNames.join(", ") || "None")}
+                </div>
+                ${coach.requiresReview ? `
+                    <div class="info-box warning-box">
+                        One or more current groups have no active configured next group.
+                        The current assignment has been retained as the suggested option.
+                        Please review it below.
+                    </div>
+                ` : ""}
+                <div class="list-sub"><strong>New season assignments</strong></div>
+                <div class="age-grid">
+                    ${groups.map(group => `
+                        <label class="age-option">
+                            <input
+                                type="checkbox"
+                                class="season-coach-group"
+                                data-age-group-id="${Number(group.id)}"
+                                ${coach.proposedIds.includes(Number(group.id)) ? "checked" : ""}>
+                            ${escapeHTML(group.display_name || group.name)}
+                        </label>
+                    `).join("")}
+                </div>
+            </div>
+        `).join("")
+        : `<div class="info-box">There are no active coaches with the Coach role to review.</div>`;
 
     renderShell(`
-
         <div class="card">
+            <button class="back-button" onclick="showSeniorDashboard()">← Back</button>
 
-            <button
-                class="back-button"
-                onclick="showSeniorDashboard()">
-
-                ← Back
-
-            </button>
-
-            <h2>
-                New Season
-            </h2>
-
-            <div class="subtitle">
-
-                Review player progression before
-                starting the new season.
-
-            </div>
+            <h2>New Season</h2>
+            <div class="subtitle">Review player progression and coach assignments before starting the new season.</div>
 
             <div class="info-box warning-box">
-
-                <strong>Current season:</strong>
-
-                ${currentSeason}
-
+                <strong>Current season:</strong> ${escapeHTML(preview.current_season)}
                 <br><br>
-
-                <strong>New season:</strong>
-
-                ${nextSeason}
-
+                <strong>New season:</strong> ${escapeHTML(nextSeason)}
             </div>
 
-            <h3>
-                Player Progression
-            </h3>
-
-            ${
-                ageGroups
-                    .map(
-                        ageGroup => {
-
-                        const count =
-                            getActivePlayers(
-                                ageGroup
-                            ).length;
-
-                        if (count === 0) {
-                            return "";
-                        }
-
-                        const next =
-                            getNextAgeGroup(
-                                ageGroup
-                            );
-
-                        if (!next) {
-
-                            return `
-
-                                <div class="promotion-row">
-
-                                    <span>
-                                        ${ageGroup}
-                                        →
-                                        Leaving Active Register
-                                    </span>
-
-                                    <strong>${count}</strong>
-
-                                </div>
-
-                            `;
-
-                        }
-
-                        const nextGroup =
-                            ageGroupData.find(
-                                group =>
-                                    group.age_group === next
-                            );
-
-                        const nextActive =
-                            nextGroup &&
-                            nextGroup.active;
-
-                        return `
-
-                            <div class="
-                                promotion-row
-                                ${
-                                    !nextActive
-                                    ? "warning-box"
-                                    : ""
-                                }
-                            ">
-
-                                <span>
-
-                                    ${ageGroup}
-                                    →
-                                    ${
-                                        nextActive
-                                        ? next
-                                        : next +
-                                          " — Leaving Active Register"
-                                    }
-
-                                </span>
-
-                                <strong>${count}</strong>
-
-                            </div>
-
-                        `;
-
-                    }).join("")
-            }
-
-            <br>
+            <h3>Player Progression</h3>
+            ${playerProgression || '<div class="info-box">No active players require progression.</div>'}
 
             <div class="info-box danger-box">
-
-                <strong>Important</strong>
-
+                <strong>Player records and history are retained.</strong>
                 <br><br>
-
-                Players will move to their configured
-                next age group only where that age group
-                is currently active.
-
-                <br><br>
-
-                If the next age group is inactive, the
-                player will leave the active register.
-
-                <br><br>
-
-                Players are not deleted. Their player
-                record and history are retained.
-
+                Players move to their configured next age group only where that group is active.
+                Players without an active next group leave the active register; they are not deleted.
             </div>
 
-            <button
-                class="blue-button"
-                onclick="
-                    confirmNewSeason()
-                ">
+            <h3>Coach Assignments</h3>
+            <div class="subtitle">
+                Each current assignment is proposed to move to its configured next active age group.
+                Review each coach individually. Select or clear groups to set the final assignments.
+            </div>
 
-                Confirm New Season
+            ${coachReview}
 
+            <div class="info-box">
+                Coach roles and Admin roles are not changed. Each active Coach must finish with at least one active age-group assignment.
+                Duplicate destination groups are automatically combined.
+            </div>
+
+            <button class="blue-button" onclick="confirmNewSeason()">
+                Review and Confirm New Season
             </button>
-
         </div>
-
     `);
-
 }
 
 async function confirmNewSeason() {
 
-    const nextSeason =
-        getNextSeason(
-            currentSeason
+    const preview = window.seasonRolloverPreview;
+    if (!preview || preview.current_season !== currentSeason) {
+        await appAlert(
+            "The rollover review is no longer available. Please reopen New Season.",
+            "Review expired",
+            "warning"
         );
-
-    const confirmed =
-        await appConfirm(
-            "Start season " +
-            nextSeason +
-            "?\n\n" +
-            "Players will move to the next active age group.\n" +
-            "Those without one will leave the active register.\n\n" +
-            "Player records and history will be retained.",
-            "Start new season?",
-            "Start new season"
-        );
-
-    if (!confirmed) {
         return;
     }
 
-    performNewSeason(
-        nextSeason
+    const cards = [...document.querySelectorAll(".season-coach-card")];
+    const finalAssignments = [];
+
+    for (const card of cards) {
+        const personId = card.dataset.personId;
+        const selectedIds = [...card.querySelectorAll(".season-coach-group:checked")]
+            .map(input => Number(input.dataset.ageGroupId))
+            .filter(Number.isInteger)
+            .sort((a, b) => a - b);
+
+        if (!selectedIds.length) {
+            await appAlert(
+                "Every active coach must have at least one age group. Please review " +
+                (card.querySelector(".list-title")?.textContent || "the coach") + ".",
+                "Coach assignment required",
+                "warning"
+            );
+            return;
+        }
+
+        finalAssignments.push({
+            person_id: personId,
+            age_group_ids: [...new Set(selectedIds)]
+        });
+    }
+
+    const expected = (preview.coaches || [])
+        .map(coach => ({
+            person_id: coach.person_id,
+            age_group_ids: [...(coach.current_age_group_ids || [])].map(Number).sort((a, b) => a - b)
+        }))
+        .sort((a, b) => a.person_id.localeCompare(b.person_id));
+
+    finalAssignments.sort((a, b) => a.person_id.localeCompare(b.person_id));
+
+    const nextSeason = getNextSeason(preview.current_season);
+    const coachChanges = finalAssignments.filter(finalCoach => {
+        const oldCoach = expected.find(item => item.person_id === finalCoach.person_id);
+        return !oldCoach || JSON.stringify(oldCoach.age_group_ids) !== JSON.stringify(finalCoach.age_group_ids);
+    }).length;
+
+    const confirmed = await appConfirm(
+        "Start season " + nextSeason + "?\n\n" +
+        "Player progression will be applied.\n" +
+        "Coach assignments for " + finalAssignments.length + " active coach(es) will be saved, including " +
+        coachChanges + " changed assignment set(s).\n\n" +
+        "All changes are applied together. If validation fails, nothing will be changed.",
+        "Confirm new season",
+        "Start new season"
     );
 
+    if (!confirmed) return;
+
+    await performNewSeason(nextSeason, {
+        expected,
+        final: finalAssignments
+    }, preview.current_season);
 }
 
 /* =========================================================

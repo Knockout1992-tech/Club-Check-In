@@ -140,7 +140,7 @@ function renderPdmRequestDetail() {
 async function pdmLoadTimeline(requestRef) {
     const host=document.getElementById("pdmTimeline");
     if(!host||!pdmReady())return;
-    const {data,error}=await supabaseClient.rpc("get_system_admin_audit_log",{supplied_pin:currentSystemAdminPIN,requested_limit:200});
+    const {data,error}=await supabaseClient.rpc("get_system_admin_audit_log_page",{supplied_pin:currentSystemAdminPIN,requested_limit:201,before_occurred_at:null,before_id:null});
     if(error||!Array.isArray(data)){
       host.innerHTML='<p class="subtitle">Request history is temporarily unavailable. The underlying audit log is retained.</p>';
       return;

@@ -271,8 +271,9 @@ function pdmDraftResponse() {
     const suggested = r.decision && options.some(x=>x[0]===r.decision) ? r.decision : options[0][0];
     const host=document.getElementById("pdmResponseHost");
     host.innerHTML='<div class="pdm-form">'+
-      '<label>Response outcome<select id="pdmResponseOutcome" onchange="pdmBuildResponseText()">'+options.map(x=>'<option value="'+pdmEscape(x[0])+'">'+pdmEscape(x[1])+'</option>').join("")+'</select></label>'+
+      '<label>Response outcome<select id="pdmResponseOutcome">'+options.map(x=>'<option value="'+pdmEscape(x[0])+'">'+pdmEscape(x[1])+'</option>').join("")+'</select></label>'+
       '<label>Decision reasons / explanation<textarea id="pdmResponseReason" rows="3" maxlength="4000" placeholder="Record the specific facts, actions taken and reasons for the decision"></textarea></label>'+
+      '<button type="button" class="secondary-button" onclick="pdmBuildResponseText()">Refresh draft from outcome and reasons</button>'+
       '<label for="pdmResponseText">Editable response draft</label><textarea id="pdmResponseText" rows="18"></textarea>'+
       '<button class="secondary-button" onclick="pdmCopyResponse()">Copy response</button>'+
       '<label for="pdmSentMethod">Sent by</label><select id="pdmSentMethod"><option value="club_contact_route">Club official contact route</option><option value="email">Email</option><option value="letter">Letter</option><option value="phone">Phone</option></select>'+
@@ -287,14 +288,14 @@ function pdmDraftResponse() {
 }
 async function pdmRecordSent() {
     if(!pdmReady()||!pdmCurrentRequest)return;
-    if(pdmCurrentRequest.request_type==="erasure"&&!pdmCurrentRequest.erasure_executed_at&&pdmCurrentRequest.status!=="refused"){
+    const outcome=document.getElementById("pdmResponseOutcome")?.value||"";
+    if(pdmCurrentRequest.request_type==="erasure"&&!pdmCurrentRequest.erasure_executed_at&&outcome!=="refused"){
       await appAlert("Complete the deletion preview and authorised erasure first, or record a refusal with the reason, before sending an erasure response.","Erasure outcome required","warning");return;
     }
-    if(pdmCurrentRequest.identity_status!=="verified"||(!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status)&&pdmCurrentRequest.status!=="refused")){
+    if((pdmCurrentRequest.identity_status!=="verified"||!["verified","not_applicable"].includes(pdmCurrentRequest.authority_status))&&outcome!=="refused"){
       await appAlert("Verify the requester’s identity and authority before issuing a response.","Verification required","warning");return;
     }
     const method=document.getElementById("pdmSentMethod")?.value||"club_contact_route";
-    const outcome=document.getElementById("pdmResponseOutcome")?.value||"";
     const requiresAccessCopy=pdmCurrentRequest.request_type==="access"&&outcome!=="refused";
     const responseText=document.getElementById("pdmResponseText")?.value||"";
     if(/\[[^\]]+\]/.test(responseText)){

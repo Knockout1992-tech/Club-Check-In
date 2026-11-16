@@ -57,6 +57,7 @@ function renderPersonalDataManagement() {
     renderShell('<div class="card retention-admin pdm-page">'+
       '<button class="back-button" onclick="showRetentionAdmin()">← System Admin</button>'+
       '<h2>Personal Data Management</h2><div class="subtitle">Manage data protection requests across Club Check-In and the Parent Portal.</div>'+
+      '<p class="pdm-note"><strong>Policy approval outstanding:</strong> The club privacy notice is still awaiting committee approval. Treat all policy details in response drafts as unapproved until the committee confirms them.</p>'+
       '<div class="info-box"><strong>Handle every request carefully.</strong><br>Verify identity and parental/representative authority, record the original receipt date, check applicable exceptions and retention holds, and respond within the applicable deadline. Do not store copies of identity documents here; record the verification outcome only. The club must approve a retention period for request case records.</div>'+
       '<section class="pdm-section"><h3>Find a parent or child</h3><div class="pdm-search"><input id="pdmSearchTerm" type="search" aria-label="Search parents or children" placeholder="Enter at least 2 characters"><button class="primary-button" onclick="pdmSearch()">Search</button></div><div id="pdmSearchResults"></div></section>'+
       '<section class="pdm-section"><div class="pdm-list-heading"><h3>Requests</h3><button class="secondary-button small-button" onclick="showPersonalDataManagement()">Refresh</button></div>'+
@@ -322,7 +323,7 @@ function pdmDraftResponse() {
       (r.request_type==="access"?'<label class="pdm-check-row"><input type="checkbox" id="pdmCheckExport"><span>I have securely supplied the relevant data copy where the outcome requires disclosure.</span></label>':'')+
       '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckThirdParty"><span>I have checked and redacted information about other people where required.</span></label>'+
       '<label class="pdm-check-row"><input type="checkbox" id="pdmCheckAccuracy"><span>I have verified every factual statement against the club’s approved policies and actual records. No unverified legal basis, retention period or supplier claim remains.</span></label>'+
-      '<p class="pdm-note">This is a draft, not a legal determination. Replace every square-bracket instruction, verify the facts and approve the wording before sending.</p>'+
+      '<p class="pdm-note">This is a draft, not a legal determination. Replace every square-bracket instruction and verify the facts. The club privacy notice is still awaiting committee approval; do not present its contents as approved club policy.</p>'+
       '<button class="primary-button" onclick="pdmRecordSent()">Record as sent</button></div>';
     document.getElementById("pdmResponseOutcome").value=suggested;
     document.getElementById("pdmResponseReason").value=r.response_notes||"";

@@ -146,15 +146,16 @@ async function pdmLoadTimeline(requestRef) {
       return;
     }
     const events=data.filter(x=>x.request_id===requestRef);
+    const olderEventsMayExist=data.length===201;
     if(!events.length){
-      host.innerHTML='<p class="subtitle">No request-specific history events were returned.</p>';
+      host.innerHTML='<p class="subtitle">'+(olderEventsMayExist?'No matching event was found in the latest 200 audit entries; older events may exist.':'No request-specific history events were returned.')+'</p>';
       return;
     }
     host.innerHTML='<ol class="pdm-timeline">'+events.map(x=>{
       const eventLabel=String(x.event_type||"event").replace(/^personal_data_/,"").replace(/_/g," ");
       const outcome=String(x.outcome||"recorded").replace(/_/g," ");
       return '<li><div class="pdm-timeline-event"><strong>'+pdmEscape(eventLabel)+'</strong><span class="pdm-timeline-outcome">'+pdmEscape(outcome)+'</span></div><div class="subtitle">'+pdmEscape(pdmDate(x.occurred_at))+' · '+pdmEscape(new Date(x.occurred_at).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}))+' · '+pdmEscape(x.actor_type||"system")+'</div></li>';
-    }).join("")+'</ol>';
+    }).join("")+'</ol>'+(olderEventsMayExist?'<p class="subtitle">Showing matching events from the latest 200 audit entries. Earlier events may exist in the full audit log.</p>':'');
 }
 async function pdmLoadBundle() {
     if(!pdmReady()||!pdmCurrentRequest)return;

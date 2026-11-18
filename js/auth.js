@@ -366,7 +366,7 @@ function showAppSessionTimeoutWarning() {
     const modal = document.createElement("div");
     modal.id = "appSessionTimeoutModal";
     modal.className = "session-timeout-overlay";
-    modal.innerHTML = \`
+    modal.innerHTML = `
         <div class="session-timeout-dialog" role="dialog" aria-modal="true" aria-labelledby="sessionTimeoutTitle">
             <h2 id="sessionTimeoutTitle">Still using Club Check-In?</h2>
             <p>You will be logged out in 2 minutes due to inactivity.</p>
@@ -375,7 +375,7 @@ function showAppSessionTimeoutWarning() {
                 <button type="button" class="secondary-button" onclick="logout()">Log out</button>
             </div>
         </div>
-    \`;
+    `;
     document.body.appendChild(modal);
     modal.querySelector("button")?.focus();
 }

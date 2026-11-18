@@ -100,7 +100,11 @@ function goHome() {
 
 // Logout ==========================================
 
-function logout() {
+async function logout() {
+
+    if (typeof revokePersonalSession === "function") {
+        await revokePersonalSession();
+    }
 
     currentRole = null;
 

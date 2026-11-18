@@ -253,16 +253,9 @@ async function lookupPersonalLoginName() {
         try {
             const status = await callPasskeyService("status");
             if (status.available) {
-                const usePasskey = await appConfirm(
-                    "Would you like to sign in using fingerprint on this device?",
-                    "Fingerprint sign-in",
-                    "Use fingerprint"
-                );
-                if (usePasskey) {
-                    const signedIn = await signInWithPasskey();
-                    if (signedIn) return;
-                    renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");
-                }
+                const signedIn = await signInWithPasskey();
+                if (signedIn) return;
+                renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");
             }
         } catch (passkeyError) {
             console.warn("Passkey availability check failed:", passkeyError);

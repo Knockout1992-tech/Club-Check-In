@@ -621,7 +621,8 @@ async function setUserActive(personID, active) {
         {
             current_senior_code: currentSeniorPIN,
             requested_person_id: personID,
-            requested_active: active
+            requested_active: active,
+            supplied_installation_id: getInstallationID()
         }
     );
 
@@ -669,7 +670,8 @@ async function resetUserInstallation(personID) {
         "reset_installation",
         {
             current_senior_code: currentSeniorPIN,
-            requested_person_id: personID
+            requested_person_id: personID,
+            supplied_installation_id: getInstallationID()
         }
     );
 

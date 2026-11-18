@@ -1481,3 +1481,11 @@ h2 {
     width: 100%;
     margin-top: 12px;
 }
+
+
+/* Keep PIN digit spacing out of ordinary text-entry controls */
+input:not([type="password"]):not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+    letter-spacing: normal;
+}

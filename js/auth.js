@@ -10,6 +10,7 @@ let currentAllowedAgeGroupIDs = [];
 let currentAuthSessionToken = null;
 
 async function showWelcome() {
+    stopAppSessionTimeout();
     currentAccessPIN = null;
     currentSeniorPIN = null;
     currentRole = null;
@@ -189,6 +190,7 @@ async function submitPersonalLogin() {
     currentUserRoles = Array.isArray(data.roles) ? data.roles : [];
     currentAllowedAgeGroupIDs = Array.isArray(data.age_group_ids) ? data.age_group_ids.map(Number) : [];
     currentAuthSessionToken = data.session_token;
+    startAppSessionTimeout();
     currentAccessPIN = data.session_token;
     currentSeniorPIN = currentUserRoles.includes("admin") ? data.session_token : null;
     currentRole = currentUserRoles.includes("coach") ? "coach" : "senior";
@@ -296,4 +298,91 @@ function showCoachAreaFromAdmin() {
         currentAgeGroup = null;
         showCoachAgeGroups();
     }
+}
+
+
+/* =====================================================
+   SESSION TIMEOUT
+   10 minutes inactivity, 2-minute warning, 2-hour maximum
+   ===================================================== */
+const APP_IDLE_LIMIT_MS = 10 * 60 * 1000;
+const APP_IDLE_WARNING_MS = 2 * 60 * 1000;
+const APP_ABSOLUTE_LIMIT_MS = 2 * 60 * 60 * 1000;
+let appSessionStartedAt = 0;
+let appLastActivityAt = 0;
+let appSessionTimeoutInterval = null;
+let appSessionWarningVisible = false;
+
+function startAppSessionTimeout() {
+    stopAppSessionTimeout();
+    appSessionStartedAt = Date.now();
+    appLastActivityAt = appSessionStartedAt;
+    appSessionWarningVisible = false;
+    ["pointerdown", "keydown", "touchstart", "scroll"].forEach(eventName => {
+        document.addEventListener(eventName, recordAppSessionActivity, { passive: true });
+    });
+    appSessionTimeoutInterval = setInterval(checkAppSessionTimeout, 1000);
+}
+
+function stopAppSessionTimeout() {
+    if (appSessionTimeoutInterval !== null) {
+        clearInterval(appSessionTimeoutInterval);
+        appSessionTimeoutInterval = null;
+    }
+    ["pointerdown", "keydown", "touchstart", "scroll"].forEach(eventName => {
+        document.removeEventListener(eventName, recordAppSessionActivity);
+    });
+    document.getElementById("appSessionTimeoutModal")?.remove();
+    appSessionWarningVisible = false;
+    appSessionStartedAt = 0;
+    appLastActivityAt = 0;
+}
+
+function recordAppSessionActivity() {
+    if (!appSessionStartedAt || appSessionWarningVisible) return;
+    appLastActivityAt = Date.now();
+}
+
+function checkAppSessionTimeout() {
+    if (!appSessionStartedAt) return;
+    const now = Date.now();
+    if (now - appSessionStartedAt >= APP_ABSOLUTE_LIMIT_MS) {
+        logout();
+        return;
+    }
+    const idleTime = now - appLastActivityAt;
+    if (idleTime >= APP_IDLE_LIMIT_MS) {
+        logout();
+        return;
+    }
+    if (idleTime >= APP_IDLE_LIMIT_MS - APP_IDLE_WARNING_MS && !appSessionWarningVisible) {
+        showAppSessionTimeoutWarning();
+    }
+}
+
+function showAppSessionTimeoutWarning() {
+    if (appSessionWarningVisible) return;
+    appSessionWarningVisible = true;
+    const modal = document.createElement("div");
+    modal.id = "appSessionTimeoutModal";
+    modal.className = "session-timeout-overlay";
+    modal.innerHTML = \`
+        <div class="session-timeout-dialog" role="dialog" aria-modal="true" aria-labelledby="sessionTimeoutTitle">
+            <h2 id="sessionTimeoutTitle">Still using Club Check-In?</h2>
+            <p>You will be logged out in 2 minutes due to inactivity.</p>
+            <div class="session-timeout-actions">
+                <button type="button" class="primary-button" onclick="continueAppSession()">Stay signed in</button>
+                <button type="button" class="secondary-button" onclick="logout()">Log out</button>
+            </div>
+        </div>
+    \`;
+    document.body.appendChild(modal);
+    modal.querySelector("button")?.focus();
+}
+
+function continueAppSession() {
+    if (!appSessionStartedAt) return;
+    appLastActivityAt = Date.now();
+    appSessionWarningVisible = false;
+    document.getElementById("appSessionTimeoutModal")?.remove();
 }

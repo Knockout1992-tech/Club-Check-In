@@ -4231,26 +4231,3 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
-
-
-function showAdminDashboardFromCoach() {
-    if (!currentUserRoles.includes("admin") || !currentAuthSessionToken) return;
-    currentRole = "senior";
-    currentSeniorPIN = currentAuthSessionToken;
-    showSeniorDashboard();
-}
-
-function showCoachAreaFromAdmin() {
-    if (!currentUserRoles.includes("coach") || !currentAuthSessionToken) return;
-    currentRole = "coach";
-    currentAccessPIN = currentAuthSessionToken;
-    const assigned = getAssignedCoachAgeGroups();
-    selectedAgeGroups = assigned.length === 1 ? [...assigned] : [];
-    if (assigned.length === 1) {
-        currentAgeGroup = assigned[0];
-        showCoachDashboard();
-    } else {
-        currentAgeGroup = null;
-        showCoachAgeGroups();
-    }
-}

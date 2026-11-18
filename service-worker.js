@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "club-check-in-v1112";
+const CACHE_NAME = "club-check-in-v1113";
 
 const APP_SHELL = [
     "./",

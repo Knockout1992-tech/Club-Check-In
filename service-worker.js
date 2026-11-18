@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "club-check-in-v1125-passkey-single-request";
+const CACHE_NAME = "club-check-in-v1126-parent-link-clipboard-fix";
 
 const APP_SHELL = [
     "./",

@@ -192,8 +192,8 @@ async function offerPasskeyRegistration() {
         if (status.available) return;
 
         const register = await appConfirm(
-            "Would you like to set up fingerprint sign-in on this device? Your device may use fingerprint, face recognition or its screen lock. Your biometric data is never shared with the club.",
-            "Set up fingerprint sign-in",
+            "Would you like to set up biometric sign-in on this device? Your device may use fingerprint, face recognition or its screen lock. Your biometric data is never shared with the club.",
+            "Set up biometric sign-in",
             "Set up"
         );
         if (!register) return;
@@ -212,7 +212,7 @@ async function offerPasskeyRegistration() {
         });
 
         await appAlert(
-            "Fingerprint sign-in has been set up on this device. You can still use your personal PIN whenever you prefer.",
+            "Biometric sign-in has been set up on this device. You can still use your personal PIN whenever you prefer.",
             "Passkey registered",
             "success"
         );
@@ -251,7 +251,7 @@ async function lookupPersonalLoginName() {
         if (!personalLoginAccount.protected_user && !personalLoginAccount.pin_setup_required && result.available) {
             const signedIn = await signInWithPasskey(result.options);
             if (signedIn) return;
-            renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");
+            renderPersonalLogin("Biometric sign-in was not completed. Please use your personal PIN instead.");
         }
     } catch (error) {
         console.warn("Passkey-first account lookup failed; falling back to PIN login:", error);
@@ -278,7 +278,7 @@ async function lookupPersonalLoginName() {
             };
 
             renderPersonalLogin(
-                "Fingerprint sign-in is temporarily unavailable. Please continue with your PIN."
+                "Biometric sign-in is temporarily unavailable. Please continue with your PIN."
             );
         } catch (fallbackError) {
             console.error("PIN account lookup failed:", fallbackError);

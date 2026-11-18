@@ -2,8 +2,7 @@
 // PERSONAL USER LOGIN
 // =====================================================
 
-let personalLoginUsers = [];
-let selectedPersonalUserID = null;
+let personalLoginAccount = null;
 let currentPersonID = null;
 let currentUserName = null;
 let currentUserRoles = [];
@@ -21,38 +20,15 @@ async function showWelcome() {
     currentAuthSessionToken = null;
     currentAgeGroup = null;
     selectedAgeGroups = [];
-    selectedPersonalUserID = null;
+    personalLoginAccount = null;
 
-    const { data, error } = await supabaseClient.rpc(
-        "get_personal_pin_login_users"
-    );
-
-    if (error || !Array.isArray(data)) {
-        console.error("Personal login user list failed:", error);
-        document.getElementById("app").innerHTML = `
-            <div class="welcome"><div class="welcome-card">
-                <img src="RHRFC.jpg" class="welcome-logo" alt="Rushden & Higham RUFC">
-                <div class="welcome-title">CLUB CHECK-IN</div>
-                <div class="welcome-club">Rushden &amp; Higham RUFC</div>
-                <div class="error">Unable to load approved users. Please check your connection.</div>
-                <button class="role-button" onclick="showWelcome()">Try Again</button>
-                <button class="secondary-button" style="width:100%;margin-top:10px" onclick="showPIN('coach')">Existing shared PIN login</button>
-            </div></div>`;
-        return;
-    }
-
-    personalLoginUsers = data;
     renderPersonalLogin();
 }
 
 function renderPersonalLogin(message = "") {
-    const options = personalLoginUsers.map(user => `
-        <option value="${escapeHTML(user.person_id)}" ${selectedPersonalUserID === user.person_id ? "selected" : ""}>
-            ${escapeHTML(user.display_name)}
-        </option>`).join("");
-
-    const selected = personalLoginUsers.find(user => user.person_id === selectedPersonalUserID);
-    const setup = !!selected?.pin_setup_required;
+    const account = personalLoginAccount;
+    const setup = !!account?.pin_setup_required;
+    const isSystemAdmin = account?.protected_user === true;
 
     document.getElementById("app").innerHTML = `
         <div class="welcome">
@@ -61,52 +37,95 @@ function renderPersonalLogin(message = "") {
                 <div class="welcome-title">CLUB CHECK-IN</div>
                 <div class="welcome-club">Rushden &amp; Higham RUFC</div>
 
-                <form onsubmit="event.preventDefault(); submitPersonalLogin();">
-                    <label for="personalUserSelect" style="display:block;text-align:left;font-weight:700;margin:0 0 7px">Your name</label>
-                    <select id="personalUserSelect" class="personal-user-select" onchange="selectPersonalLoginUser(this.value)">
-                        <option value="">Select your name</option>
-                        ${options}
-                    </select>
-
-                    ${selected ? (setup ? `
-                        <p class="subtitle" style="margin:8px 0 14px">First-time setup: enter the existing shared Coach PIN, then choose your personal PIN.</p>
-                        <input id="setupSharedPin" class="pin-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="Shared Coach PIN" required>
-                        <input id="setupNewPin" class="pin-input" type="password" inputmode="numeric" maxlength="12" autocomplete="new-password" placeholder="New personal PIN" required>
-                        <input id="setupConfirmPin" class="pin-input" type="password" inputmode="numeric" maxlength="12" autocomplete="new-password" placeholder="Confirm personal PIN" required>
-                    ` : `
-                        <input id="personalPin" class="pin-input" type="password" inputmode="numeric" maxlength="12" autocomplete="current-password" placeholder="Personal PIN" required>
-                    `) : ""}
-                    <div id="personalLoginError" class="error">${escapeHTML(message)}</div>
-                    <button class="primary-button" type="submit" ${selected ? "" : "disabled"}>
-                        ${setup ? "Set Up Personal PIN" : "Sign In"}
-                    </button>
-                </form>
-
-                <button class="secondary-button personal-login-secondary" onclick="showPIN('coach')">
-                    Existing shared PIN login
-                </button>
+                ${!account ? `
+                    <form onsubmit="event.preventDefault(); lookupPersonalLoginName();">
+                        <label for="personalNameInput" style="display:block;text-align:left;font-weight:700;margin:0 0 7px">Your name</label>
+                        <input id="personalNameInput" class="pin-input" type="text" maxlength="100"
+                            autocomplete="name" placeholder="Enter your name" required>
+                        <div id="personalLoginError" class="error">${escapeHTML(message)}</div>
+                        <button class="primary-button" type="submit">Continue</button>
+                    </form>
+                ` : isSystemAdmin ? `
+                    <p class="subtitle" style="margin:12px 0">System Admin</p>
+                    <p class="subtitle">Continue using the existing Admin PIN.</p>
+                    <button class="primary-button" onclick="continueSystemAdminLogin()">Continue to Admin PIN</button>
+                    <button class="secondary-button personal-login-secondary" onclick="resetPersonalLoginName()">Use a different name</button>
+                ` : `
+                    <p class="subtitle" style="margin:8px 0 14px">Signing in as <strong>${escapeHTML(account.display_name)}</strong></p>
+                    <form onsubmit="event.preventDefault(); submitPersonalLogin();">
+                        ${setup ? `
+                            <p class="subtitle" style="margin:8px 0 14px">First-time setup: enter the existing shared Coach PIN, then choose your personal PIN.</p>
+                            <input id="setupSharedPin" class="pin-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="Shared Coach PIN" required>
+                            <input id="setupNewPin" class="pin-input" type="password" inputmode="numeric" maxlength="12" autocomplete="new-password" placeholder="New personal PIN" required>
+                            <input id="setupConfirmPin" class="pin-input" type="password" inputmode="numeric" maxlength="12" autocomplete="new-password" placeholder="Confirm personal PIN" required>
+                        ` : `
+                            <input id="personalPin" class="pin-input" type="password" inputmode="numeric" maxlength="12" autocomplete="current-password" placeholder="Personal PIN" required>
+                        `}
+                        <div id="personalLoginError" class="error">${escapeHTML(message)}</div>
+                        <button class="primary-button" type="submit">${setup ? "Set Up Personal PIN" : "Sign In"}</button>
+                    </form>
+                    <button class="secondary-button personal-login-secondary" onclick="resetPersonalLoginName()">Use a different name</button>
+                `}
                 ${getInstallButtonHTML()}
                 <a class="policy-link" href="https://rhrfc-mini.pages.dev/policies/" target="_blank" rel="noopener noreferrer">Privacy &amp; Data Protection</a>
                 <div class="welcome-version">${APP_VERSION}</div>
             </div>
         </div>`;
 
-    if (selected) {
-        const target = document.getElementById(setup ? "setupSharedPin" : "personalPin");
-        target?.focus();
-    }
+    document.getElementById(account && !isSystemAdmin
+        ? (setup ? "setupSharedPin" : "personalPin")
+        : "personalNameInput")?.focus();
 }
 
-function selectPersonalLoginUser(personID) {
-    selectedPersonalUserID = personID || null;
+async function lookupPersonalLoginName() {
+    const name = document.getElementById("personalNameInput")?.value.trim() || "";
+    const errorBox = document.getElementById("personalLoginError");
+
+    if (!name) {
+        errorBox.textContent = "Please enter your name.";
+        return;
+    }
+
+    errorBox.textContent = "Checking account…";
+    const { data, error } = await supabaseClient.rpc("get_personal_pin_login_status", {
+        supplied_name: name
+    });
+
+    if (error || !data?.success) {
+        console.error("Personal login name lookup failed:", error || data);
+        errorBox.textContent = data?.message || "Unable to check the account. Please try again.";
+        return;
+    }
+
+    personalLoginAccount = {
+        person_id: data.person_id,
+        display_name: data.display_name,
+        pin_setup_required: data.pin_setup_required === true,
+        protected_user: data.protected_user === true
+    };
+
     renderPersonalLogin();
+}
+
+function resetPersonalLoginName() {
+    personalLoginAccount = null;
+    renderPersonalLogin();
+}
+
+function continueSystemAdminLogin() {
+    if (!personalLoginAccount?.protected_user || personalLoginAccount.person_id !== "MAIN-001") {
+        renderPersonalLogin("Invalid System Admin account.");
+        return;
+    }
+    showPIN("senior");
 }
 
 async function submitPersonalLogin() {
     const errorBox = document.getElementById("personalLoginError");
-    const user = personalLoginUsers.find(item => item.person_id === selectedPersonalUserID);
-    if (!user) {
-        errorBox.textContent = "Please select your name.";
+    const user = personalLoginAccount;
+
+    if (!user || user.protected_user) {
+        errorBox.textContent = "Please enter your name again.";
         return;
     }
 
@@ -122,7 +141,7 @@ async function submitPersonalLogin() {
             errorBox.textContent = "Complete all PIN fields.";
             return;
         }
-        if (!/^\d{6,12}$/.test(newPin)) {
+        if (!/^\\d{6,12}$/.test(newPin)) {
             errorBox.textContent = "Your personal PIN must be 6–12 digits.";
             return;
         }
@@ -227,7 +246,6 @@ function clearPersonalSession() {
     currentAgeGroup = null;
     selectedAgeGroups = [];
 }
-
 
 async function revokePersonalSession() {
     if (!currentAuthSessionToken) return;

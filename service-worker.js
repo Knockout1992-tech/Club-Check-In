@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "club-check-in-v1125-coachnav-backlogin";
+const CACHE_NAME = "club-check-in-v1125-coachnav-backlogin-session10m2h";
 
 const APP_SHELL = [
     "./",

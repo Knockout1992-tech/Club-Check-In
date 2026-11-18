@@ -290,7 +290,7 @@ async function showCoachDashboard() {
         ? selectedAgeGroups
         : [currentAgeGroup];
 
-    // Back always returns to the login screen and ends the current session.
+    // Back returns the signed-in coach to their assigned age-group selection.
     const showAdminDashboardButton =
         currentPersonID && currentUserRoles.includes("admin");
 
@@ -400,7 +400,7 @@ async function showCoachDashboard() {
         <div class="card coach-dashboard-card">
 
             <div class="coach-dashboard-top-actions">
-                <button class="back-button" onclick="logout()">← Back</button>
+                <button class="back-button" onclick="showCoachAgeGroups()">← Back</button>
                 ${showAdminDashboardButton ? `
                     <button class="coach-dashboard-admin-button" onclick="showAdminDashboardFromCoach()">Admin Dashboard</button>
                 ` : ""}

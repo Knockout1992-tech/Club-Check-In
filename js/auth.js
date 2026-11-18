@@ -247,7 +247,7 @@ async function lookupPersonalLoginName() {
 
         renderPersonalLogin();
 
-        if (!personalLoginAccount.protected_user && !personalLoginAccount.pin_setup_required) {
+        if (!personalLoginAccount.protected_user && !personalLoginAccount.pin_setup_required && result.available) {
             const signedIn = await signInWithPasskey(result.options);
             if (signedIn) return;
             renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");

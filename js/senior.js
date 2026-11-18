@@ -1443,7 +1443,7 @@ async function copyTextToClipboard(value) {
     // Use the modern clipboard API when the browser permits it.
     if (navigator.clipboard && window.isSecureContext) {
         try {
-            await copyTextToClipboard(text);
+            await navigator.clipboard.writeText(text);
             return;
         } catch (error) {
             console.warn("Clipboard API unavailable; trying compatibility fallback.", error);

@@ -418,11 +418,6 @@ async function showCoachDashboard() {
                 Coach Dashboard
 
             </div>
-            ${currentPersonID && currentUserRoles.includes("admin") ? `
-                <button class="secondary-button" style="width:100%;margin-bottom:14px" onclick="showAdminDashboardFromCoach()">Admin Dashboard</button>
-            ` : ""}
-
-
             <div class="stats coach-dashboard-stats">
 
                 <div class="stat">
@@ -473,6 +468,14 @@ async function showCoachDashboard() {
 </button>
 
             </div>
+
+            ${currentPersonID && currentUserRoles.includes("admin") ? `
+                <div class="system-admin-footer">
+                    <button class="system-admin-small-button" onclick="showAdminDashboardFromCoach()">
+                        Admin Dashboard
+                    </button>
+                </div>
+            ` : ""}
 
         </div>
 

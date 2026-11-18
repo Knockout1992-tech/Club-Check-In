@@ -290,6 +290,15 @@ async function showCoachDashboard() {
         ? selectedAgeGroups
         : [currentAgeGroup];
 
+    // A single assigned age group has no age-group selection screen to return to.
+    const assignedCoachGroups = currentPersonID
+        ? getAssignedCoachAgeGroups()
+        : [];
+    const showAgeGroupBackButton =
+        !currentPersonID || assignedCoachGroups.length > 1;
+    const showAdminDashboardButton =
+        currentPersonID && currentUserRoles.includes("admin");
+
     if (
         currentRole !== "coach" ||
         !currentAccessPIN
@@ -395,11 +404,16 @@ async function showCoachDashboard() {
 
         <div class="card coach-dashboard-card">
 
-            <button
-                class="back-button"
-                onclick="showCoachAgeGroups()">
-                ← Age Groups
-            </button>
+            ${(showAgeGroupBackButton || showAdminDashboardButton) ? `
+                <div class="coach-dashboard-top-actions">
+                    ${showAgeGroupBackButton ? `
+                        <button class="back-button" onclick="showCoachAgeGroups()">← Age Groups</button>
+                    ` : "<span></span>"}
+                    ${showAdminDashboardButton ? `
+                        <button class="coach-dashboard-admin-button" onclick="showAdminDashboardFromCoach()">Admin Dashboard</button>
+                    ` : ""}
+                </div>
+            ` : ""}
 
             <h2 class="coach-dashboard-title">
                 ${
@@ -468,14 +482,6 @@ async function showCoachDashboard() {
 </button>
 
             </div>
-
-            ${currentPersonID && currentUserRoles.includes("admin") ? `
-                <div class="system-admin-footer">
-                    <button class="system-admin-small-button" onclick="showAdminDashboardFromCoach()">
-                        Admin Dashboard
-                    </button>
-                </div>
-            ` : ""}
 
         </div>
 

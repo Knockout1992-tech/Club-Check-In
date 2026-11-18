@@ -1513,3 +1513,30 @@ select {
     font-size: 13px;
     font-weight: 600;
 }
+
+
+/* Session inactivity warning */
+.session-timeout-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.68);
+}
+.session-timeout-dialog {
+    width: 100%;
+    max-width: 420px;
+    padding: 26px;
+    border-radius: 16px;
+    background: #fff;
+    color: #111;
+    box-shadow: 0 12px 40px rgba(0,0,0,.28);
+    text-align: center;
+}
+.session-timeout-dialog h2 { margin: 0 0 12px; color: #111; }
+.session-timeout-dialog p { margin: 0 0 22px; color: #555; line-height: 1.5; }
+.session-timeout-actions { display: flex; flex-direction: column; gap: 10px; }
+.session-timeout-actions button { width: 100%; }

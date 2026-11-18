@@ -212,13 +212,9 @@ async function offerPasskeyRegistration() {
             "success"
         );
     } catch (error) {
-        console.warn("Passkey registration was not completed:", error);
-        await appAlert(
-            (error?.message || "Passkey registration could not be completed.") +
-            "\\n\\nYou are signed in and can continue using your PIN.",
-            "PIN sign-in remains available",
-            "warning"
-        );
+        // Passkey registration is optional. Never interrupt a successful PIN login
+        // with a warning if registration is cancelled or the service is unavailable.
+        console.warn("Optional passkey registration was not completed:", error);
     }
 }
 

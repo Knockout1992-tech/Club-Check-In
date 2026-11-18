@@ -101,6 +101,9 @@ function showCoachAgeGroups() {
                 several age groups in one register.
 
             </div>
+            ${currentPersonID && currentUserRoles.includes("admin") ? `
+                <button class="secondary-button" style="width:100%;margin-bottom:14px" onclick="showAdminDashboardFromCoach()">Admin Dashboard</button>
+            ` : ""}
 
             <div class="multi-age-summary">
 

@@ -102,6 +102,11 @@ function goHome() {
 
 async function logout() {
 
+    if (typeof stopAppSessionTimeout === "function") {
+        stopAppSessionTimeout();
+    }
+
+
     if (typeof revokePersonalSession === "function") {
         await revokePersonalSession();
     }

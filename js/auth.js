@@ -186,6 +186,11 @@ async function offerPasskeyRegistration() {
         personalLoginAccount.protected_user) return;
 
     try {
+        // Do not offer registration again when this account already has a passkey
+        // registered for this installation.
+        const status = await callPasskeyService("status");
+        if (status.available) return;
+
         const register = await appConfirm(
             "Would you like to set up fingerprint sign-in on this device? Your device may use fingerprint, face recognition or its screen lock. Your biometric data is never shared with the club.",
             "Set up fingerprint sign-in",

@@ -141,7 +141,7 @@ async function submitPersonalLogin() {
             errorBox.textContent = "Complete all PIN fields.";
             return;
         }
-        if (!/^\\d{6,12}$/.test(newPin)) {
+        if (!/^\d{6,12}$/.test(newPin)) {
             errorBox.textContent = "Your personal PIN must be 6–12 digits.";
             return;
         }

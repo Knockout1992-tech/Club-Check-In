@@ -63,8 +63,7 @@ function renderPersonalLogin(message = "") {
 
                 <form onsubmit="event.preventDefault(); submitPersonalLogin();">
                     <label for="personalUserSelect" style="display:block;text-align:left;font-weight:700;margin:0 0 7px">Your name</label>
-                    <select id="personalUserSelect" onchange="selectPersonalLoginUser(this.value)"
-                        style="width:100%;padding:14px;border:1px solid #ccc;border-radius:10px;background:#fff;color:#111;font:inherit;margin-bottom:12px">
+                    <select id="personalUserSelect" class="personal-user-select" onchange="selectPersonalLoginUser(this.value)">
                         <option value="">Select your name</option>
                         ${options}
                     </select>
@@ -83,7 +82,7 @@ function renderPersonalLogin(message = "") {
                     </button>
                 </form>
 
-                <button class="secondary-button" style="width:100%;margin-top:12px" onclick="showPIN('coach')">
+                <button class="secondary-button personal-login-secondary" onclick="showPIN('coach')">
                     Existing shared PIN login
                 </button>
                 ${getInstallButtonHTML()}

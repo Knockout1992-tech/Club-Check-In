@@ -78,6 +78,148 @@ function renderPersonalLogin(message = "") {
         : "personalNameInput")?.focus();
 }
 
+function passkeyBase64UrlToBuffer(value) {
+    const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "=".repeat((4 - base64.length % 4) % 4);
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+}
+
+function passkeyBufferToBase64Url(value) {
+    const bytes = new Uint8Array(value);
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+}
+
+function serialisePasskeyCredential(credential) {
+    const response = credential.response;
+    const result = {
+        id: credential.id,
+        rawId: passkeyBufferToBase64Url(credential.rawId),
+        type: credential.type,
+        clientExtensionResults: credential.getClientExtensionResults()
+    };
+
+    if (response.attestationObject) {
+        result.response = {
+            attestationObject: passkeyBufferToBase64Url(response.attestationObject),
+            clientDataJSON: passkeyBufferToBase64Url(response.clientDataJSON),
+            transports: typeof response.getTransports === "function" ? response.getTransports() : []
+        };
+        result.authenticatorAttachment = credential.authenticatorAttachment || "platform";
+    } else {
+        result.response = {
+            authenticatorData: passkeyBufferToBase64Url(response.authenticatorData),
+            clientDataJSON: passkeyBufferToBase64Url(response.clientDataJSON),
+            signature: passkeyBufferToBase64Url(response.signature),
+            userHandle: response.userHandle ? passkeyBufferToBase64Url(response.userHandle) : null
+        };
+    }
+
+    return result;
+}
+
+function preparePasskeyOptions(options) {
+    const prepared = { ...options, challenge: passkeyBase64UrlToBuffer(options.challenge) };
+    if (options.user) {
+        prepared.user = { ...options.user, id: passkeyBase64UrlToBuffer(options.user.id) };
+    }
+    for (const key of ["allowCredentials", "excludeCredentials"]) {
+        if (Array.isArray(options[key])) {
+            prepared[key] = options[key].map(item => ({
+                ...item,
+                id: passkeyBase64UrlToBuffer(item.id)
+            }));
+        }
+    }
+    return prepared;
+}
+
+async function callPasskeyService(action, extra = {}) {
+    const { data, error } = await supabaseClient.functions.invoke("club_checkin_passkeys", {
+        body: {
+            action,
+            person_id: personalLoginAccount?.person_id || currentPersonID,
+            installation_id: getInstallationID(),
+            ...extra
+        }
+    });
+    if (error) {
+        console.error("Passkey service request failed:", error);
+        throw new Error("Passkey service is unavailable.");
+    }
+    if (!data?.success) throw new Error(data?.message || "Passkey request could not be completed.");
+    return data;
+}
+
+async function signInWithPasskey() {
+    try {
+        if (!window.PublicKeyCredential || !navigator.credentials?.get) {
+            throw new Error("This browser or device does not support passkey sign-in.");
+        }
+
+        const result = await callPasskeyService("authentication-options");
+        const credential = await navigator.credentials.get({
+            publicKey: preparePasskeyOptions(result.options)
+        });
+        if (!credential) throw new Error("Sign-in was cancelled.");
+
+        const verified = await callPasskeyService("authentication-verify", {
+            response: serialisePasskeyCredential(credential)
+        });
+        await completePersonalLogin(verified, "passkey");
+        return true;
+    } catch (error) {
+        console.warn("Passkey sign-in was not completed:", error);
+        return false;
+    }
+}
+
+async function offerPasskeyRegistration() {
+    if (!currentPersonID || !currentAuthSessionToken || !window.PublicKeyCredential ||
+        !navigator.credentials?.create || !personalLoginAccount ||
+        personalLoginAccount.protected_user) return;
+
+    try {
+        const register = await appConfirm(
+            "Would you like to set up fingerprint sign-in on this device? Your device may use fingerprint, face recognition or its screen lock. Your biometric data is never shared with the club.",
+            "Set up fingerprint sign-in",
+            "Set up"
+        );
+        if (!register) return;
+
+        const result = await callPasskeyService("registration-options", {
+            session_token: currentAuthSessionToken
+        });
+        const credential = await navigator.credentials.create({
+            publicKey: preparePasskeyOptions(result.options)
+        });
+        if (!credential) throw new Error("Passkey registration was cancelled.");
+
+        await callPasskeyService("registration-verify", {
+            session_token: currentAuthSessionToken,
+            response: serialisePasskeyCredential(credential)
+        });
+
+        await appAlert(
+            "Fingerprint sign-in has been set up on this device. You can still use your personal PIN whenever you prefer.",
+            "Passkey registered",
+            "success"
+        );
+    } catch (error) {
+        console.warn("Passkey registration was not completed:", error);
+        await appAlert(
+            (error?.message || "Passkey registration could not be completed.") +
+            "\\n\\nYou are signed in and can continue using your PIN.",
+            "PIN sign-in remains available",
+            "warning"
+        );
+    }
+}
+
 async function lookupPersonalLoginName() {
     const name = document.getElementById("personalNameInput")?.value.trim() || "";
     const errorBox = document.getElementById("personalLoginError");
@@ -106,6 +248,26 @@ async function lookupPersonalLoginName() {
     };
 
     renderPersonalLogin();
+
+    if (!personalLoginAccount.protected_user && !personalLoginAccount.pin_setup_required) {
+        try {
+            const status = await callPasskeyService("status");
+            if (status.available) {
+                const usePasskey = await appConfirm(
+                    "Would you like to sign in using fingerprint on this device?",
+                    "Fingerprint sign-in",
+                    "Use fingerprint"
+                );
+                if (usePasskey) {
+                    const signedIn = await signInWithPasskey();
+                    if (signedIn) return;
+                    renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");
+                }
+            }
+        } catch (passkeyError) {
+            console.warn("Passkey availability check failed:", passkeyError);
+        }
+    }
 }
 
 function resetPersonalLoginName() {
@@ -142,7 +304,7 @@ async function submitPersonalLogin() {
             errorBox.textContent = "Complete all PIN fields.";
             return;
         }
-        if (!/^\d{6,12}$/.test(newPin)) {
+        if (!/^\\d{6,12}$/.test(newPin)) {
             errorBox.textContent = "Your personal PIN must be 6–12 digits.";
             return;
         }
@@ -185,6 +347,10 @@ async function submitPersonalLogin() {
         return;
     }
 
+    await completePersonalLogin(data, "pin");
+}
+
+async function completePersonalLogin(data, authMethod = "pin") {
     currentPersonID = data.person_id;
     currentUserName = data.name;
     currentUserRoles = Array.isArray(data.roles) ? data.roles : [];
@@ -217,6 +383,10 @@ async function submitPersonalLogin() {
     }
 
     await autoClosePreviousAttendanceRegisters();
+
+    if (authMethod === "pin") {
+        await offerPasskeyRegistration();
+    }
 
     if (currentRole === "coach") {
         if (selectedAgeGroups.length === 1) {

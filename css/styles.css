@@ -1489,3 +1489,27 @@ textarea,
 select {
     letter-spacing: normal;
 }
+
+
+/* Coach dashboard navigation actions share one top row */
+.coach-dashboard-top-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.coach-dashboard-top-actions .back-button {
+    margin: 0;
+}
+.coach-dashboard-admin-button {
+    width: auto;
+    min-height: 40px;
+    padding: 8px 13px;
+    border: 1px solid #c9c9c9;
+    border-radius: 8px;
+    background: #e5e5e5;
+    color: #222;
+    font-size: 13px;
+    font-weight: 600;
+}

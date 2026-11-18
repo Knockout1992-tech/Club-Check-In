@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "club-check-in-v1118-passkey-fast-auth";
+const CACHE_NAME = "club-check-in-v1118-passkey-single-request";
 
 const APP_SHELL = [
     "./",

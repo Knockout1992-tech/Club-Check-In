@@ -242,12 +242,12 @@ async function lookupPersonalLoginName() {
             person_id: result.person_id,
             display_name: result.display_name,
             pin_setup_required: result.pin_setup_required === true,
-            protected_user: false
+            protected_user: result.protected_user === true
         };
 
         renderPersonalLogin();
 
-        if (!personalLoginAccount.pin_setup_required) {
+        if (!personalLoginAccount.protected_user && !personalLoginAccount.pin_setup_required) {
             const signedIn = await signInWithPasskey(result.options);
             if (signedIn) return;
             renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");

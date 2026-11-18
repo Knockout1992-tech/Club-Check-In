@@ -91,7 +91,7 @@ function passkeyBufferToBase64Url(value) {
     const bytes = new Uint8Array(value);
     let binary = "";
     for (const byte of bytes) binary += String.fromCharCode(byte);
-    return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 function serialisePasskeyCredential(credential) {
@@ -304,7 +304,7 @@ async function submitPersonalLogin() {
             errorBox.textContent = "Complete all PIN fields.";
             return;
         }
-        if (!/^\\d{6,12}$/.test(newPin)) {
+        if (!/^\d{6,12}$/.test(newPin)) {
             errorBox.textContent = "Your personal PIN must be 6–12 digits.";
             return;
         }

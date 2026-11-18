@@ -259,3 +259,41 @@ async function revokePersonalSession() {
         console.error("Session revocation failed:", error);
     }
 }
+
+
+/* =====================================================
+   ROLE SWITCHING FOR DUAL-ROLE PERSONAL ACCOUNTS
+   ===================================================== */
+
+function showAdminDashboardFromCoach() {
+    if (!currentUserRoles.includes("admin") || !currentAuthSessionToken) {
+        console.warn("Admin dashboard access denied: no active Admin session.");
+        return;
+    }
+
+    currentRole = "senior";
+    currentSeniorPIN = currentAuthSessionToken;
+    currentAccessPIN = currentAuthSessionToken;
+    showSeniorDashboard();
+}
+
+function showCoachAreaFromAdmin() {
+    if (!currentUserRoles.includes("coach") || !currentAuthSessionToken) {
+        console.warn("Coach area access denied: no active Coach session.");
+        return;
+    }
+
+    currentRole = "coach";
+    currentAccessPIN = currentAuthSessionToken;
+
+    const assigned = getAssignedCoachAgeGroups();
+    selectedAgeGroups = assigned.length === 1 ? [...assigned] : [];
+
+    if (assigned.length === 1) {
+        currentAgeGroup = assigned[0];
+        showCoachDashboard();
+    } else {
+        currentAgeGroup = null;
+        showCoachAgeGroups();
+    }
+}

@@ -228,3 +228,17 @@ function clearPersonalSession() {
     currentAgeGroup = null;
     selectedAgeGroups = [];
 }
+
+
+async function revokePersonalSession() {
+    if (!currentAuthSessionToken) return;
+    try {
+        const { error } = await supabaseClient.rpc("revoke_personal_user_session", {
+            supplied_session_token: currentAuthSessionToken,
+            supplied_installation_id: getInstallationID()
+        });
+        if (error) console.error("Session revocation failed:", error);
+    } catch (error) {
+        console.error("Session revocation failed:", error);
+    }
+}

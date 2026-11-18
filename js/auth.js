@@ -155,13 +155,15 @@ async function callPasskeyService(action, extra = {}) {
     return data;
 }
 
-async function signInWithPasskey() {
+async function signInWithPasskey(preloadedOptions = null) {
     try {
         if (!window.PublicKeyCredential || !navigator.credentials?.get) {
             throw new Error("This browser or device does not support passkey sign-in.");
         }
 
-        const result = await callPasskeyService("authentication-options");
+        const result = preloadedOptions
+            ? { options: preloadedOptions }
+            : await callPasskeyService("authentication-options");
         const credential = await navigator.credentials.get({
             publicKey: preparePasskeyOptions(result.options)
         });
@@ -230,29 +232,29 @@ async function lookupPersonalLoginName() {
     }
 
     errorBox.textContent = "Checking account…";
-    const { data, error } = await supabaseClient.rpc("get_personal_pin_login_status", {
-        supplied_name: name
-    });
 
-    if (error || !data?.success) {
-        console.error("Personal login name lookup failed:", error || data);
-        errorBox.textContent = data?.message || "Unable to check the account. Please try again.";
-        return;
-    }
+    try {
+        const result = await callPasskeyService("authentication-options-by-name", {
+            supplied_name: name
+        });
 
-    personalLoginAccount = {
-        person_id: data.person_id,
-        display_name: data.display_name,
-        pin_setup_required: data.pin_setup_required === true,
-        protected_user: data.protected_user === true
-    };
+        personalLoginAccount = {
+            person_id: result.person_id,
+            display_name: result.display_name,
+            pin_setup_required: result.pin_setup_required === true,
+            protected_user: false
+        };
 
-    renderPersonalLogin();
+        renderPersonalLogin();
 
-    if (!personalLoginAccount.protected_user && !personalLoginAccount.pin_setup_required) {
-        const signedIn = await signInWithPasskey();
-        if (signedIn) return;
-        renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");
+        if (!personalLoginAccount.pin_setup_required) {
+            const signedIn = await signInWithPasskey(result.options);
+            if (signedIn) return;
+            renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");
+        }
+    } catch (error) {
+        console.warn("Personal login lookup failed:", error);
+        errorBox.textContent = error?.message || "Unable to check the account. Please try again.";
     }
 }
 

@@ -2,7 +2,7 @@
    CONFIG / APPLICATION STATE
    ========================================================= */
 
-const APP_VERSION = "V2.4.7";
+const APP_VERSION = "V2.4.8";
 
 let ageGroups = [];
 let players = {};

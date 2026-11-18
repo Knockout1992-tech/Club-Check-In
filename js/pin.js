@@ -174,6 +174,9 @@ if (currentRole === "coach") {
     return;
 }
 
+// Apply the same session timeout to shared-PIN sessions.
+startAppSessionTimeout();
+
 // Step 4: Load players using the verified role and PIN.
 let playersLoaded = false;
 

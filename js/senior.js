@@ -794,6 +794,10 @@ async function matchAdminCall(functionName, body) {
             // Keep the original error message if no response body is available.
         }
 
+        if (error.context?.status === 401) {
+            message = "Your sign-in session is no longer valid. Please log out and sign in again.";
+        }
+
         throw new Error(message);
     }
 

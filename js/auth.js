@@ -386,7 +386,9 @@ async function completePersonalLogin(data, authMethod = "pin") {
             logout();
             return;
         }
-        selectedAgeGroups = assigned.length === 1 ? [...assigned] : [];
+        // Personal Coach accounts always open the groups assigned to them.
+        // Multiple assignments use the combined dashboard rather than a picker.
+        selectedAgeGroups = [...assigned];
     }
 
     let loaded = false;
@@ -407,12 +409,8 @@ async function completePersonalLogin(data, authMethod = "pin") {
     }
 
     if (currentRole === "coach") {
-        if (selectedAgeGroups.length === 1) {
-            currentAgeGroup = selectedAgeGroups[0];
-            await showCoachDashboard();
-        } else {
-            showCoachAgeGroups();
-        }
+        currentAgeGroup = selectedAgeGroups[0] || null;
+        await showCoachDashboard();
     } else {
         await showSeniorDashboard();
     }
@@ -455,37 +453,56 @@ async function revokePersonalSession() {
    ROLE SWITCHING FOR DUAL-ROLE PERSONAL ACCOUNTS
    ===================================================== */
 
-function showAdminDashboardFromCoach() {
+async function showAdminDashboardFromCoach() {
     if (!currentUserRoles.includes("admin") || !currentAuthSessionToken) {
         console.warn("Admin dashboard access denied: no active Admin session.");
         return;
     }
 
+    // Reload using the Admin role so the list contains every active player.
     currentRole = "senior";
     currentSeniorPIN = currentAuthSessionToken;
     currentAccessPIN = currentAuthSessionToken;
-    showSeniorDashboard();
+
+    const loaded = await loadPlayersFromSupabase();
+    if (!loaded) {
+        currentRole = "coach";
+        currentSeniorPIN = null;
+        await appAlert("Unable to load the full club player list. You are still in Coach mode.", "Player load failed", "danger");
+        return;
+    }
+
+    await showSeniorDashboard();
 }
 
-function showCoachAreaFromAdmin() {
+async function showCoachAreaFromAdmin() {
     if (!currentUserRoles.includes("coach") || !currentAuthSessionToken) {
         console.warn("Coach area access denied: no active Coach session.");
         return;
     }
 
-    currentRole = "coach";
-    currentAccessPIN = currentAuthSessionToken;
-
     const assigned = getAssignedCoachAgeGroups();
-    selectedAgeGroups = assigned.length === 1 ? [...assigned] : [];
-
-    if (assigned.length === 1) {
-        currentAgeGroup = assigned[0];
-        showCoachDashboard();
-    } else {
-        currentAgeGroup = null;
-        showCoachAgeGroups();
+    if (!assigned.length) {
+        await appAlert("Your account has no active age groups assigned. Please contact an Admin.", "No age groups assigned", "warning");
+        return;
     }
+
+    // Reload using the Coach role so Admin-only players are no longer in memory.
+    currentRole = "coach";
+    currentSeniorPIN = null;
+    currentAccessPIN = currentAuthSessionToken;
+    selectedAgeGroups = [...assigned];
+    currentAgeGroup = assigned[0];
+
+    const loaded = await loadPlayersFromSupabase();
+    if (!loaded) {
+        currentRole = "senior";
+        currentSeniorPIN = currentAuthSessionToken;
+        await appAlert("Unable to reload your assigned Coach players. You are still in Admin mode.", "Player load failed", "danger");
+        return;
+    }
+
+    await showCoachDashboard();
 }
 
 

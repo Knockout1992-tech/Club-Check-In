@@ -415,6 +415,10 @@ async function showCoachDashboard() {
                 Coach Dashboard
 
             </div>
+            ${currentPersonID && currentUserRoles.includes("admin") ? `
+                <button class="secondary-button" style="width:100%;margin-bottom:14px" onclick="showAdminDashboardFromCoach()">Admin Dashboard</button>
+            ` : ""}
+
 
             <div class="stats coach-dashboard-stats">
 
@@ -1915,6 +1919,9 @@ function showSeniorDashboard() {
             <div class="subtitle">
                 Season ${currentSeason}
             </div>
+            ${currentPersonID && currentUserRoles.includes("coach") ? `
+                <button class="secondary-button" style="width:100%;margin-bottom:14px" onclick="showCoachAreaFromAdmin()">Coach Area</button>
+            ` : ""}
 
             <div class="stats">
 
@@ -4218,3 +4225,26 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
+
+function showAdminDashboardFromCoach() {
+    if (!currentUserRoles.includes("admin") || !currentAuthSessionToken) return;
+    currentRole = "senior";
+    currentSeniorPIN = currentAuthSessionToken;
+    showSeniorDashboard();
+}
+
+function showCoachAreaFromAdmin() {
+    if (!currentUserRoles.includes("coach") || !currentAuthSessionToken) return;
+    currentRole = "coach";
+    currentAccessPIN = currentAuthSessionToken;
+    const assigned = getAssignedCoachAgeGroups();
+    selectedAgeGroups = assigned.length === 1 ? [...assigned] : [];
+    if (assigned.length === 1) {
+        currentAgeGroup = assigned[0];
+        showCoachDashboard();
+    } else {
+        currentAgeGroup = null;
+        showCoachAgeGroups();
+    }
+}

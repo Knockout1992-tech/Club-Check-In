@@ -250,16 +250,9 @@ async function lookupPersonalLoginName() {
     renderPersonalLogin();
 
     if (!personalLoginAccount.protected_user && !personalLoginAccount.pin_setup_required) {
-        try {
-            const status = await callPasskeyService("status");
-            if (status.available) {
-                const signedIn = await signInWithPasskey();
-                if (signedIn) return;
-                renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");
-            }
-        } catch (passkeyError) {
-            console.warn("Passkey availability check failed:", passkeyError);
-        }
+        const signedIn = await signInWithPasskey();
+        if (signedIn) return;
+        renderPersonalLogin("Fingerprint sign-in was not completed. Please use your personal PIN instead.");
     }
 }
 

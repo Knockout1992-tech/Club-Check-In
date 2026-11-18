@@ -1463,3 +1463,21 @@ h2 {
 .retention-admin #club-policy-editor>.admin-collapse-body{padding:0 17px 17px}
 .retention-admin #club-policy-editor .retention-section{border:0;padding:0;margin:0}
 @media(max-width:520px){.retention-admin .admin-collapse>summary{padding:14px;font-size:14px}.retention-admin .admin-collapse-body{padding:12px}.retention-admin .admin-policy-item>summary{align-items:flex-start}}
+
+
+/* Personal login: reuse the existing monochrome welcome and PIN styling */
+.personal-user-select {
+    width: 100%;
+    min-height: 50px;
+    padding: 13px 14px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: #fff;
+    color: #111;
+    font: inherit;
+}
+.personal-login-secondary {
+    width: 100%;
+    margin-top: 12px;
+}

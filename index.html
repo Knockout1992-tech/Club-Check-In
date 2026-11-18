@@ -290,12 +290,7 @@ async function showCoachDashboard() {
         ? selectedAgeGroups
         : [currentAgeGroup];
 
-    // A single assigned age group has no age-group selection screen to return to.
-    const assignedCoachGroups = currentPersonID
-        ? getAssignedCoachAgeGroups()
-        : [];
-    const showAgeGroupBackButton =
-        !currentPersonID || assignedCoachGroups.length > 1;
+    // Back always returns to the login screen and ends the current session.
     const showAdminDashboardButton =
         currentPersonID && currentUserRoles.includes("admin");
 
@@ -404,16 +399,12 @@ async function showCoachDashboard() {
 
         <div class="card coach-dashboard-card">
 
-            ${(showAgeGroupBackButton || showAdminDashboardButton) ? `
-                <div class="coach-dashboard-top-actions">
-                    ${showAgeGroupBackButton ? `
-                        <button class="back-button" onclick="showCoachAgeGroups()">← Age Groups</button>
-                    ` : "<span></span>"}
-                    ${showAdminDashboardButton ? `
-                        <button class="coach-dashboard-admin-button" onclick="showAdminDashboardFromCoach()">Admin Dashboard</button>
-                    ` : ""}
-                </div>
-            ` : ""}
+            <div class="coach-dashboard-top-actions">
+                <button class="back-button" onclick="logout()">← Back</button>
+                ${showAdminDashboardButton ? `
+                    <button class="coach-dashboard-admin-button" onclick="showAdminDashboardFromCoach()">Admin Dashboard</button>
+                ` : ""}
+            </div>
 
             <h2 class="coach-dashboard-title">
                 ${

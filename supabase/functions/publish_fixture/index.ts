@@ -137,7 +137,7 @@ const requestedRole = hasCoachCode ? "coach" : "senior";
       const { data: fixtureGroups, error: groupError } = await supabase
         .from("match_fixture_age_groups").select("age_group_id").eq("fixture_id", fixtureId);
       if (groupError) return response({ error: "Unable to verify fixture age groups" }, 500);
-      if (!(fixtureGroups ?? []).some((group: any) => coachAssignedAgeGroupIDs.includes(Number(group.age_group_id)))) {
+      if (!(fixtureGroups ?? []).length || !(fixtureGroups ?? []).every((group: any) => coachAssignedAgeGroupIDs.includes(Number(group.age_group_id)))) {
         return response({ error: "You do not have access to publish this fixture" }, 403);
       }
     }

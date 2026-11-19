@@ -17,6 +17,11 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Push service is not configured" }), { status: 503, headers: corsHeaders });
     }
 
+    const webhookSecret = Deno.env.get("COACH_PUSH_WEBHOOK_SECRET");
+    if (!webhookSecret || req.headers.get("x-coach-push-secret") !== webhookSecret) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+    }
+
     const payload = await req.json();
     const outboxId = Number(payload?.record?.id ?? payload?.id);
     if (!Number.isInteger(outboxId) || outboxId <= 0) {

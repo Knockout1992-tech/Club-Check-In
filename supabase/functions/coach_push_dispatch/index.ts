@@ -69,7 +69,8 @@ Deno.serve(async (req: Request) => {
         event.event_kind === "cancelled" && event.event_type === "match" ? "Fixture cancelled" :
         event.event_kind === "updated" && event.event_type === "match" ? "Fixture updated" : title,
       body: bodyText || kindText,
-      url: "./",
+      url: "./?notification=1&source=" + encodeURIComponent(String(event.source_type || "")) +
+        "&id=" + encodeURIComponent(String(event.source_id || "")),
       tag: "club-event-" + event.event_key,
     });
 

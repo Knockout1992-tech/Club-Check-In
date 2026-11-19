@@ -108,7 +108,7 @@ BEGIN
     'parent_name', v_account.parent_name
   );
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.accept_parent_family_invitation(p_token_hash text, p_parent_access_id bigint)
  RETURNS jsonb
@@ -184,7 +184,7 @@ BEGIN
 
   RETURN jsonb_build_object('ok', true, 'family_id', v_invite.family_id);
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.update_personal_data_request(p_system_admin_pin text, p_request_id bigint, p_status text, p_identity_status text, p_authority_status text, p_scope_notes text, p_extension_reason text, p_extension_notified_at timestamp with time zone, p_decision text, p_response_notes text, p_sent_at timestamp with time zone, p_sent_via text, p_completed_at timestamp with time zone)
  RETURNS jsonb
@@ -244,7 +244,7 @@ begin
  return jsonb_build_object('success',true,'request_ref',v_request.request_ref,'status',v_request.status,
   'due_at',v_request.due_at,'extended_due_at',v_request.extended_due_at,'clock_started_at',v_request.clock_started_at);
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.list_personal_data_requests(p_system_admin_pin text)
  RETURNS jsonb
@@ -261,7 +261,8 @@ begin
   coalesce(completed_at,sent_at,case when status='withdrawn' then updated_at else null end) as closed_at
   from public.personal_data_requests order by received_at desc limit 100) x;
  return jsonb_build_object('success',true,'requests',v_rows);
-end;$function$
+end;
+$function$;
 
 CREATE OR REPLACE FUNCTION public.update_parent_retention_review_period(system_admin_pin text, requested_review_period_months integer)
  RETURNS jsonb
@@ -881,5 +882,4 @@ exception when others then
   end if;
   raise;
 end;
-$function$
-
+$function$;

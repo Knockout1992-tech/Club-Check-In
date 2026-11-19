@@ -755,8 +755,6 @@ begin
     v_affected := v_deleted_parents;
   end if;
 
-  end if;
-
   insert into public.retention_audit_log(run_id,policy_key,action,records_checked,records_affected,outcome,details)
   values(v_run_id,'parent_family_links','delete',v_checked,v_affected,
     case when v_checked=0 then 'skipped' when p_mode='dry_run' then 'would_process'

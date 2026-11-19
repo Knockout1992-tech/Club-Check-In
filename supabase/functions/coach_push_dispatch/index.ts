@@ -11,7 +11,7 @@ Deno.serve(async (req: Request) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const publicKey = Deno.env.get("COACH_PUSH_VAPID_PUBLIC_KEY");
     const privateKey = Deno.env.get("COACH_PUSH_VAPID_PRIVATE_KEY");
-    const subject = Deno.env.get("COACH_PUSH_VAPID_SUBJECT") || "mailto:club-admin@rhrufc.co.uk";
+    const subject = Deno.env.get("COACH_PUSH_VAPID_SUBJECT") || "https://rhrufc-mini.pages.dev";
     if (!url || !serviceKey || !publicKey || !privateKey) {
       console.error("Push dispatch is missing Supabase or VAPID secrets");
       return new Response(JSON.stringify({ error: "Push service is not configured" }), { status: 503, headers: corsHeaders });

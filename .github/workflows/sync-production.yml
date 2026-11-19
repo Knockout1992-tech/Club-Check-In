@@ -1,0 +1,76 @@
+name: Sync canonical Club Check-In to production
+
+on:
+  workflow_run:
+    workflows:
+      - PWA Versioning and Syntax Check
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-club-check-in-production
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check sync token is configured
+        env:
+          SYNC_TOKEN: ${{ secrets.CLUB_CHECK_IN_SYNC_TOKEN }}
+        run: |
+          if [ -z "$SYNC_TOKEN" ]; then
+            echo "::error::Add the CLUB_CHECK_IN_SYNC_TOKEN repository secret before running this workflow."
+            exit 1
+          fi
+
+      - name: Check out canonical Club Check-In
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: canonical
+
+      - name: Check out Parent Portal repository
+        uses: actions/checkout@v4
+        with:
+          repository: Knockout1992-tech/Club-Match-Availability
+          ref: main
+          token: ${{ secrets.CLUB_CHECK_IN_SYNC_TOKEN }}
+          path: parent-portal
+
+      - name: Sync only the PWA runtime files
+        run: |
+          set -euo pipefail
+          mkdir -p staging
+          cp -a canonical/index.html canonical/manifest.json canonical/service-worker.js staging/
+          cp -a canonical/css canonical/js canonical/icons staging/
+          if [ -f canonical/RHRFC.jpg ]; then
+            cp -a canonical/RHRFC.jpg staging/
+          fi
+
+          mkdir -p parent-portal/club-check-in
+          rsync -a --delete staging/ parent-portal/club-check-in/
+
+      - name: Commit and push production PWA mirror
+        working-directory: parent-portal
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- club-check-in; then
+            echo "Production PWA mirror is already up to date."
+            exit 0
+          fi
+
+          git add club-check-in
+          git commit -m "chore: sync Club Check-In from canonical [version-managed]"
+          git push origin HEAD:main

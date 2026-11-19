@@ -20,6 +20,20 @@ END $$;
 ALTER TABLE public.personal_data_requests
   ADD COLUMN IF NOT EXISTS retention_anonymised_at timestamptz;
 
+ALTER TABLE public.retention_holds
+  DROP CONSTRAINT IF EXISTS retention_holds_target_allowed;
+ALTER TABLE public.retention_holds
+  ADD CONSTRAINT retention_holds_target_allowed CHECK (
+    (policy_key='attendance_individual' AND target_table='attendance_records')
+    OR (policy_key IN ('match_availability','cancelled_fixture_responses') AND target_table='match_availability')
+    OR (policy_key='invitation_tokens' AND target_table IN ('match_parent_family_invitations','match_parent_family_invites'))
+    OR (policy_key='security_logs' AND target_table IN ('installation_access_attempts','system_admin_audit_log'))
+    OR (policy_key='parent_portal_security_audit' AND target_table='system_admin_audit_log')
+    OR (policy_key='parent_family_links' AND target_table='match_parent_access')
+    OR (policy_key='pdm_case_records' AND target_table='personal_data_requests')
+    OR (policy_key='archived_players' AND target_table='players')
+  );
+
 UPDATE public.retention_policies
 SET review_period_months=3,
     policy_version=policy_version+1,
@@ -298,6 +312,127 @@ BEGIN
   RETURN jsonb_build_object('success',true,'review_period_months',requested_review_period_months);
 END;
 $function$;
+CREATE OR REPLACE FUNCTION public.manage_retention_hold(p_system_admin_pin text, p_action text, p_hold_id bigint DEFAULT NULL::bigint, p_policy_key text DEFAULT NULL::text, p_target_table text DEFAULT NULL::text, p_target_reference text DEFAULT NULL::text, p_category text DEFAULT NULL::text, p_reason text DEFAULT NULL::text, p_review_due_at timestamp with time zone DEFAULT NULL::timestamp with time zone, p_review_notes text DEFAULT NULL::text, p_release_reason text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_action text := lower(btrim(coalesce(p_action,'')));
+  v_exists boolean := false;
+  v_hold public.retention_holds%rowtype;
+  v_actor text := 'system_admin';
+begin
+  if not public._verify_system_admin_pin(p_system_admin_pin) then
+    return null;
+  end if;
+
+  if v_action='create' then
+    if p_policy_key is null or p_target_table is null or p_target_reference is null
+       or char_length(btrim(p_target_reference))=0 or char_length(btrim(p_target_reference))>200
+       or p_category is null or p_category not in ('safeguarding','insurance','legal','incident')
+       or p_reason is null or char_length(btrim(p_reason)) not between 10 and 2000
+       or p_review_due_at is null or p_review_due_at <= now() then
+      return jsonb_build_object('success',false,'message','Check the hold category, record reference, reason and future review date.');
+    end if;
+
+    v_exists := case
+      when p_target_table='attendance_records' and p_policy_key='attendance_individual' then
+        exists(select 1 from public.attendance_records where id::text=btrim(p_target_reference))
+      when p_target_table='match_availability' and p_policy_key in ('match_availability','cancelled_fixture_responses') then
+        exists(select 1 from public.match_availability where id::text=btrim(p_target_reference))
+      when p_target_table='match_parent_family_invitations' and p_policy_key='invitation_tokens' then
+        exists(select 1 from public.match_parent_family_invitations where id::text=btrim(p_target_reference))
+      when p_target_table='match_parent_family_invites' and p_policy_key='invitation_tokens' then
+        exists(select 1 from public.match_parent_family_invites where id::text=btrim(p_target_reference))
+      when p_target_table='installation_access_attempts' and p_policy_key='security_logs' then
+        exists(select 1 from public.installation_access_attempts where installation_id=btrim(p_target_reference))
+      when p_target_table='system_admin_audit_log' and p_policy_key='security_logs' then
+        exists(select 1 from public.system_admin_audit_log where id::text=btrim(p_target_reference) and source_system='club_check_in')
+      when p_target_table='system_admin_audit_log' and p_policy_key='parent_portal_security_audit' then
+        exists(select 1 from public.system_admin_audit_log where id::text=btrim(p_target_reference) and source_system='match_availability_parent_portal')
+      when p_target_table='match_parent_access' and p_policy_key='parent_family_links' then
+        exists(select 1 from public.match_parent_access where id::text=btrim(p_target_reference))
+      when p_target_table='personal_data_requests' and p_policy_key='pdm_case_records' then
+        exists(select 1 from public.personal_data_requests
+          where id::text=btrim(p_target_reference)
+            and status in ('completed','partially_completed','refused','withdrawn')
+            and retention_anonymised_at is null)
+      when p_target_table='players' and p_policy_key='archived_players' then
+        exists(select 1 from public.players where player_id=btrim(p_target_reference) and archived=true)
+      else false
+    end;
+
+    if not v_exists then
+      return jsonb_build_object('success',false,'message','The selected record was not found or is not eligible for this type of hold.');
+    end if;
+
+    insert into public.retention_holds(
+      policy_key,target_table,target_reference,category,reason,review_due_at,created_by
+    ) values (
+      p_policy_key,btrim(p_target_table),btrim(p_target_reference),p_category,btrim(p_reason),p_review_due_at,v_actor
+    ) returning * into v_hold;
+
+    insert into public.system_admin_audit_log(
+      source_system,severity,event_type,outcome,actor_type,actor_reference,details
+    ) values (
+      'club_check_in','info','retention_hold_created','success','system_admin',v_actor,
+      jsonb_build_object('hold_id',v_hold.id,'policy_key',v_hold.policy_key,
+        'target_table',v_hold.target_table,'target_reference',v_hold.target_reference,
+        'category',v_hold.category,'review_due_at',v_hold.review_due_at)
+    );
+    return jsonb_build_object('success',true,'hold_id',v_hold.id,'message','Retention hold created.');
+  elsif v_action='review' then
+    if p_hold_id is null or p_review_due_at is null or p_review_due_at <= now()
+       or p_review_notes is null or char_length(btrim(p_review_notes)) not between 10 and 2000 then
+      return jsonb_build_object('success',false,'message','A future review date and review note are required.');
+    end if;
+    update public.retention_holds
+    set review_due_at=p_review_due_at,last_reviewed_at=now(),
+        last_reviewed_by=v_actor,review_notes=btrim(p_review_notes)
+    where id=p_hold_id and status='active'
+    returning * into v_hold;
+    if not found then
+      return jsonb_build_object('success',false,'message','Active retention hold not found.');
+    end if;
+    insert into public.system_admin_audit_log(
+      source_system,severity,event_type,outcome,actor_type,actor_reference,details
+    ) values (
+      'club_check_in','info','retention_hold_reviewed','success','system_admin',v_actor,
+      jsonb_build_object('hold_id',v_hold.id,'policy_key',v_hold.policy_key,
+        'target_table',v_hold.target_table,'target_reference',v_hold.target_reference,
+        'review_due_at',v_hold.review_due_at,'review_notes',v_hold.review_notes)
+    );
+    return jsonb_build_object('success',true,'hold_id',v_hold.id,'message','Retention hold review recorded.');
+  elsif v_action='release' then
+    if p_hold_id is null or p_release_reason is null
+       or char_length(btrim(p_release_reason)) not between 10 and 2000 then
+      return jsonb_build_object('success',false,'message','A release reason is required.');
+    end if;
+    update public.retention_holds
+    set status='released',released_at=now(),released_by=v_actor,release_reason=btrim(p_release_reason)
+    where id=p_hold_id and status='active'
+    returning * into v_hold;
+    if not found then
+      return jsonb_build_object('success',false,'message','Active retention hold not found.');
+    end if;
+    insert into public.system_admin_audit_log(
+      source_system,severity,event_type,outcome,actor_type,actor_reference,details
+    ) values (
+      'club_check_in','info','retention_hold_released','success','system_admin',v_actor,
+      jsonb_build_object('hold_id',v_hold.id,'policy_key',v_hold.policy_key,
+        'target_table',v_hold.target_table,'target_reference',v_hold.target_reference,
+        'release_reason',v_hold.release_reason)
+    );
+    return jsonb_build_object('success',true,'hold_id',v_hold.id,'message','Retention hold released. The normal retention rule will apply again.');
+  end if;
+
+  return jsonb_build_object('success',false,'message','Unsupported retention hold action.');
+end;
+$function$
+
+
 CREATE OR REPLACE FUNCTION public.run_retention_job(p_mode text DEFAULT 'scheduled'::text)
  RETURNS jsonb
  LANGUAGE plpgsql

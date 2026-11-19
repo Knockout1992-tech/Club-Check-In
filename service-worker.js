@@ -34,6 +34,38 @@ self.addEventListener("activate", event => {
     );
 });
 
+// Push notifications =================================
+
+self.addEventListener("push", event => {
+    let payload = {};
+    try { payload = event.data ? event.data.json() : {}; } catch (_) {
+        payload = { body: event.data ? event.data.text() : "Open Club Check-In for updates." };
+    }
+    const title = payload.title || "Club Check-In";
+    const options = {
+        body: payload.body || "There is an update to your club calendar.",
+        icon: "./icons/icon.svg",
+        badge: "./icons/icon.svg",
+        tag: payload.tag || "club-check-in-update",
+        renotify: false,
+        data: { url: payload.url || "./" }
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", event => {
+    event.notification.close();
+    const target = new URL(event.notification.data?.url || "./", self.registration.scope).href;
+    event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+        for (const client of list) {
+            if (client.url.startsWith(self.registration.scope) && "focus" in client) {
+                return client.navigate(target).then(() => client.focus());
+            }
+        }
+        return clients.openWindow(target);
+    }));
+});
+
 // Network First — Bypass Browser Cache ============
 
 self.addEventListener("fetch", event => {

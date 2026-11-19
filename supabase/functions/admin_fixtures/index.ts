@@ -244,9 +244,10 @@ const suppliedCode = requestedRole === "coach" ? coachCode : seniorCode;
           return response({ error: "Unable to verify fixture age groups" }, 500);
         }
 
-        const hasPermittedGroup = (fixtureGroups ?? []).some((item: any) =>
-          coachAssignedAgeGroupIDs.includes(Number(item.age_group_id))
-        );
+        const hasPermittedGroup = (fixtureGroups ?? []).length > 0 &&
+          (fixtureGroups ?? []).every((item: any) =>
+            coachAssignedAgeGroupIDs.includes(Number(item.age_group_id))
+          );
 
         if (!hasPermittedGroup) {
           return response({ error: "You do not have access to manage this fixture" }, 403);

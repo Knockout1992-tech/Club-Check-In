@@ -4,9 +4,6 @@
 ALTER TABLE public.retention_policies
   ADD COLUMN IF NOT EXISTS review_period_months integer;
 
-ALTER TABLE public.retention_policies
-  ADD COLUMN IF NOT EXISTS retention_anonymised_at timestamptz;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -597,7 +594,13 @@ begin
       set edit_token_hash=null,
           edit_lock_token_hash=null,
           edit_lock_expires_at=null
-      where ms.last_updated_by_parent_id in (select id from disabled)
+      where (
+        ms.last_updated_by_parent_id in (select id from disabled)
+        or ms.family_id in (
+          select pa.family_id from public.match_parent_access pa
+          where pa.id in (select id from disabled) and pa.family_id is not null
+        )
+      )
       returning ms.id
     )
     select count(*) into v_parent_review_disabled from disabled;

@@ -55,15 +55,22 @@ self.addEventListener("push", event => {
 
 self.addEventListener("notificationclick", event => {
     event.notification.close();
-    const target = new URL(event.notification.data?.url || "./", self.registration.scope).href;
-    event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
-        for (const client of list) {
-            if (client.url.startsWith(self.registration.scope) && "focus" in client) {
-                return client.navigate(target).then(() => client.focus());
+    event.waitUntil((async () => {
+        const target = new URL(event.notification.data?.url || "./", self.registration.scope);
+        const scope = new URL(self.registration.scope);
+        if (target.origin !== scope.origin || !target.pathname.startsWith(scope.pathname)) return;
+
+        const list = await clients.matchAll({ type: "window", includeUncontrolled: true });
+        const existing = list.find(client => client.url.startsWith(self.registration.scope));
+        if (existing) {
+            if ("focus" in existing) await existing.focus();
+            if ("postMessage" in existing) {
+                existing.postMessage({ type: "COACH_NOTIFICATION_OPEN", url: target.href });
             }
+            return;
         }
-        return clients.openWindow(target);
-    }));
+        return clients.openWindow(target.href);
+    })());
 });
 
 // Network First — Bypass Browser Cache ============

@@ -430,7 +430,7 @@ begin
 
   return jsonb_build_object('success',false,'message','Unsupported retention hold action.');
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.run_retention_job(p_mode text DEFAULT 'scheduled'::text)

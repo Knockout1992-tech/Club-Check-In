@@ -287,6 +287,7 @@ function retentionHoldTargetOptions() {
         ["security_logs","installation_access_attempts","Installation security log (all events for installation)"],
         ["parent_portal_security_audit","system_admin_audit_log","Parent Portal security audit event"],
         ["parent_family_links","match_parent_access","Parent account"],
+        ["pdm_case_records","personal_data_requests","Personal data request case"],
         ["archived_players","players","Archived player"]
     ];
 }

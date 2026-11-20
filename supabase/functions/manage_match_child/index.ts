@@ -50,7 +50,10 @@ async function getAssignedCoachAgeGroupIds(db: any, credential: string, installa
     .select("age_group_id")
     .eq("person_id", personId);
   if (assignmentError) return null;
-  return [...new Set((assignments ?? []).map((row: any) => Number(row.age_group_id)).filter((id: number) => Number.isInteger(id) && id > 0))];
+  const ageGroupIds: number[] = (assignments ?? [])
+    .map((row: any) => Number(row.age_group_id))
+    .filter((id: number) => Number.isInteger(id) && id > 0);
+  return Array.from(new Set<number>(ageGroupIds));
 }
 
 Deno.serve(async (req) => {
@@ -238,13 +241,6 @@ const requestedRole = hasCoachCode ? "coach" : "senior";
         error: "The parent is currently editing this response. Please try again when they have finished.",
       }, 409);
     }
-
-    return response({
-      success: true,
-      action,
-      child_id: childId,
-      ...(action === "update_availability" ? { availability } : {}),
-    });
 
     if (action === "update_availability") {
       const { data: updatedChild, error: updateError } =

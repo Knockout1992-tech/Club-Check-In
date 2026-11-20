@@ -14,7 +14,7 @@ This guide explains how the club should use Club Check-In and Match Availability
 
 It covers:
 - Parents and guardians submitting match availability.
-- Coaches viewing their assigned age groups and recording attendance.
+- Coaches viewing their assigned age groups and, if the club chooses to use it, recording attendance.
 - Admin users managing people, access, fixtures, seasons and player records.
 - Routine data retention and anonymisation.
 - Basic troubleshooting and service recovery.
@@ -210,12 +210,11 @@ Club Check-In requires an online connection for operational data. It is not an o
 1. Confirm whether the device has internet access.
 2. If other websites work but Club Check-In does not, treat it as a possible service issue.
 3. Do not repeatedly submit the same parent response or attendance changes.
-4. If attendance must be taken immediately, use the club’s separately approved temporary contingency method.
-5. Keep any temporary record secure and accessible only to the people who need it.
-6. When service returns, an authorised Coach should enter or reconcile the attendance in the correct register.
-7. Verify the entries before disposing of the temporary record in accordance with club policy.
+4. The attendance feature is not currently used as the club’s routine attendance process. If it is unavailable, there is no existing attendance process to lose or replace.
+5. No separate paper-register contingency is currently required or defined.
+6. If the club later decides to rely on Club Check-In for routine attendance, agree and document a suitable fallback before doing so.
 
-The temporary contingency method must be agreed by the club. This guide does not authorise storing children’s information in personal messaging accounts or unapproved spreadsheets.
+This guide does not authorise storing children’s information in personal messaging accounts or unapproved spreadsheets.
 
 ### 8.2 If an account or installation is compromised
 
@@ -261,7 +260,7 @@ Database backup and restoration remain a lower-priority resilience improvement. 
 
 The club should nominate a document owner (normally a designated Admin or club officer) to:
 - Confirm role responsibilities and escalation arrangements.
-- Agree the temporary attendance contingency method.
+- Revisit attendance contingency arrangements only if the club starts relying on Club Check-In for routine attendance.
 - Check this guide after material application changes.
 - Review it alongside the club’s privacy, retention and safeguarding arrangements.
 - Record formal approval and the next review date.

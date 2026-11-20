@@ -242,6 +242,15 @@ const requestedRole = hasCoachCode ? "coach" : "senior";
       }, 409);
     }
 
+    // The database RPC performs the update/delete atomically after checking
+    // the parent edit lock and fixture status.
+    return response({
+      success: true,
+      action,
+      child_id: childId,
+      ...(action === "update_availability" ? { availability } : {}),
+    });
+
     if (action === "update_availability") {
       const { data: updatedChild, error: updateError } =
         await supabase

@@ -103,7 +103,10 @@ async function getAssignedCoachAgeGroupIds(db: any, credential: string, installa
     .select("age_group_id")
     .eq("person_id", personId);
   if (assignmentError) return null;
-  return [...new Set((assignments ?? []).map((row: any) => Number(row.age_group_id)).filter((id: number) => Number.isInteger(id) && id > 0))];
+  const assignedIds: number[] = (assignments ?? [])
+    .map((row: any): number => Number(row.age_group_id))
+    .filter((id: number): boolean => Number.isInteger(id) && id > 0);
+  return Array.from(new Set<number>(assignedIds));
 }
 
 Deno.serve(async (req) => {

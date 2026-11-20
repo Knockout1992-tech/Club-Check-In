@@ -1,0 +1,276 @@
+# Club Check-In — Club Operating & Recovery Guide
+
+**Club:** Rushden & Higham RUFC  
+**Application:** https://rhrufc-mini.pages.dev  
+**Match Availability:** Open the fixture link shared by the club  
+**Document status:** Working operational guide — review with the club before formal adoption  
+**Last reviewed:** 20 November 2026
+
+---
+
+## 1. Purpose and scope
+
+This guide explains how the club should use Club Check-In and Match Availability, what each role is permitted to do, and what to do when something goes wrong.
+
+It covers:
+- Parents and guardians submitting match availability.
+- Coaches viewing their assigned age groups and recording attendance.
+- Senior/Admin users managing people, access, fixtures, seasons and player records.
+- Routine data retention and anonymisation.
+- Basic troubleshooting and service recovery.
+
+This guide describes the reviewed system design. Some real-user workflows have not yet been demonstrated end to end; those are identified in Section 10.
+
+## 2. Roles and responsibilities
+
+| Role | Main responsibilities | Restrictions |
+|---|---|---|
+| Parent/guardian | Open a fixture link, sign in, maintain their children’s details and submit availability | Can only access their own family information and authorised fixture responses |
+| Coach | Access assigned age groups, view relevant match responses and record attendance | Cannot manage users or access unassigned age groups |
+| Senior | Senior-level club operations, including fixture/season and player administration | Does not automatically have System Admin authority |
+| System Admin | User and access administration and protected system-level operations | Reserved for specifically authorised users |
+
+Use an individual account/session where provided. Do not share personal PINs or leave an authenticated device unattended.
+
+## 3. Parents and guardians — Match Availability
+
+### 3.1 Open a fixture
+
+1. Open the fixture link shared by the club, normally through the club’s WhatsApp communication.
+2. Check that the opposition and fixture details are correct.
+3. If prompted, sign in using the parent account name and six-digit PIN.
+4. A parent who has not registered can create an account through the portal.
+
+Parent registration is intentionally not advertised as a public club sign-up route. The club shares fixture links with families.
+
+### 3.2 Add children and submit availability
+
+1. Add or select the child.
+2. Check the child’s name, age group and school year.
+3. Select one availability response: Available, Unavailable or Unsure.
+4. Submit the response and check that the portal confirms it.
+
+Only enter information requested by the portal. Do not enter medical details or other unnecessary personal information in free-text fields.
+
+### 3.3 Return to Parent Home
+
+Use the parent sign-in route and the same account details to return to Parent Home and review the family’s recorded responses.
+
+### 3.4 Edit a response
+
+Where editing is available, use the edit route supplied by the portal. Editing uses a separate, time-limited edit token and may be unavailable when the fixture is closed, the deadline has passed or an edit lock is active.
+
+If editing is blocked, contact the club through its normal communication channel. Do not repeatedly submit duplicate responses.
+
+### 3.5 Family invitations
+
+A parent can use the family-sharing invitation process where offered. Invitations are single-use and expire after 24 hours. If an invitation has expired or the link is invalid, ask the issuing parent to create a new invitation.
+
+An invitation gives access to the intended family-sharing arrangement; it is not a PIN reset or general account recovery method.
+
+### 3.6 Parent PIN problems
+
+- Check that the correct parent account name and six-digit PIN are being used.
+- Five failed PIN attempts can trigger a temporary ten-minute lock.
+- Wait for the lock period to expire before trying again.
+- There is currently no self-service parent PIN recovery.
+- Do not send a PIN to a coach or post it in a WhatsApp group.
+
+If access remains unavailable, refer the issue to the club’s designated Senior/Admin. Any manual account recovery process must be authorised by the club and should avoid collecting unnecessary personal information.
+
+## 4. Coaches — attendance and match information
+
+### 4.1 Sign in
+
+1. Open Club Check-In.
+2. Select the Coach sign-in route.
+3. Use your individual personal PIN or registered passkey, where available.
+4. Select an age group you have been assigned.
+
+The operational Coach access model uses an individual session. The old shared Coach PIN is not intended for normal Coach operations.
+
+If an expected age group is missing, ask a Senior/Admin to check your active age-group assignment. Do not try to access another Coach’s account.
+
+### 4.2 Record attendance
+
+1. Select the correct age group and register date.
+2. Check that the correct register is open.
+3. Mark each player present or absent.
+4. Check any changes before leaving the register.
+
+**Attendance changes are saved as they are made.** The Save/Leave action does not submit or lock the register. Do not assume that leaving the screen is what saves the attendance.
+
+If the connection fails or the app reports a save error:
+- Stop making further changes until the connection is restored.
+- Reopen the register and check the recorded positions.
+- Re-enter only changes that are genuinely missing.
+- Do not assume an unsuccessful save has been stored.
+
+Previous registers are handled by the system’s automatic close process on a subsequent login. Coaches do not need to treat Save/Leave as a register submission.
+
+### 4.3 New players and GMS
+
+A new player added to an open register is initially included as absent until attendance is recorded.
+
+Coaches can make GMS-related suggestions for their assigned groups. Final GMS confirmation is a Senior-only operation.
+
+### 4.4 Match Availability
+
+Coaches can view fixtures and responses for their assigned age groups. Fixture access and response visibility are restricted by the age-group assignments held by the system.
+
+If a fixture or child response is missing:
+- Confirm that the fixture includes your assigned age group.
+- Ask a Senior/Admin to check the fixture’s age-group allocation and your assignment.
+- Do not request another Coach’s credentials.
+
+## 5. Senior and System Admin operations
+
+### 5.1 User and access management
+
+Use the appropriate Senior/Admin area for the operation. System Admin functions are restricted to specifically authorised users.
+
+Typical access-management tasks include:
+- Adding or renaming manageable users.
+- Activating or deactivating users.
+- Assigning Coach age groups.
+- Reviewing installation/device access.
+- Resetting an installation where the system offers that operation.
+
+Before deactivating a user or resetting an installation, confirm the identity and the reason for the change. Explain the impact to the affected user through the club’s normal communication route.
+
+Deactivating a user is designed to revoke their active sessions, installation access and passkeys.
+
+### 5.2 Fixtures
+
+Senior/Admin users manage fixture creation, publication, changes and cancellation through Match Availability administration.
+
+Before publishing:
+- Check opposition and fixture date.
+- Check venue and home/away details.
+- Check the selected age groups.
+- Check response deadline and fixture status.
+- Share the generated fixture link through the club’s normal communication channel.
+
+If a fixture is changed or cancelled, communicate the change to affected families and Coaches. Do not assume that an old shared link represents the latest fixture details without checking the portal.
+
+### 5.3 Season planning
+
+Use the season-planning functions for planned events and one-off events. Coach access is limited to assigned age groups; Senior operations have broader authority.
+
+Check the date, event details and age groups before saving.
+
+### 5.4 Player archiving and anonymisation
+
+Archive players who are no longer active in accordance with club procedure. Permanent anonymisation is a separate action and should only be used when the club’s retention rules permit it.
+
+Before manual anonymisation:
+- Confirm the player is archived.
+- Check whether a retention hold applies.
+- Confirm the action is authorised.
+
+The anonymisation process is intended to preserve attendance history and player identifiers needed for historical relationships while removing identifying player details. Linked Match Availability child names are also anonymised, subject to applicable record-level holds.
+
+Do not use anonymisation as a routine way to correct a spelling mistake or remove a duplicate. Resolve the underlying record issue first.
+
+## 6. Data retention and privacy
+
+The system has automated retention policies and a daily scheduled retention process. Retention periods differ by record type and are configured in the system; this guide is not a substitute for the current club privacy and retention policies.
+
+Key operating points:
+- Do not keep local spreadsheets or screenshots of children’s attendance or availability unless the club has an approved need and storage arrangement.
+- Do not share PINs, session links or parent edit links.
+- Use only the information required to run rugby activities.
+- Retention holds must be used where records need to be preserved for an incident, review or other authorised reason.
+- Do not promise a parent that information has been erased until the authorised process has completed and the result has been checked.
+
+The app does not maintain an offline copy of the live player and attendance database on the device.
+
+## 7. Troubleshooting
+
+| Problem | What to do |
+|---|---|
+| App will not load | Check the device has internet access. Close and reopen the app or browser. Try the live app link again. |
+| App appears out of date | Close the app fully and reopen it while online. If the issue remains, ask the Senior/Admin to check the latest deployment. |
+| Supabase/connection error | Stop and avoid repeated submissions. Restore internet access, reopen the relevant screen and verify what was actually saved. |
+| Coach cannot sign in | Check personal PIN/passkey and internet access. If the account is locked, inactive or the session has expired, ask Senior/Admin to review access. |
+| Coach cannot see an age group | Ask Senior/Admin to check the active age-group assignment. |
+| Parent PIN rejected | Check account name and PIN. After five failed attempts, wait ten minutes before trying again. |
+| Parent cannot edit a response | Check fixture status, deadline and edit-lock message. Ask the club if the response needs administrative attention. |
+| Fixture link does not work | Check the link has been copied in full and that the fixture is still valid/open. Ask Senior/Admin to verify or share a fresh link. |
+| Attendance appears wrong after a connection failure | Reopen the correct register and compare each player. Correct only confirmed missing or incorrect entries. |
+| A user has lost a device | Ask Senior/Admin to review installation access and revoke/reset the affected installation if appropriate. |
+| Suspected unauthorised access | Stop using the affected session/device and report it promptly to the designated Senior/Admin. Preserve relevant details; do not delete records or attempt to investigate by changing data. |
+
+## 8. Service outage and recovery
+
+### 8.1 If the internet or Supabase is unavailable
+
+Club Check-In requires an online connection for operational data. It is not an offline attendance system.
+
+1. Confirm whether the device has internet access.
+2. If other websites work but Club Check-In does not, treat it as a possible service issue.
+3. Do not repeatedly submit the same parent response or attendance changes.
+4. If attendance must be taken immediately, use the club’s separately approved temporary contingency method.
+5. Keep any temporary record secure and accessible only to the people who need it.
+6. When service returns, an authorised Coach should enter or reconcile the attendance in the correct register.
+7. Verify the entries before disposing of the temporary record in accordance with club policy.
+
+The temporary contingency method must be agreed by the club. This guide does not authorise storing children’s information in personal messaging accounts or unapproved spreadsheets.
+
+### 8.2 If an account or installation is compromised
+
+1. Notify the designated Senior/Admin promptly.
+2. Identify the affected user and device/installation.
+3. Use the system’s access-management controls to deactivate the user or reset/revoke the affected installation as appropriate.
+4. Check whether other active sessions or passkeys need revoking.
+5. Record the incident and any retention hold required.
+6. Do not delete relevant audit records while the incident is being reviewed.
+
+### 8.3 Backups and restoration
+
+A GitHub Actions backup workflow has been prepared, but the database connection secret has not yet been configured and a successful backup/restoration test has **not** been completed.
+
+Therefore:
+- Do not treat GitHub source control as a database backup.
+- Do not assume that the club can currently restore all live database records from the backup workflow.
+- Do not make destructive database changes on the assumption that a tested restore point exists.
+- Backup setup and a restoration exercise remain outstanding.
+
+If the database becomes unavailable or data appears to be missing, escalate to the person responsible for the Supabase project. Do not attempt an improvised database restore.
+
+## 9. Deployment and application updates
+
+The canonical source repository is Knockout1992-tech/Club-Check-In. Changes are deployed through the configured GitHub workflows. The Parent Match Availability portal is maintained in its own repository and synchronised from the canonical project where configured.
+
+Operational users should:
+- Use the live club link rather than an old bookmark or copied test URL.
+- Avoid installing unofficial copies or using old duplicate Pages addresses.
+- Report unexpected behaviour with the screen, approximate time and steps that led to it.
+- Never send PINs, session tokens or private invitation/edit links as diagnostic evidence.
+
+The latest reviewed release on 20 November 2026 was Club Check-In V3.6.9. This version reference will become outdated as future releases are deployed.
+
+## 10. Checks still required before formal adoption
+
+The technical review and automated checks do not replace live operational acceptance testing. The following remain to be demonstrated with authorised real accounts:
+
+- Parent family invitation acceptance and separation of family data.
+- Coach sign-in and a complete attendance workflow.
+- Senior/Admin sign-in and representative administration tasks.
+- A real parent availability submission and subsequent review/edit.
+- A real attendance save and subsequent verification.
+
+The club should record who performed each check, the date, the outcome and any corrective action.
+
+The backup workflow also requires its secrets to be configured, a successful backup run and a controlled restoration test.
+
+## 11. Document ownership and review
+
+The club should nominate a document owner (normally a designated Senior/Admin or club officer) to:
+- Confirm role responsibilities and escalation arrangements.
+- Agree the temporary attendance contingency method.
+- Check this guide after material application changes.
+- Review it alongside the club’s privacy, retention and safeguarding arrangements.
+- Record formal approval and the next review date.
+
+**This is a working operational guide, not evidence by itself of formal Club approval, a completed disaster-recovery test or legal compliance certification.**

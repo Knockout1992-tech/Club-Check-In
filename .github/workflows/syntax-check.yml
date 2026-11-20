@@ -1,4 +1,3 @@
-
 name: PWA Versioning and Syntax Check
 
 concurrency:
@@ -24,13 +23,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check PDM external JavaScript
-        run: node --check js/personal-data-admin.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-      - name: Check System Admin and retention JavaScript
-        run: node --check js/retention-admin.js
+      - name: Check all external JavaScript files
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --check "$file"
+          done < <(find js -type f -name '*.js' -print0 | sort -z)
 
-      - name: Check index.html JavaScript
+      - name: Check inline JavaScript in index.html
         run: |
           python3 - <<'PY'
           import re
@@ -41,26 +47,42 @@ jobs:
               html = f.read()
 
           scripts = re.findall(
-              r"<script\b[^>]*>(.*?)</script>",
+              r"<script\\b[^>]*>(.*?)</script>",
               html,
               re.DOTALL | re.IGNORECASE
           )
 
+          checked = 0
           for i, script in enumerate(scripts, 1):
+              if not script.strip():
+                  continue
               result = subprocess.run(
                   ["node", "--check"],
                   input=script,
                   text=True,
                   capture_output=True
               )
-
               if result.returncode != 0:
                   print(f"JavaScript syntax error in script block {i}:")
                   print(result.stderr)
                   sys.exit(1)
+              checked += 1
 
-          print(f"JavaScript syntax check passed ({len(scripts)} script blocks checked).")
+          print(f"JavaScript syntax check passed ({checked} inline script blocks checked).")
           PY
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check all Club Check-In Edge Functions
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            deno check --no-lock "$file"
+          done < <(find supabase/functions -mindepth 2 -maxdepth 2 -name 'index.ts' -print0 | sort -z)
 
       - name: Safely increment and push PWA versions
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip ci]')

@@ -336,7 +336,7 @@ Deno.serve(async (req: Request) => {
           requireUserVerification: true,
           credential: {
             id: passkey.credential_id,
-            publicKey: decodeBase64Url(passkey.public_key),
+            publicKey: new Uint8Array(decodeBase64Url(passkey.public_key)),
             counter: Number(passkey.sign_count),
             transports: passkey.transports,
           },

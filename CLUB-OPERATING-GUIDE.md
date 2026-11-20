@@ -19,7 +19,7 @@ It covers:
 - Routine data retention and anonymisation.
 - Basic troubleshooting and service recovery.
 
-This guide describes the reviewed system design. Some real-user workflows have not yet been demonstrated end to end; those are identified in Section 10.
+This guide reflects technical reviews and intermittent live use of the system. The main parent, Coach, Senior/Admin and attendance workflows have been exercised in normal use, but this has not been recorded as one formal end-to-end acceptance test. Section 10 identifies only the remaining follow-up points.
 
 ## 2. Roles and responsibilities
 
@@ -64,7 +64,7 @@ If editing is blocked, contact the club through its normal communication channel
 
 ### 3.5 Family invitations
 
-A parent can use the family-sharing invitation process where offered. Invitations are single-use and expire after 24 hours. If an invitation has expired or the link is invalid, ask the issuing parent to create a new invitation.
+A parent can use the family-sharing invitation process where offered. Invitations are single-use and expire after 24 hours. The corrected invitation link has been confirmed working in live use. If an invitation has expired or the link is invalid, ask the issuing parent to create a new invitation.
 
 An invitation gives access to the intended family-sharing arrangement; it is not a PIN reset or general account recovery method.
 
@@ -228,15 +228,14 @@ The temporary contingency method must be agreed by the club. This guide does not
 
 ### 8.3 Backups and restoration
 
-A GitHub Actions backup workflow has been prepared, but the database connection secret has not yet been configured and a successful backup/restoration test has **not** been completed.
+A GitHub Actions database backup workflow has been prepared, but it is not yet configured because the database connection details have not been added. A successful backup and restoration test have therefore **not** been completed.
 
-Therefore:
-- Do not treat GitHub source control as a database backup.
-- Do not assume that the club can currently restore all live database records from the backup workflow.
-- Do not make destructive database changes on the assumption that a tested restore point exists.
-- Backup setup and a restoration exercise remain outstanding.
+This is a planned resilience improvement, not a blocker to routine use of the live system. The club should remain aware that GitHub source control is not a database backup and that a tested database restore is not currently available. When convenient, the workflow can be configured and a controlled restoration exercise carried out.
 
-If the database becomes unavailable or data appears to be missing, escalate to the person responsible for the Supabase project. Do not attempt an improvised database restore.
+Until then:
+- Avoid destructive database changes unless there is a clear reason and an appropriate recovery plan.
+- If the database becomes unavailable or data appears to be missing, escalate to the person responsible for the Supabase project.
+- Do not attempt an improvised database restore.
 
 ## 9. Deployment and application updates
 
@@ -252,17 +251,11 @@ The latest reviewed release on 20 November 2026 was Club Check-In V3.6.9. This v
 
 ## 10. Checks still required before formal adoption
 
-The technical review and automated checks do not replace live operational acceptance testing. The following remain to be demonstrated with authorised real accounts:
+The system has been exercised in live use at different times across the parent, Coach, Senior/Admin, Match Availability and attendance workflows. These checks have not been consolidated into a single formal acceptance record, but there is no requirement to repeat working journeys solely to create one.
 
-- Parent family invitation acceptance and separation of family data.
-- Coach sign-in and a complete attendance workflow.
-- Senior/Admin sign-in and representative administration tasks.
-- A real parent availability submission and subsequent review/edit.
-- A real attendance save and subsequent verification.
+The corrected family invitation link has also been confirmed working in live use. The outstanding governance task is to keep a simple record of any future issues or material changes and the checks performed in response.
 
-The club should record who performed each check, the date, the outcome and any corrective action.
-
-The backup workflow also requires its secrets to be configured, a successful backup run and a controlled restoration test.
+Database backup and restoration remain a lower-priority resilience improvement. The backup workflow is prepared but not configured, and no restoration test has been completed. This does not prevent routine operation, but it should be revisited when the database connection details are available.
 
 ## 11. Document ownership and review
 

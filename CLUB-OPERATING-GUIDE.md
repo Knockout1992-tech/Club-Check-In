@@ -15,11 +15,11 @@ This guide explains how the club should use Club Check-In and Match Availability
 It covers:
 - Parents and guardians submitting match availability.
 - Coaches viewing their assigned age groups and recording attendance.
-- Senior/Admin users managing people, access, fixtures, seasons and player records.
+- Admin users managing people, access, fixtures, seasons and player records.
 - Routine data retention and anonymisation.
 - Basic troubleshooting and service recovery.
 
-This guide reflects technical reviews and intermittent live use of the system. The main parent, Coach, Senior/Admin and attendance workflows have been exercised in normal use, but this has not been recorded as one formal end-to-end acceptance test. Section 10 identifies only the remaining follow-up points.
+This guide reflects technical reviews and intermittent live use of the system. The main parent, Coach, Admin and attendance workflows have been exercised in normal use, but this has not been recorded as one formal end-to-end acceptance test. Section 10 identifies only the remaining follow-up points.
 
 ## 2. Roles and responsibilities
 
@@ -27,7 +27,7 @@ This guide reflects technical reviews and intermittent live use of the system. T
 |---|---|---|
 | Parent/guardian | Open a fixture link, sign in, maintain their children’s details and submit availability | Can only access their own family information and authorised fixture responses |
 | Coach | Access assigned age groups, view relevant match responses and record attendance | Cannot manage users or access unassigned age groups |
-| Senior | Senior-level club operations, including fixture/season and player administration | Does not automatically have System Admin authority |
+| Admin | Club administration, including fixtures, seasons and player records | Does not automatically have System Admin authority |
 | System Admin | User and access administration and protected system-level operations | Reserved for specifically authorised users |
 
 Use an individual account/session where provided. Do not share personal PINs or leave an authenticated device unattended.
@@ -76,7 +76,7 @@ An invitation gives access to the intended family-sharing arrangement; it is not
 - There is currently no self-service parent PIN recovery.
 - Do not send a PIN to a coach or post it in a WhatsApp group.
 
-If access remains unavailable, refer the issue to the club’s designated Senior/Admin. Any manual account recovery process must be authorised by the club and should avoid collecting unnecessary personal information.
+If access remains unavailable, refer the issue to the club’s designated Admin. Any manual account recovery process must be authorised by the club and should avoid collecting unnecessary personal information.
 
 ## 4. Coaches — attendance and match information
 
@@ -89,7 +89,7 @@ If access remains unavailable, refer the issue to the club’s designated Senior
 
 The operational Coach access model uses an individual session. The old shared Coach PIN is not intended for normal Coach operations.
 
-If an expected age group is missing, ask a Senior/Admin to check your active age-group assignment. Do not try to access another Coach’s account.
+If an expected age group is missing, ask a Admin to check your active age-group assignment. Do not try to access another Coach’s account.
 
 ### 4.2 Record attendance
 
@@ -112,7 +112,7 @@ Previous registers are handled by the system’s automatic close process on a su
 
 A new player added to an open register is initially included as absent until attendance is recorded.
 
-Coaches can make GMS-related suggestions for their assigned groups. Final GMS confirmation is a Senior-only operation.
+Coaches can make GMS-related suggestions for their assigned groups. Final GMS confirmation is a Admin-only operation.
 
 ### 4.4 Match Availability
 
@@ -120,14 +120,14 @@ Coaches can view fixtures and responses for their assigned age groups. Fixture a
 
 If a fixture or child response is missing:
 - Confirm that the fixture includes your assigned age group.
-- Ask a Senior/Admin to check the fixture’s age-group allocation and your assignment.
+- Ask a Admin to check the fixture’s age-group allocation and your assignment.
 - Do not request another Coach’s credentials.
 
-## 5. Senior and System Admin operations
+## 5. Admin and System Admin operations
 
 ### 5.1 User and access management
 
-Use the appropriate Senior/Admin area for the operation. System Admin functions are restricted to specifically authorised users.
+Use the appropriate Admin area for the operation. System Admin functions are restricted to specifically authorised users.
 
 Typical access-management tasks include:
 - Adding or renaming manageable users.
@@ -142,7 +142,7 @@ Deactivating a user is designed to revoke their active sessions, installation ac
 
 ### 5.2 Fixtures
 
-Senior/Admin users manage fixture creation, publication, changes and cancellation through Match Availability administration.
+Admin users manage fixture creation, publication, changes and cancellation through Match Availability administration.
 
 Before publishing:
 - Check opposition and fixture date.
@@ -155,7 +155,7 @@ If a fixture is changed or cancelled, communicate the change to affected familie
 
 ### 5.3 Season planning
 
-Use the season-planning functions for planned events and one-off events. Coach access is limited to assigned age groups; Senior operations have broader authority.
+Use the season-planning functions for planned events and one-off events. Coach access is limited to assigned age groups; Admin operations have broader authority.
 
 Check the date, event details and age groups before saving.
 
@@ -190,16 +190,16 @@ The app does not maintain an offline copy of the live player and attendance data
 | Problem | What to do |
 |---|---|
 | App will not load | Check the device has internet access. Close and reopen the app or browser. Try the live app link again. |
-| App appears out of date | Close the app fully and reopen it while online. If the issue remains, ask the Senior/Admin to check the latest deployment. |
+| App appears out of date | Close the app fully and reopen it while online. If the issue remains, ask the Admin to check the latest deployment. |
 | Supabase/connection error | Stop and avoid repeated submissions. Restore internet access, reopen the relevant screen and verify what was actually saved. |
-| Coach cannot sign in | Check personal PIN/passkey and internet access. If the account is locked, inactive or the session has expired, ask Senior/Admin to review access. |
-| Coach cannot see an age group | Ask Senior/Admin to check the active age-group assignment. |
+| Coach cannot sign in | Check personal PIN/passkey and internet access. If the account is locked, inactive or the session has expired, ask Admin to review access. |
+| Coach cannot see an age group | Ask Admin to check the active age-group assignment. |
 | Parent PIN rejected | Check account name and PIN. After five failed attempts, wait ten minutes before trying again. |
 | Parent cannot edit a response | Check fixture status, deadline and edit-lock message. Ask the club if the response needs administrative attention. |
-| Fixture link does not work | Check the link has been copied in full and that the fixture is still valid/open. Ask Senior/Admin to verify or share a fresh link. |
+| Fixture link does not work | Check the link has been copied in full and that the fixture is still valid/open. Ask Admin to verify or share a fresh link. |
 | Attendance appears wrong after a connection failure | Reopen the correct register and compare each player. Correct only confirmed missing or incorrect entries. |
-| A user has lost a device | Ask Senior/Admin to review installation access and revoke/reset the affected installation if appropriate. |
-| Suspected unauthorised access | Stop using the affected session/device and report it promptly to the designated Senior/Admin. Preserve relevant details; do not delete records or attempt to investigate by changing data. |
+| A user has lost a device | Ask Admin to review installation access and revoke/reset the affected installation if appropriate. |
+| Suspected unauthorised access | Stop using the affected session/device and report it promptly to the designated Admin. Preserve relevant details; do not delete records or attempt to investigate by changing data. |
 
 ## 8. Service outage and recovery
 
@@ -219,7 +219,7 @@ The temporary contingency method must be agreed by the club. This guide does not
 
 ### 8.2 If an account or installation is compromised
 
-1. Notify the designated Senior/Admin promptly.
+1. Notify the designated Admin promptly.
 2. Identify the affected user and device/installation.
 3. Use the system’s access-management controls to deactivate the user or reset/revoke the affected installation as appropriate.
 4. Check whether other active sessions or passkeys need revoking.
@@ -251,7 +251,7 @@ The latest reviewed release on 20 November 2026 was Club Check-In V3.6.9. This v
 
 ## 10. Checks still required before formal adoption
 
-The system has been exercised in live use at different times across the parent, Coach, Senior/Admin, Match Availability and attendance workflows. These checks have not been consolidated into a single formal acceptance record, but there is no requirement to repeat working journeys solely to create one.
+The system has been exercised in live use at different times across the parent, Coach, Admin, Match Availability and attendance workflows. These checks have not been consolidated into a single formal acceptance record, but there is no requirement to repeat working journeys solely to create one.
 
 The corrected family invitation link has also been confirmed working in live use. The outstanding governance task is to keep a simple record of any future issues or material changes and the checks performed in response.
 
@@ -259,7 +259,7 @@ Database backup and restoration remain a lower-priority resilience improvement. 
 
 ## 11. Document ownership and review
 
-The club should nominate a document owner (normally a designated Senior/Admin or club officer) to:
+The club should nominate a document owner (normally a designated Admin or club officer) to:
 - Confirm role responsibilities and escalation arrangements.
 - Agree the temporary attendance contingency method.
 - Check this guide after material application changes.

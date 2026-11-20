@@ -265,6 +265,8 @@ const requestedRole = hasCoachCode ? "coach" : "senior";
         }, 500);
       }
 
+      if (!updatedChild) return response({ error: "Unable to update availability" }, 500);
+
       return response({
         success: true,
         action: "update_availability",
@@ -296,6 +298,8 @@ const requestedRole = hasCoachCode ? "coach" : "senior";
           error: "Unable to delete duplicate entry",
         }, 500);
       }
+
+      if (!deletedChild) return response({ error: "Unable to delete duplicate entry" }, 500);
 
       return response({
         success: true,

@@ -1,6 +1,6 @@
 # Club Check-In Security Review
 
-**Review date:** 19 November 2026  
+**Review date:** 20 November 2026  
 **Status:** Technical controls implemented; Club policy approval remains a governance decision.
 
 ## Scope
@@ -49,7 +49,7 @@ A Coach may only manage or publish a fixture when every age group attached to th
 
 Verified against the live Supabase project:
 
-- All 44 tables in the exposed `public` schema have Row Level Security enabled.
+- All 46 tables in the exposed `public` schema have Row Level Security enabled.
 - No public table is missing RLS.
 - The `anon` role has zero direct INSERT, UPDATE or DELETE table grants.
 - Anonymous direct SELECT is limited to the public age-group and season lookup tables.
@@ -65,12 +65,21 @@ The advisor cannot determine whether those internal checks are correct from the 
 
 ## Verification performed
 
-- Confirmed all 44 public tables have RLS enabled.
+- Confirmed all 46 public tables have RLS enabled.
 - Confirmed zero anonymous direct table write grants.
 - Confirmed an invalid personal Coach session is rejected.
 - Confirmed a legacy shared Coach credential is rejected by the operational Coach identity lookup.
 - Confirmed the unused installation-wide user lookup RPC is not executable by anon or authenticated.
 - Confirmed the four hardened fixture/availability Edge Functions are deployed and their source matches the canonical GitHub `main` branch.
+
+## Additional maintenance review — 20 November 2026
+
+- Reviewed retention scheduling and policy execution; scheduled daily retention runs were completing successfully at the time of review.
+- Corrected manual archived-player anonymisation so player-level retention holds block the action and linked Match Availability child names are anonymised consistently, while preserving attendance history and player identifiers.
+- Reviewed offline and connection-failure behaviour. The application requires an online Supabase connection for operational data; it does not maintain an offline attendance database.
+- Confirmed the latest canonical Club Check-In release and production mirror workflows completed successfully on 20 November 2026. The deployed PWA version is V3.6.9.
+
+Operational limitation: source and automated checks do not replace live end-to-end testing with actual parent, Coach and Senior/Admin accounts. Backup restoration has not yet been demonstrated.
 
 ## Governance remaining
 

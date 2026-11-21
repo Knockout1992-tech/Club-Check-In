@@ -1,6 +1,6 @@
 # Club Check-In — Change-Control, Security & Privacy Master Prompt
 
-**Purpose:** This document is the mandatory starting point for any future ChatGPT work on Club Check-In. It records the known architecture, operating decisions, security expectations, privacy requirements and working rules. It is a control document, not proof that every item has been re-tested or that the Club has formally approved its policies.
+**Purpose:** This document is the mandatory starting point for any future work on Club Check-In. It records the known architecture, operating decisions, security expectations, privacy requirements and working rules. It is a control document, not proof that every item has been re-tested or that the Club has formally approved its policies.
 
 **Club:** Rushden & Higham RUFC  
 **Main application:** https://rhrufc-mini.pages.dev  
@@ -14,7 +14,7 @@
 
 ---
 
-## 0. Mandatory instruction to ChatGPT — read this first
+## 0. Mandatory instruction — read this first
 
 You are assisting with a live, operational club system used by parents/guardians, Coaches and club administrators. Treat this as a production system holding information about children. Your job is to improve it without breaking existing working behaviour or collecting unnecessary information.
 

@@ -3,14 +3,14 @@
 **Purpose:** This document is the mandatory starting point for any future work on Club Check-In. It records the known architecture, operating decisions, security expectations, privacy requirements and working rules. It is a control document, not proof that every item has been re-tested or that the Club has formally approved its policies.
 
 **Club:** Rushden & Higham RUFC  
-**Main application:** https://rhrufc-mini.pages.dev  
+**Main application:** https://rhrufc-mini.pages.dev/club-check-in/  
 **Main repository:** https://github.com/Knockout1992-tech/Club-Check-In  
 **Canonical production branch:** `main`  
 **Documentation branch created for this file:** `docs/club-checkin-master-prompt`  
 **Supabase project reference:** `muxxlewtqhpckhoqeinn`  
 **Related Match Availability site repository:** `Knockout1992-tech/Club-Match-Availability`  
 **Last consolidated:** 21 November 2026  
-**Current source version constant observed in `js/config.js`:** `V3.7.4` (this is a source-code value; verify the actual live deployed version before relying on it).
+**Canonical source version observed in `main/js/config.js` on 21 November 2026:** `V3.7.9`. **Production mirror version observed in `Club-Match-Availability/club-check-in/js/config.js`:** `V3.8.1`. These values do not match; neither value alone proves what Cloudflare is currently serving. Resolve the version mismatch before declaring a release live.
 
 ---
 
@@ -81,14 +81,14 @@ The system is not a general-purpose CRM and must not drift into one.
 
 ### 2.1 Main Club Check-In PWA
 
-- Live URL: `https://rhrufc-mini.pages.dev`
+- Live app URL: `https://rhrufc-mini.pages.dev/club-check-in/` (the Pages project root serves Match Availability; Club Check-In is published under `/club-check-in/`).
 - Repository: `Knockout1992-tech/Club-Check-In`
 - Canonical source branch: `main`
 - Frontend is a browser-based Progressive Web App.
 - Supabase provides database, RPC and Edge Function services.
 - The app requires an online connection for operational data. It is not an offline attendance database.
 - The service worker uses a network-first strategy for same-origin GET requests and maintains an app-shell/cache fallback. It is configured not to retain a local player database. Review the current service worker before changing caching behaviour.
-- The source version constant observed in `js/config.js` is `V3.7.4`; verify the deployed version independently.
+- Canonical source and production mirror versions were found to differ on 21 November 2026 (`V3.7.9` versus `V3.8.1`). Verify the live Cloudflare response independently; do not use either repository value as proof of the live version.
 
 ### 2.2 Match Availability
 
@@ -107,6 +107,23 @@ The main repository contains GitHub workflows including:
 - `.github/workflows/pdm-browser-tests.yml`
 
 Read the current workflow files before any push or deployment. Understand exactly which branch/event triggers production synchronisation and which remote/site it updates. A successful GitHub commit is not proof that the Pages deployment or Edge Functions have updated.
+
+
+### 2.5 Verified Club Check-In release and Cloudflare Pages chain — 21 November 2026
+
+The Club Check-In PWA has a two-repository release path and a separate Cloudflare deployment stage:
+
+1. Canonical source: `Knockout1992-tech/Club-Check-In`, branch `main`.
+2. `.github/workflows/syntax-check.yml` (PWA Versioning and Syntax Check) checks external and inline JavaScript and performs advisory Deno checks. On a successful push to `main`, it automatically increments `APP_VERSION` in `js/config.js` and the service-worker cache version, then pushes a generated version commit.
+3. `.github/workflows/pdm-browser-tests.yml` runs the PDM browser smoke tests on pushes and pull requests to `main`.
+4. `.github/workflows/sync-production.yml` starts after the versioning workflow completes successfully on `main` (or by manual dispatch). It checks out the latest canonical `main`, stages `index.html`, `manifest.json`, `service-worker.js`, `css/`, `js/`, `icons/` and optional `RHRFC.jpg`, then mirrors these runtime files into `Knockout1992-tech/Club-Match-Availability/club-check-in/` and pushes that repository's `main`. It requires the `CLUB_CHECK_IN_SYNC_TOKEN` repository secret.
+5. The push to the Match Availability repository is expected to trigger its Cloudflare Pages Git integration. This is a separate final stage; the sync workflow does not prove that the Cloudflare build completed or that the public URL is serving the new files.
+
+**Correct Club Check-In URL:** `https://rhrufc-mini.pages.dev/club-check-in/`. The root URL is the Match Availability site, not the Club Check-In launch page.
+
+For every release, verify separately: canonical source commit/version; versioning workflow and generated commit; browser test result; production mirror commit and copied version; Cloudflare Pages deployment status and deployed commit; then public responses for `/club-check-in/js/config.js` and `/club-check-in/service-worker.js`. A green GitHub sync run alone is not release acceptance. The sync workflow is designed to copy the latest canonical `main` after versioning; if runs overlap, fail or are manually dispatched, inspect the exact commits rather than assuming correct ordering.
+
+**Discrepancy found 21 November 2026:** canonical `main/js/config.js` returned `V3.7.9`, while the production mirror `club-check-in/js/config.js` returned `V3.8.1`. The live Cloudflare response has not yet been independently verified. Treat this as an unresolved release-integrity issue. Do not state a confirmed live version or manually change version/cache values until the reason for the mismatch is established.
 
 ### 2.4 Current source layout observed
 

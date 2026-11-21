@@ -541,12 +541,38 @@ If the user says “go” after a clearly described plan, treat that as approval
 
 ---
 
-## 14. Copy-and-use prompt
+## 14. Living-document requirement — mandatory for every chat
+
+This file is the project's **living control document**, not a one-off handover note. Every ChatGPT conversation that works on Club Check-In must maintain it.
+
+### Required behaviour in every new chat
+
+1. Fetch and read the latest version of this file from the canonical repository and branch before doing any work. Do not rely on a copy pasted into an earlier conversation or on remembered context.
+2. Check whether the requested task or any approved change affects the architecture, setup, repositories, deployment, roles, authentication, permissions, data flows, privacy, retention, security controls, testing, operating procedures or known issues.
+3. If the work reveals that any statement in this document is wrong, stale, incomplete or newly verified, flag that discrepancy. Do not leave known misleading instructions in place.
+4. When an approved change materially affects the system or its operating rules, update this document as part of the same work. Include the date, what changed, relevant files/functions/tables/configuration, verification performed and any remaining caveats.
+5. If a task is investigative only and no change is authorised, do not silently amend production code or configuration. You may propose a documentation update; only commit it when the user has authorised the documentation change or has given standing approval for routine factual maintenance.
+6. Do not record secrets, credentials, real PINs, tokens, personal data, identifiable child/family details or sensitive operational values in this file.
+7. Keep historical findings clearly labelled with dates and status. Do not present an old finding as a current fact without re-verification.
+8. Do not delete unresolved issues merely because a code change was attempted. Close an item only after its resolution has been verified.
+9. Keep the document concise enough to remain usable, but detailed enough that a new chat can safely understand the system and its constraints.
+10. Before finishing a task, explicitly state whether this living document needed updating. If it did, identify the section updated and provide the commit/branch reference. If it did not, say why.
+
+### Where and how to maintain it
+
+- The intended long-term canonical location is the root of `main` in `Knockout1992-tech/Club-Check-In`.
+- Until the user confirms that this file has been moved to `main`, retrieve the current authorised working copy from the branch containing this document. Do not assume the temporary documentation branch is already the canonical location.
+- Do not create another branch just to update this document. Follow the user's current branch/deployment instructions.
+- Update the document through a reviewed GitHub commit, preserving its existing history. Do not overwrite unrelated edits.
+- A documentation update is not permission to deploy the application, alter database state or publish a privacy policy.
+- If the relevant code change is not yet approved, do not pre-emptively document it as implemented. You may record it as a proposal or unresolved item with its status clearly stated.
+
+## 15. Copy-and-use prompt
 
 The user can start a future Club Check-In conversation with the following instruction:
 
-> **Before doing anything, read `AI-CHANGE-CONTROL-AND-SECURITY-MASTER-PROMPT.md` in the Club-Check-In repository, then read the current operating guide, security review, relevant source, migrations and live privacy/retention policy. Treat the master prompt as mandatory working rules. Verify the current implementation rather than assuming the document is perfectly current. Do not amend code, database permissions, data, policies or production configuration until you have explained the proposed change, impact, risks and tests and I have explicitly approved it. Preserve working functionality, minimise data collection, keep the privacy notice aligned with actual behaviour, and do not deploy without separate approval.**
+> **Before doing anything, fetch and read the latest `AI-CHANGE-CONTROL-AND-SECURITY-MASTER-PROMPT.md` from the Club-Check-In repository's canonical branch. Then read the current operating guide, security review, relevant source, migrations and live privacy/retention policy. Treat the master prompt as mandatory working rules and as a living document that you must maintain. Verify the current implementation rather than assuming the document is perfectly current. Do not amend code, database permissions, data, policies or production configuration until you have explained the proposed change, impact, risks and tests and I have explicitly approved it. Preserve working functionality, minimise data collection, keep the privacy notice aligned with actual behaviour, and do not deploy without separate approval. Whenever an approved change materially affects the system, update the master prompt in the same work, record what changed and how it was verified, and commit the documentation update. At the end of every task, tell me whether the living document was updated and where the change was committed.**
 
 ---
 
-**Document control:** Update this file when architecture, authentication, data collection, retention, deployment or user-approved working rules materially change. Keep dated findings and distinguish confirmed live facts from historical notes, assumptions and unresolved items. Do not put credentials, secrets, personal data or real user identifiers in this document.
+**Document control:** This file must be reviewed and maintained as part of every material Club Check-In change. Keep dated findings and distinguish confirmed live facts from historical notes, assumptions and unresolved items. Do not put credentials, secrets, personal data or real user identifiers in this document.

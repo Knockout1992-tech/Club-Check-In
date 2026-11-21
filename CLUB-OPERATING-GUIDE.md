@@ -1,7 +1,7 @@
 # Club Check-In — Club Operating & Recovery Guide
 
 **Club:** Rushden & Higham RUFC  
-**Application:** https://rhrufc-mini.pages.dev  
+**Application:** https://rhrufc-mini.pages.dev/club-check-in/  
 **Match Availability:** Open the fixture link shared by the club  
 **Document status:** Working operational guide — review with the club before formal adoption  
 **Last reviewed:** 20 November 2026
@@ -238,15 +238,28 @@ Until then:
 
 ## 9. Deployment and application updates
 
-The canonical source repository is Knockout1992-tech/Club-Check-In. Changes are deployed through the configured GitHub workflows. The Parent Match Availability portal is maintained in its own repository and synchronised from the canonical project where configured.
+The canonical source repository is `Knockout1992-tech/Club-Check-In`, branch `main`. The production mirror is `Knockout1992-tech/Club-Match-Availability`, branch `main`, folder `club-check-in/`. Cloudflare Pages hosts Match Availability at the project root and Club Check-In beneath `/club-check-in/`.
+
+**Correct Club Check-In launch URL:** https://rhrufc-mini.pages.dev/club-check-in/
+
+The release path is:
+
+1. A change is committed to canonical `main`.
+2. `PWA Versioning and Syntax Check` checks JavaScript and automatically increments the app version and service-worker cache version on a successful push.
+3. `PDM Browser Tests` runs browser smoke tests.
+4. `Sync canonical Club Check-In to production` checks out the latest canonical `main`, copies the PWA runtime files into `Club-Match-Availability/club-check-in/`, and pushes the mirror repository's `main` branch.
+5. That mirror push is expected to trigger the Cloudflare Pages Git deployment.
+6. The Cloudflare Pages deployment must be checked separately, followed by verification of the public app URL and assets. A successful GitHub sync is not proof that Cloudflare has finished deploying.
+
+If the app appears out of date, check each stage in order: canonical source version, versioning workflow result and generated commit, mirror version and commit, Cloudflare Pages deployment status/commit, then the public `club-check-in/js/config.js` and service-worker response. Do not immediately ask users to uninstall the PWA or clear stored data.
 
 Operational users should:
-- Use the live club link rather than an old bookmark or copied test URL.
+- Use the exact live Club Check-In link above, not the Pages project root, an old bookmark or a copied test URL.
 - Avoid installing unofficial copies or using old duplicate Pages addresses.
 - Report unexpected behaviour with the screen, approximate time and steps that led to it.
 - Never send PINs, session tokens or private invitation/edit links as diagnostic evidence.
 
-The latest reviewed release on 20 November 2026 was Club Check-In V3.6.9. This version reference will become outdated as future releases are deployed.
+**Version status (21 November 2026):** canonical source `js/config.js` was observed as `V3.7.9`, while the production mirror `club-check-in/js/config.js` was observed as `V3.8.1`. These values do not match and the live Cloudflare response has not yet been independently confirmed. Do not quote either value as the confirmed live version until the discrepancy is investigated and Cloudflare's deployed assets have been checked.
 
 ## 10. Checks still required before formal adoption
 

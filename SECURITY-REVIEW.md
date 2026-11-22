@@ -84,3 +84,21 @@ Operational limitation: source and automated checks do not replace live end-to-e
 ## Governance remaining
 
 The Club must review and approve the policy content, retention periods, responsibilities and contact details before treating the policies as formally adopted. Technical implementation does not itself constitute Club approval or a legal compliance certification.
+
+
+## Supplementary review — First-Aider Management (22 November 2026)
+
+A System Admin-only first-aider volunteer register has been added.
+
+- Tables: \`first_aider_volunteers\` and \`first_aider_age_group_assignments\`.
+- Both tables have RLS enabled and direct table privileges revoked from \`PUBLIC\`, \`anon\` and \`authenticated\`.
+- The four RPCs (\`get_first_aider_admin_data\`, \`save_first_aider\`, \`set_first_aider_active\`, \`clear_dummy_first_aider_data\`) are \`SECURITY DEFINER\`, use an empty fixed search path and call the existing System Admin PIN verifier before accessing records.
+- Browser access to the RPCs is granted to anon/authenticated only because the app's custom System Admin PIN model is not Supabase Auth; every RPC independently verifies the PIN. This is not a public unauthenticated data path.
+- One main assignment per volunteer is enforced by a partial unique index. Additional assignments are stored separately and do not count as main coverage.
+- Main-cover gaps are calculated from active volunteers and their main assignments only. Shared assignments do not close a gap.
+- Optional pitch is operational allocation information, not a qualification or medical record.
+- Demonstration records are marked \`is_dummy=true\`; cleanup deletes only those records and cascades their assignments.
+- Retention policy \`first_aider_volunteers\` is enabled as manual review only, with automatic enforcement disabled and no period invented.
+- The live policy content now identifies System Admin access to volunteer names and age-group/pitch allocations. The public privacy notice wording and retention schedule have also been amended to describe the data.
+
+**Verification evidence:** database metadata confirms both tables have RLS enabled; RPC grants are limited to anon/authenticated plus database owner; the live database contains only three clearly marked demonstration volunteer rows with the agreed U6–U10 example assignments. This metadata check is not an end-to-end hostile HTTP access test. A manual app/UI test using the club's System Admin session and a negative unauthorised RPC test remain part of release acceptance.

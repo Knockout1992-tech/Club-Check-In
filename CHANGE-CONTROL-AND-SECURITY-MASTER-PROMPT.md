@@ -636,4 +636,12 @@ A System Admin-only First-Aider Management tool has been implemented in the main
 - The live editable policy content now discloses System Admin access to first-aider names and allocations. The public privacy notice source has been amended with that disclosure and the manual-review retention entry.
 - No medical details, qualification records, expiry dates, contact details or child data are collected by this feature.
 
-**Current verification status:** migration is present in live migration history; dummy assignments match the requested example; live policy configuration is manual-review-only. Browser/UI acceptance, unauthorised RPC testing, full release-chain verification and public Cloudflare response checks remain outstanding until those checks are completed. Do not claim the feature is fully operational merely because the migration and GitHub commit exist.
+**Release verification update — 22 November 2026:**
+- Canonical source commit: `0a62c154e002d50099c4898cbd4feb86ba6cfef4`; source version `V3.9.1`; service-worker cache `club-check-in-v1258-no-local-player-cache`.
+- PWA Versioning and Syntax Check completed successfully for the feature code; PDM Browser Tests also completed successfully. The PDM smoke suite is not a dedicated First-Aider UI test.
+- Production sync workflow run `45050523365` completed successfully and wrote mirror commit `708f86e6061b278cf84cc480dd5373dbdc9161f9`.
+- Cloudflare Pages project `rhrufc-mini` reports production deployment `a49a29f5-6088-4a0d-945f-b93de722c240` with build and deploy stages successful, triggered by mirror commit `708f86e6061b278cf84cc480dd5373dbdc9161f9`.
+- The production mirror contains `js/first-aider-admin.js`, its script reference in `index.html`, and the updated public privacy notice. However, mirror `js/config.js` remains `V3.9.0` and mirror service-worker cache remains `club-check-in-v1257-no-local-player-cache`, while canonical source is `V3.9.1` / `v1258`. The sync job checked out canonical commit `0a62c154e002d50099c4898cbd4feb86ba6cfef4` but its mirror commit changed only the first-aider script. This is an unresolved release-integrity discrepancy; inspect before any further deployment or manual version adjustment.
+- The Cloudflare API confirms deployment success, but direct public HTTP reads of the deployed config/service-worker/script could not be completed from this environment.
+
+**Still outstanding:** manual UI acceptance using the club's System Admin session, a controlled unauthorised RPC test that does not submit guessed PINs, correction of the source/mirror version mismatch, and direct public response checks. Do not claim the feature is fully accepted until these are completed.

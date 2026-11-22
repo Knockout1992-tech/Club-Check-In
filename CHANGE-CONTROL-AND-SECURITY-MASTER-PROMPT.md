@@ -539,6 +539,16 @@ These are not blanket authorisations to fix anything. Verify current state first
 
 ---
 
+### 9. Coach invitation screen — added 22 November 2026
+
+The Admin Dashboard now includes an **Invite Coach** entry. It opens a dedicated screen with the Club Check-In initial access URL, copy-link action, Admin account/age-group setup checklist, first-time Coach PIN instructions, iPhone/Safari guidance and a security reminder.
+
+- Runtime files changed on canonical `main`: `index.html` and new `js/coach-invite.js`.
+- No database, RPC, authentication or personal-data changes were made.
+- Personal PIN setup instructions were checked against `js/auth.js`: the new personal PIN is 6–12 digits; the shared Coach PIN is used only during first-time setup.
+- Canonical source was versioned to `V3.8.3`; production sync workflow completed successfully and the production mirror contains the button, script reference and invitation script.
+- The public Cloudflare URL could not be directly fetched from this environment, so a final live-browser/iPhone interaction test remains outstanding.
+
 ## 13. Required response format for future work
 
 When the user asks for a change, respond in this order:

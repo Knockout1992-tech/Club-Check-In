@@ -141,6 +141,7 @@ DECLARE
     v_old_json jsonb;
     v_new_json jsonb;
     v_old_first_aider_json jsonb;
+    v_old_first_aider_pitch_json jsonb;
     v_new_first_aider_json jsonb;
 BEGIN
     IF public.verify_access_code(supplied_code, 'senior') IS DISTINCT FROM true THEN
@@ -458,6 +459,14 @@ BEGIN
                AS x(age_group_id bigint, is_main boolean, source_age_group_id bigint);
 
         IF v_old_first_aider_json IS DISTINCT FROM v_new_first_aider_json THEN
+            SELECT COALESCE(jsonb_agg(
+                jsonb_build_object('age_group_id', a.age_group_id, 'pitch', a.pitch)
+                ORDER BY a.age_group_id
+            ), '[]'::jsonb)
+              INTO v_old_first_aider_pitch_json
+              FROM public.first_aider_age_group_assignments a
+             WHERE a.volunteer_id = v_first_aider.volunteer_id;
+
             DELETE FROM public.first_aider_age_group_assignments
              WHERE volunteer_id = v_first_aider.volunteer_id;
 
@@ -470,9 +479,9 @@ BEGIN
                 x.is_main,
                 (
                     SELECT old_assignment.pitch
-                    FROM public.first_aider_age_group_assignments old_assignment
-                    WHERE old_assignment.volunteer_id = v_first_aider.volunteer_id
-                      AND old_assignment.age_group_id = x.source_age_group_id
+                    FROM jsonb_to_recordset(v_old_first_aider_pitch_json)
+                         AS old_assignment(age_group_id bigint, pitch text)
+                    WHERE old_assignment.age_group_id = x.source_age_group_id
                 )
             FROM jsonb_to_recordset(v_first_aider.assignments)
                  AS x(age_group_id bigint, is_main boolean, source_age_group_id bigint);

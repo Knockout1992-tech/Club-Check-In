@@ -172,6 +172,25 @@ The anonymisation process is intended to preserve attendance history and player 
 
 Do not use anonymisation as a routine way to correct a spelling mistake or remove a duplicate. Resolve the underlying record issue first.
 
+
+### 5.5 First-Aider Management
+
+The **First-Aider Management** function is available only inside System Admin and requires the separate System Admin PIN. First-aider volunteers do not need a Club Check-In account, PIN or installation.
+
+System Admin records:
+- Volunteer name.
+- One main age group.
+- Any additional/shared age groups.
+- Optional pitch information for each assignment.
+
+The coverage summary follows one rule: an age group is **Covered** only when at least one active first aider has it as their main age group. An additional/shared assignment is displayed as extra cover but does not remove a gap. For example, a volunteer whose main group is U8 and who additionally covers U6 and U7 leaves U6 and U7 shown as gaps unless each has its own active main first aider.
+
+Use Deactivate when a volunteer is no longer providing cover; this removes them from active coverage without deleting their record. Reactivate when appropriate. Do not enter medical details, qualifications, expiry dates, parent contact details or children's information in this register.
+
+The initial demonstration records are clearly labelled **DUMMY**. They are not real volunteers. Use **Clear DUMMY sample data** in First-Aider Management to remove only those marked demonstration records. Do not use this function to remove real volunteer records.
+
+First-aider volunteer names and allocations are currently held under manual retention review. No automatic deletion or anonymisation period has been approved.
+
 ## 6. Data retention and privacy
 
 The system has automated retention policies and a daily scheduled retention process. Retention periods differ by record type and are configured in the system; this guide is not a substitute for the current club privacy and retention policies.

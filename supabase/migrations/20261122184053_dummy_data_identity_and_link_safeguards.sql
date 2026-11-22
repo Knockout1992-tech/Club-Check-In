@@ -14,7 +14,7 @@ BEGIN
     END IF;
     RETURN OLD;
 END;
-$function$
+$function$;
 
 
 DROP TRIGGER IF EXISTS preserve_dummy_age_group_code ON public.age_groups;

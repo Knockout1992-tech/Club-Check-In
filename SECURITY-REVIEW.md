@@ -102,3 +102,21 @@ A System Admin-only first-aider volunteer register has been added.
 - The live policy content now identifies System Admin access to volunteer names and age-group/pitch allocations. The public privacy notice wording and retention schedule have also been amended to describe the data.
 
 **Verification evidence:** database metadata confirms both tables have RLS enabled; RPC grants are limited to anon/authenticated plus database owner; the live database contains only three clearly marked demonstration volunteer rows with the agreed U6–U10 example assignments. This metadata check is not an end-to-end hostile HTTP access test. A manual app/UI test using the club's System Admin session and a negative unauthorised RPC test remain part of release acceptance.
+
+
+## Supplementary review — System-wide DUMMY Data Management (22 November 2026)
+
+A System Admin-only DUMMY data manager has been added to the System Admin home screen.
+
+- Runtime files: `index.html`, `js/dummy-data-admin.js`, `js/retention-admin.js` and `js/first-aider-admin.js`.
+- Database migrations: `system_wide_dummy_data_management`, `dummy_data_identity_and_link_safeguards` and `refine_dummy_identity_and_availability_cleanup`.
+- RPCs: `get_dummy_data_summary` and `clear_dummy_data`. Both use `SECURITY DEFINER`, an empty fixed `search_path`, and the existing `_verify_system_admin_pin` verifier. That verifier locks after five failed attempts for 15 minutes and records attempts in the System Admin audit log. The RPCs are exposed to anon/authenticated only to support the app's custom PIN model; the System Admin PIN is checked inside each function.
+- The cleanup uses explicit identifier fields, not a broad scan of arbitrary text. It covers DUMMY players, first-aider volunteers, fixture opposition, parent submission names, child availability names, season-planner event titles/opposition, schedule names, break labels and season names, plus linked demonstration attendance and coach notification outbox rows.
+- Access/user accounts, Parent access accounts, credentials, installations, sessions, personal-data request cases, age-group reference configuration, security logs, audit history, retention policies/runs and retention holds are excluded from deletion.
+- Attendance registers are retained. Attendance records for DUMMY players are removed; historical summaries for mixed registers are recalculated. A DUMMY season is removable only when it is not current and contains no genuine attendance. A DUMMY parent/fixture with genuine linked responses blocks the entire transaction. Active retention holds also block the entire transaction.
+- Database triggers preserve the DUMMY prefix on edits. The first-aider edit and active-status RPCs now allow DUMMY records while retaining their `is_dummy` marker.
+- No new personal-data fields or collection purposes were introduced. The existing privacy notice and retention configuration were inspected; no policy text or retention setting was changed.
+
+**Current preview counts (22 November 2026; not cleared):** 45 DUMMY players, 51 linked attendance records, 8 affected registers, 1 DUMMY fixture, 3 DUMMY submissions, 19 DUMMY availability responses, 3 DUMMY season-planner events and 3 DUMMY first-aider volunteers. No DUMMY schedules, breaks, seasons or queued coach notifications were found. The eight affected attendance registers are retained.
+
+**Acceptance status:** migration and RPC definitions are deployed; a System Admin preview and cleanup have not yet been run using the club's live System Admin session. The GitHub JavaScript syntax and PDM browser smoke checks must pass for the final release, followed by mirror/Cloudflare/public asset verification and manual System Admin UI acceptance. Do not claim the destructive cleanup has run until the System Admin action confirms success.

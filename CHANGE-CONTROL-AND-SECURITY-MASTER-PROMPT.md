@@ -9,7 +9,7 @@
 **Documentation branch created for this file:** `docs/club-checkin-master-prompt`  
 **Supabase project reference:** `muxxlewtqhpckhoqeinn`  
 **Related Match Availability site repository:** `Knockout1992-tech/Club-Match-Availability`  
-**Last consolidated:** 21 November 2026  
+**Last consolidated:** 22 November 2026  
 **Canonical source version observed in `main/js/config.js` on 21 November 2026:** `V3.7.9`. **Production mirror version observed in `Club-Match-Availability/club-check-in/js/config.js`:** `V3.8.1`. These values do not match; neither value alone proves what Cloudflare is currently serving. Resolve the version mismatch before declaring a release live.
 
 ---
@@ -645,3 +645,37 @@ A System Admin-only First-Aider Management tool has been implemented in the main
 - The Cloudflare API confirms deployment success, but direct public HTTP reads of the deployed config/service-worker/script could not be completed from this environment.
 
 **Still outstanding:** manual UI acceptance using the club's System Admin session, a controlled unauthorised RPC test that does not submit guessed PINs, correction of the source/mirror version mismatch, and direct public response checks. Do not claim the feature is fully accepted until these are completed.
+
+
+## 11. System-wide DUMMY Data Management — added 22 November 2026
+
+A global DUMMY data manager is being added to the System Admin home screen so demonstration records can be reviewed and cleared across the operational database from one place. The First-Aider Management screen no longer contains a separate DUMMY-only cleanup button. DUMMY first-aider records now expose Edit and Deactivate/Reactivate controls like genuine volunteers; the `is_dummy` marker and DUMMY name prefix are preserved.
+
+### Runtime and database changes
+
+- Runtime files: `index.html`, `js/dummy-data-admin.js`, `js/retention-admin.js`, `js/first-aider-admin.js`.
+- Database migrations: `20261122183952_system_wide_dummy_data_management`, `20261122184053_dummy_data_identity_and_link_safeguards`, `20261122184500_refine_dummy_identity_and_availability_cleanup`.
+- RPCs: `get_dummy_data_summary(system_admin_pin)` and `clear_dummy_data(system_admin_pin)`; both verify the separate System Admin PIN inside a SECURITY DEFINER function with an empty fixed search path. Failed System Admin PIN attempts are rate-limited by the existing verifier (five failures, 15-minute lock) and audited.
+- The cleanup uses designated identifier fields and explicit linked-record handling. It does not delete user/Parent accounts, access credentials, installations, sessions, personal-data cases, age-group reference configuration, security logs, audit history, retention policies/runs or retention holds.
+- Attendance records linked to DUMMY players are removed, but attendance registers are retained. Historical totals for mixed registers are recalculated. DUMMY seasons are only removed if non-current and free of genuine attendance. Genuine responses linked to a DUMMY parent/fixture or an active retention hold stop the full transaction.
+- Trigger safeguards preserve the DUMMY prefix when a DUMMY identifier is edited. DUMMY player deletion is blocked if it would leave a non-DUMMY Match Availability child record linked to that player.
+
+### Live data preview — 22 November 2026
+
+The following DUMMY records were found. This is a preview only; the cleanup action has not been executed:
+
+| Area | Count |
+|---|---:|
+| Players | 45 |
+| Attendance records linked to DUMMY players | 51 |
+| Attendance registers affected (retained) | 8 |
+| Match fixtures | 1 |
+| Match submissions | 3 |
+| Match availability responses | 19 |
+| Season-planner events | 3 |
+| First-aider volunteers | 3 |
+| DUMMY schedules, breaks, seasons and queued notifications | 0 |
+
+The global manager displays a preview and requires a separate confirmation before cleanup. The cleanup runs transactionally and leaves protected system/security/audit/retention records intact. Do not treat the preview as evidence that data has been deleted.
+
+**Verification outstanding:** confirm latest GitHub versioning/syntax workflow, PDM browser smoke test, production sync, Cloudflare deployment and public config/service-worker responses; then complete manual System Admin preview/edit/status acceptance. The global cleanup itself remains an explicit System Admin action and has not been run as part of deployment.

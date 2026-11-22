@@ -682,3 +682,17 @@ The global manager displays a preview and requires a separate confirmation befor
 
 
 **Release verification update — 22 November 2026:** Canonical source is `V4.0.4` / `club-check-in-v1271-no-local-player-cache`. PWA Versioning and Syntax Check and PDM Browser Tests passed for the reviewed runtime changes. Production sync completed and canonical/mirror `js/config.js` and `service-worker.js` contents match. Cloudflare Pages production deployment `fcd370ee-9da9-4b9b-ba22-a27f3a823ce8` completed successfully from mirror commit `3951badfd1990bd2369a02338c2f16c47340cd71`. The public service-worker response was independently checked and returned `club-check-in-v1271-no-local-player-cache`. Public config/script response checks and manual System Admin UI acceptance remain outstanding. The global cleanup action has not been run; no DUMMY data has been deleted.
+
+
+### 10.1 First-Aider Gap Analysis and simplified assignments — 22 November 2026
+
+The First-Aider Management screen now presents the age-group coverage review as a table with **Age group**, **Main cover**, **Additional/shared cover** and **Status** columns.
+
+- Coverage rule is unchanged: only an active main assignment makes an age group Covered. Additional/shared assignments remain visible but do not close a gap.
+- Add/Edit now asks for the volunteer name, one main age group and optional additional/shared age groups only.
+- Pitch fields and pitch references have been removed from the first-aider interface and its form styling. The existing database pitch columns and RPC parameters are retained for compatibility; the revised frontend sends blank pitch values when saving. Existing stored pitch values are not bulk-deleted by this UI-only change.
+- Volunteer status controls, DUMMY identity preservation, System Admin-only access and the global DUMMY cleanup flow are unchanged.
+- Runtime files changed on canonical `main`: `js/first-aider-admin.js` and `css/styles.css`.
+- No database migration, policy text, retention setting or data cleanup was performed for this UI change.
+
+**Verification:** source inspection confirms no pitch input/display references remain in the First-Aider JavaScript. The obsolete pitch-specific editor CSS was removed. Automated syntax/browser tests, production mirror sync, Cloudflare deployment and live UI acceptance are tracked separately after the current release.

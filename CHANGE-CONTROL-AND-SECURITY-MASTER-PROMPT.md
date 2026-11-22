@@ -16,6 +16,20 @@
 
 ## 0. Mandatory instruction — read this first
 
+### Absolute requirement — follow this document exactly
+
+**This document is the controlling instruction for all work on Club Check-In. It must be followed word for word, in full, every time. Do not deviate, reinterpret, selectively apply, skip, weaken, replace or work around any instruction in it.**
+
+- Read the complete current document before doing anything on the project; do not rely on memory, summaries, previous chats or assumptions.
+- Treat every requirement, approval gate, restriction, verification step and reporting requirement as mandatory, not optional guidance.
+- Do not decide independently that an instruction is unnecessary, inconvenient, overly cautious or can be bypassed.
+- Do not substitute a different workflow or deployment process, even if it appears faster or technically equivalent.
+- If an instruction cannot be followed, conflicts with verified project state, or appears ambiguous or outdated, stop before taking the affected action. Explain the exact issue and ask the user how to proceed. Do not silently choose an interpretation or proceed by approximation.
+- A request or approval authorises only the scope expressly described. It does not waive any other requirement in this document.
+- These requirements apply to investigation, planning, code changes, documentation changes, testing, Git operations, database work, production synchronisation and deployment.
+
+**No deviation is permitted without the user's explicit instruction to change the relevant requirement in this document.**
+
 You are assisting with a live, operational club system used by parents/guardians, Coaches and club administrators. Treat this as a production system holding information about children. Your job is to improve it without breaking existing working behaviour or collecting unnecessary information.
 
 **Before suggesting or making any amendment:**

@@ -696,3 +696,20 @@ The First-Aider Management screen now presents the age-group coverage review as 
 - No database migration, policy text, retention setting or data cleanup was performed for this UI change.
 
 **Verification:** source inspection confirms no pitch input/display references remain in the First-Aider JavaScript. The obsolete pitch-specific editor CSS was removed. Automated syntax/browser tests, production mirror sync, Cloudflare deployment and live UI acceptance are tracked separately after the current release.
+
+
+### 10.2 First-aider assignments in the existing season rollover — 22 November 2026
+
+First-aider coverage is now included in the existing **Start New Season** review; it is not a separate rollover process.
+
+- Runtime change: index.html (existing showNewSeason() / confirmNewSeason() review and confirmation).
+- Database migration: supabase/migrations/20261122190000_season_rollover_first_aider_assignments.sql; live migration season_rollover_first_aider_assignments applied on 22 November 2026.
+- The existing secure preview now returns active first-aider volunteer names and their main/shared age-group assignments to an authenticated active Admin for the rollover review. First-Aider Management itself remains System Admin-only; Admins do not gain add/edit/deactivate access.
+- Proposed assignments follow age_groups.next_age_group_id where the destination group is active. When there is no active next group, the existing active group is retained as the suggested option and flagged for review. If a stored assignment refers to an inactive group, the Admin must choose an active destination.
+- Each active volunteer must finish with exactly one main assignment. Additional/shared assignments remain separate and do not count as main cover or close a coverage gap. Duplicate destination assignments are combined in the review.
+- The Admin confirmation submits both expected and final first-aider assignment snapshots with the existing player and Coach rollover. The database locks the first-aider tables, rejects stale snapshots, validates active volunteers/groups, and commits the season/player/Coach/first-aider changes in the same transaction. A validation failure rolls the transaction back.
+- Existing pitch values are not displayed or edited; legacy pitch metadata is preserved for an assignment where its source assignment can be identified. No new volunteer fields are collected.
+- First-aider assignment changes are recorded in the System Admin audit log without copying volunteer names into the audit details.
+- The live editable privacy notice now states that Administrators can review first-aider volunteer names and main/additional age-group allocations during season rollover. System Admin access to the register remains disclosed. The first-aider retention policy remains manual review only; no retention period or automatic deletion was introduced.
+
+**Verification so far:** migration application returned success; live function metadata confirms the preview and rollover functions retain their fixed empty search_path and the existing Admin validation; the live policy content contains the new Admin disclosure; four active first-aider records currently have a main assignment. The PWA Versioning and Syntax Check, PDM Browser Tests and production sync workflows completed successfully for the runtime commit. This does not yet establish the final Cloudflare Pages deployment or live UI acceptance. Do not claim end-to-end acceptance until the production mirror, Pages deployment, public assets and Admin review UI are checked.

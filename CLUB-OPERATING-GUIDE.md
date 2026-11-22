@@ -188,7 +188,7 @@ Use Deactivate when a volunteer is no longer providing cover; this removes them 
 
 The initial demonstration records are clearly labelled **DUMMY**. They are not real volunteers. DUMMY volunteers can be edited and deactivated/reactivated like other volunteers; their DUMMY identity is preserved when the name is changed. Use the separate **DUMMY Data** tool on the System Admin home screen to preview and clear demonstration records across the operational database. There is no longer a first-aider-only clear button. The global cleanup uses a confirmation step, checks retention holds and linked genuine records, and leaves access, security, audit and retention records untouched.
 
-First-aider volunteer names and age-group allocations are currently held under manual retention review. No automatic deletion or anonymisation period has been approved.
+First-aider volunteer names and age-group allocations are currently held under manual retention review. No automatic deletion or anonymisation period has been approved. The existing **Start New Season** review also includes active first-aider assignments so an Admin can review their progression alongside Coaches. Admin access is limited to viewing and confirming the rollover assignments; adding, editing, deactivating or reactivating first-aider volunteers remains restricted to System Admin.
 
 ### 5.6 DUMMY Data Management
 

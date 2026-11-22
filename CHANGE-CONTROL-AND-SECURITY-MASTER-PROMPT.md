@@ -618,3 +618,22 @@ The user can start a future Club Check-In conversation with the following instru
 ---
 
 **Document control:** This file must be reviewed and maintained as part of every material Club Check-In change. Keep dated findings and distinguish confirmed live facts from historical notes, assumptions and unresolved items. Do not put credentials, secrets, personal data or real user identifiers in this document.
+
+
+### 10. First-Aider Management — added 22 November 2026
+
+A System Admin-only First-Aider Management tool has been implemented in the main PWA.
+
+- Runtime files: \`index.html\`, \`js/retention-admin.js\`, and \`js/first-aider-admin.js\`.
+- Database migration: \`supabase/migrations/20261122170000_first_aider_management.sql\`; live migration history records \`first_aider_management\` as applied.
+- Tables: \`first_aider_volunteers\` (adult volunteer name, active status, dummy marker) and \`first_aider_age_group_assignments\` (one main assignment, additional/shared assignments, optional pitch).
+- The separate System Admin PIN is required; first-aiders are not app users and receive no account or login.
+- Coverage rule: a group is covered only if at least one active first aider has that group as their main assignment. Additional/shared assignments are displayed but never close a gap.
+- The feature supports add/edit, deactivate/reactivate and a dummy-only cleanup action. Real records are not deleted through the UI.
+- The initial DUMMY example matches Parent A (main U8, additional U6/U7), Parent B (main U9), Parent C (main U10). The live data currently contains these three clearly marked dummy rows.
+- Both tables have RLS enabled and direct table grants revoked from PUBLIC, anon and authenticated. RPCs use SECURITY DEFINER, fixed empty search_path and the existing System Admin PIN verifier. The functions are executable by anon/authenticated at the RPC layer because the app uses its own PIN/session model; each function verifies the System Admin PIN internally.
+- Retention key \`first_aider_volunteers\` is enabled as manual review only, with automatic enforcement disabled and no retention period invented.
+- The live editable policy content now discloses System Admin access to first-aider names and allocations. The public privacy notice source has been amended with that disclosure and the manual-review retention entry.
+- No medical details, qualification records, expiry dates, contact details or child data are collected by this feature.
+
+**Current verification status:** migration is present in live migration history; dummy assignments match the requested example; live policy configuration is manual-review-only. Browser/UI acceptance, unauthorised RPC testing, full release-chain verification and public Cloudflare response checks remain outstanding until those checks are completed. Do not claim the feature is fully operational merely because the migration and GitHub commit exist.

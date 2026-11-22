@@ -187,9 +187,15 @@ The coverage summary follows one rule: an age group is **Covered** only when at 
 
 Use Deactivate when a volunteer is no longer providing cover; this removes them from active coverage without deleting their record. Reactivate when appropriate. Do not enter medical details, qualifications, expiry dates, parent contact details or children's information in this register.
 
-The initial demonstration records are clearly labelled **DUMMY**. They are not real volunteers. Use **Clear DUMMY sample data** in First-Aider Management to remove only those marked demonstration records. Do not use this function to remove real volunteer records.
+The initial demonstration records are clearly labelled **DUMMY**. They are not real volunteers. DUMMY volunteers can be edited and deactivated/reactivated like other volunteers; their DUMMY identity is preserved when the name is changed. Use the separate **DUMMY Data** tool on the System Admin home screen to preview and clear demonstration records across the operational database. There is no longer a first-aider-only clear button. The global cleanup uses a confirmation step, checks retention holds and linked genuine records, and leaves access, security, audit and retention records untouched.
 
 First-aider volunteer names and allocations are currently held under manual retention review. No automatic deletion or anonymisation period has been approved.
+
+### 5.6 DUMMY Data Management
+
+The **DUMMY Data** tool is available from the System Admin home screen. It previews demonstration records across the operational database before offering one global cleanup action. Review the counts before confirming. The cleanup is transactional: if it finds an active retention hold, genuine attendance inside a DUMMY season, or genuine responses linked to a DUMMY parent/fixture, the entire operation stops without partial deletion. Attendance registers are retained; attendance rows marked through a DUMMY player are removed and historical totals for mixed registers are recalculated. Security/access records, personal-data cases, audit history, retention configuration and age-group reference configuration are not cleared.
+
+Do not use DUMMY labels for genuine club records. When editing a DUMMY record, keep the DUMMY prefix so it remains identifiable for the global cleanup.
 
 ## 6. Data retention and privacy
 

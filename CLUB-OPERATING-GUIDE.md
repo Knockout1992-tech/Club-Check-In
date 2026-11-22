@@ -174,22 +174,21 @@ Do not use anonymisation as a routine way to correct a spelling mistake or remov
 
 
 ### 5.5 First-Aider Management
-
+ 
 The **First-Aider Management** function is available only inside System Admin and requires the separate System Admin PIN. First-aider volunteers do not need a Club Check-In account, PIN or installation.
 
 System Admin records:
 - Volunteer name.
 - One main age group.
 - Any additional/shared age groups.
-- Optional pitch information for each assignment.
 
-The coverage summary follows one rule: an age group is **Covered** only when at least one active first aider has it as their main age group. An additional/shared assignment is displayed as extra cover but does not remove a gap. For example, a volunteer whose main group is U8 and who additionally covers U6 and U7 leaves U6 and U7 shown as gaps unless each has its own active main first aider.
+The gap analysis is shown as a table by age group. An age group is **Covered** only when at least one active first aider has it as their main age group. Additional/shared cover is shown separately but does not remove a gap. For example, a volunteer whose main group is U8 and who additionally covers U6 and U7 leaves U6 and U7 shown as gaps unless each has its own active main first aider.
 
 Use Deactivate when a volunteer is no longer providing cover; this removes them from active coverage without deleting their record. Reactivate when appropriate. Do not enter medical details, qualifications, expiry dates, parent contact details or children's information in this register.
 
 The initial demonstration records are clearly labelled **DUMMY**. They are not real volunteers. DUMMY volunteers can be edited and deactivated/reactivated like other volunteers; their DUMMY identity is preserved when the name is changed. Use the separate **DUMMY Data** tool on the System Admin home screen to preview and clear demonstration records across the operational database. There is no longer a first-aider-only clear button. The global cleanup uses a confirmation step, checks retention holds and linked genuine records, and leaves access, security, audit and retention records untouched.
 
-First-aider volunteer names and allocations are currently held under manual retention review. No automatic deletion or anonymisation period has been approved.
+First-aider volunteer names and age-group allocations are currently held under manual retention review. No automatic deletion or anonymisation period has been approved.
 
 ### 5.6 DUMMY Data Management
 

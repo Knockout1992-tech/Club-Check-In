@@ -32,7 +32,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.save_first_aider(system_admin_pin text, requested_id bigint, requested_name text, requested_main_age_group_id bigint, requested_main_pitch text, requested_additional_assignments jsonb)
@@ -169,7 +169,7 @@ BEGIN
 
     RETURN jsonb_build_object('success', true, 'id', v_id, 'is_dummy', v_is_dummy);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.set_first_aider_active(system_admin_pin text, requested_id bigint, requested_active boolean)
@@ -214,7 +214,7 @@ BEGIN
 
     RETURN jsonb_build_object('success', true, 'id', v_id, 'active', requested_active);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_dummy_data_summary(system_admin_pin text)
@@ -384,7 +384,7 @@ BEGIN
         'protected_age_group_configuration', v_age_groups
     );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.clear_dummy_data(system_admin_pin text)
@@ -702,7 +702,7 @@ BEGIN
         )
     );
 END;
-$function$
+$function$;
 
 
 DROP TRIGGER IF EXISTS preserve_dummy_age_group_display_name ON public.age_groups;

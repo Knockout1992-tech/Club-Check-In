@@ -123,3 +123,21 @@ A System Admin-only DUMMY data manager has been added to the System Admin home s
 
 
 **Release verification update — 22 November 2026:** Canonical and production mirror source were checked at version `V4.0.4` and service-worker cache `club-check-in-v1271-no-local-player-cache`; the corresponding source files match. The PWA Versioning and Syntax Check and PDM Browser Tests passed for the reviewed runtime changes. Production sync completed. Cloudflare Pages deployment `fcd370ee-9da9-4b9b-ba22-a27f3a823ce8` completed successfully, and the public service-worker response returned the expected `club-check-in-v1271-no-local-player-cache`. The public config/script response checks and manual System Admin preview/edit/status acceptance remain outstanding. The global cleanup action has not been run.
+
+
+## Supplementary review — First-aider season rollover integration (22 November 2026)
+
+The existing Admin season rollover now includes first-aider assignments in the same preview, review and atomic commit as player progression and Coach assignments.
+
+- Runtime: index.html.
+- Migration: 20261122190000_season_rollover_first_aider_assignments, applied to the live Supabase project.
+- get_season_rollover_preview_secure(text,text) returns active first-aider names and assignments only after its existing Senior/Admin identity and installation checks succeed. rollover_season_with_coaches_secure(...) applies the reviewed first-aider assignments within the existing transaction.
+- First-aider tables are locked during commit; expected assignments are compared with the live snapshot; each active volunteer must appear exactly once and have exactly one main active age-group assignment. Duplicate age-group assignments and inactive destinations are rejected.
+- Progression uses the configured next active age group. The UI retains the current active group as a suggested option when no active next group exists and flags it for Admin review. Main/shared designation is maintained separately.
+- Existing pitch metadata is not displayed; source-linked pitch values are preserved when assignment rows are rebuilt.
+- Changes are audited using volunteer IDs and age-group assignment values, not volunteer names.
+- Admin visibility during rollover is disclosed in the live editable privacy notice. System Admin-only first-aider management remains unchanged. Retention remains manual review only.
+
+**Live verification:** migration application returned success. Function metadata confirms both RPCs remain SECURITY DEFINER with an empty fixed search path; both retain the pre-existing Admin verification in their bodies and are executable through the custom PIN RPC model. The live privacy notice includes the Admin rollover disclosure. A metadata-only count confirms four active first-aider records and all four currently have a main assignment.
+
+**Release verification:** the PWA Versioning and Syntax Check and PDM Browser Tests completed successfully for the index.html runtime commit; the subsequent production sync workflow completed successfully. Cloudflare Pages deployment state, mirror contents and public asset responses are still being checked. No live season rollover was executed; the official rollover date lock remains in force until 1 August 2027.
